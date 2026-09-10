@@ -1,315 +1,469 @@
-"""
-Semáforo de Inversión Social - CDMX
-Prototipo inicial (v0) del pipeline de análisis.
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Semáforo de Inversión Social · CDMX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<style>
+  :root{
+    --paper: #EFF1EC;
+    --surface: #FFFFFF;
+    --ink: #1C2521;
+    --ink-soft: #4C574F;
+    --muted: #7C8880;
+    --line: #D6DAD1;
+    --accent: #1F4B44;
+    --accent-soft: #E4EBE7;
+    --rojo: #B23A32;
+    --rojo-bg: #F5E4E1;
+    --amarillo: #A8730F;
+    --amarillo-bg: #F5EBD6;
+    --verde: #2F7A52;
+    --verde-bg: #E1EEE5;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:'Fraunces', serif; font-weight:600; margin:0;}
+  a{color:var(--accent);}
 
-QUÉ HACE ESTE PROTOTIPO
-------------------------
-Consolida las 5 ediciones históricas de DENUE ya depuradas en data/ (nov-2022,
-nov-2023, nov-2024, may-2025, may-2026), agregadas por alcaldía, y con ellas:
+  .wrap{max-width:1180px; margin:0 auto; padding:28px 22px 60px;}
 
-  1. Mide la evolución real de la oferta (conteo de establecimientos) por
-     alcaldía y categoría a lo largo de ~3.5 años.
-  2. Ajusta una tendencia lineal (mínimos cuadrados) oferta vs. tiempo,
-     con intervalo de predicción para 1, 3 y 5 años.
-  3. Valida el modelo retrospectivamente: entrena con las 3 primeras
-     ediciones (2022-2024) y compara la predicción contra lo observado en
-     2025 y 2026 (tal como pide el reto: "predecir 2020 usando 2010-2015").
-  4. Normaliza la oferta actual por población (Censo 2020, INEGI) para
-     tener una primera aproximación de oferta per cápita.
-  5. Clasifica cada alcaldía-categoría en un semáforo (rojo/amarillo/verde)
-     combinando nivel de oferta per cápita y tendencia de crecimiento.
+  header.top{
+    display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:14px; padding-bottom:18px; border-bottom:1px solid var(--line); margin-bottom:22px;
+  }
+  header.top h1{font-size:28px; letter-spacing:-0.01em;}
+  header.top .kicker{color:var(--muted); font-size:14px; max-width:560px;}
 
-QUÉ NO HACE TODAVÍA (limitación explícita, no implícita)
----------------------------------------------------------
-El README del proyecto pide cruzar la oferta con la DEMANDA real: cambios
-demográficos por AGEB (Censo 2010/2020 a nivel manzana), áreas verdes,
-PILARES, instalaciones deportivas de Datos Abiertos CDMX, directorio INAPAM
-y uso de suelo. Ninguna de esas fuentes está todavía en data/ — sólo DENUE.
-Por eso el semáforo de este v0 es un proxy de SOLO OFERTA (saturación /
-crecimiento de establecimientos), no todavía de demanda insatisfecha. La
-población usada aquí es un total estático 2020 por alcaldía (para tener
-algo per cápita ya), no una serie temporal de crecimiento poblacional.
-Esto se señala también en el dashboard para no engañar al usuario final.
+  .caveat{
+    background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--accent);
+    border-radius:2px; padding:12px 16px; font-size:13.5px; color:var(--ink-soft);
+    margin-bottom:24px; max-width:900px;
+  }
+  .caveat strong{color:var(--ink);}
 
-Próximo paso obvio: sustituir POBLACION_2020_ALCALDIA por el cruce real
-Censo 2010 vs 2020 por AGEB, y agregar espacio público / PILARES / INAPAM
-para construir el índice de demanda insatisfecha que sí pide el reto.
-"""
+  .layout{display:grid; grid-template-columns:250px 1fr; gap:22px;}
+  @media (max-width:880px){ .layout{grid-template-columns:1fr;} }
 
-import json
-from pathlib import Path
+  .panel{
+    background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:18px;
+  }
 
-import numpy as np
-import pandas as pd
+  .filters .field{margin-bottom:20px;}
+  .filters label.field-label{
+    display:block; font-size:12.5px; color:var(--muted); margin-bottom:8px;
+  }
+  select{
+    width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:4px;
+    background:var(--paper); font-family:inherit; font-size:14px; color:var(--ink);
+  }
+  .segmented{display:flex; border:1px solid var(--line); border-radius:4px; overflow:hidden;}
+  .segmented button{
+    flex:1; padding:8px 0; border:none; background:var(--paper); font-family:inherit;
+    font-size:13.5px; color:var(--ink-soft); cursor:pointer; border-right:1px solid var(--line);
+  }
+  .segmented button:last-child{border-right:none;}
+  .segmented button.active{background:var(--accent); color:#fff;}
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+  .legend{margin-top:22px; padding-top:18px; border-top:1px solid var(--line);}
+  .legend .field-label{font-size:12.5px; color:var(--muted); margin-bottom:10px; display:block;}
+  .legend-row{display:flex; align-items:flex-start; gap:9px; margin-bottom:9px; font-size:13px; color:var(--ink-soft);}
+  .dot{width:10px; height:10px; border-radius:50%; margin-top:4px; flex-shrink:0;}
+  .dot.rojo{background:var(--rojo);} .dot.amarillo{background:var(--amarillo);} .dot.verde{background:var(--verde);}
 
-# (carpeta, archivo csv, año elapsed en meses desde la primera edición)
-EDITIONS = [
-    ("NOVIEMBRE 2022 CDMX", "denue_cdmx_11_2022_depurado.csv"),
-    ("NOVIEMBRE 2023 CDMX", "denue_cdmx_11_2023_depurado.csv"),
-    ("NOVIEMBRE 2024 CDMX", "denue_cdmx_11_2024_depurado.csv"),
-    ("MAYO 2025 CDMX", "denue_cdmx_05_2025_depurado.csv"),
-    ("MAYO 2026 CDMX", "denue_cdmx_05_2026_depurado.csv"),
-]
+  .rank-list{margin-top:22px; padding-top:18px; border-top:1px solid var(--line);}
+  .rank-list .field-label{font-size:12.5px; color:var(--muted); margin-bottom:10px; display:block;}
+  .rank-item{
+    display:block; width:100%; text-align:left; background:none; border:none; cursor:pointer;
+    padding:8px 0; border-bottom:1px solid var(--line); font-family:inherit;
+  }
+  .rank-item:last-child{border-bottom:none;}
+  .rank-item .name{font-size:13.5px; color:var(--ink); display:block;}
+  .rank-item .meta{font-size:12px; color:var(--muted);}
 
-# Población total, Censo de Población y Vivienda 2020 (INEGI, comunicado
-# 98/21). Cifra estática de referencia -- ver limitación en el docstring.
-POBLACION_2020_ALCALDIA = {
-    "Iztapalapa": 1835486,
-    "Gustavo A. Madero": 1173351,
-    "Álvaro Obregón": 759137,
-    "Coyoacán": 614447,
-    "Tlalpan": 699928,
-    "Cuauhtémoc": 545884,
-    "Azcapotzalco": 432205,
-    "Iztacalco": 404695,
-    "Benito Juárez": 434153,
-    "Miguel Hidalgo": 414470,
-    "Venustiano Carranza": 442798,
-    "Xochimilco": 442178,
-    "Tláhuac": 392313,
-    "Cuajimalpa de Morelos": 217686,
-    "La Magdalena Contreras": 247622,
-    "Milpa Alta": 152685,
+  #map{height:460px; border-radius:4px; overflow:hidden;}
+  .map-note{font-size:11.5px; color:var(--muted); margin-top:8px;}
+
+  .detail-head{display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-bottom:6px;}
+  .detail-head h2{font-size:22px;}
+  .pill{
+    display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px;
+    font-size:12.5px; font-weight:500;
+  }
+  .pill.rojo{background:var(--rojo-bg); color:var(--rojo);}
+  .pill.amarillo{background:var(--amarillo-bg); color:var(--amarillo);}
+  .pill.verde{background:var(--verde-bg); color:var(--verde);}
+
+  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:18px 0 20px;}
+  @media (max-width:700px){ .stat-row{grid-template-columns:repeat(2,1fr);} }
+  .stat{border:1px solid var(--line); border-radius:4px; padding:12px 14px;}
+  .stat .v{font-family:'IBM Plex Mono', monospace; font-size:19px; color:var(--ink);}
+  .stat .l{font-size:11.5px; color:var(--muted); margin-top:3px;}
+
+  #trend{height:280px; margin-bottom:8px;}
+
+  .explain{font-size:14px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:16px; margin-top:6px;}
+  .explain p{margin:0 0 10px;}
+
+  .validation-table{width:100%; border-collapse:collapse; font-size:13px; margin-top:14px;}
+  .validation-table caption{text-align:left; font-size:12.5px; color:var(--muted); margin-bottom:8px; caption-side:top;}
+  .validation-table th, .validation-table td{padding:7px 8px; border-bottom:1px solid var(--line); text-align:right;}
+  .validation-table th:first-child, .validation-table td:first-child{text-align:left;}
+  .validation-table th{color:var(--muted); font-weight:500; font-size:12px;}
+
+  footer{margin-top:28px; font-size:12.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:16px;}
+  footer a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <h1>Semáforo de Inversión Social</h1>
+      <div class="kicker">Zonas de oportunidad para infraestructura social en la CDMX, a partir de la evolución de la oferta 2022–2026.</div>
+    </div>
+  </header>
+
+  <div class="caveat">
+    <strong>Qué es esto todavía:</strong> un prototipo v0 que sólo usa la oferta (DENUE, 5 ediciones 2022–2026). El semáforo compara alcaldías entre sí por oferta per cápita y tendencia de crecimiento — <strong>no incorpora aún</strong> población por AGEB, áreas verdes, PILARES ni uso de suelo, que son necesarios para medir demanda insatisfecha real. Tratar el color como punto de partida para investigar, no como conclusión.
+  </div>
+
+  <div class="layout">
+    <aside class="panel filters">
+      <div class="field">
+        <label class="field-label">Categoría de oferta</label>
+        <select id="f-categoria"></select>
+      </div>
+      <div class="field">
+        <label class="field-label">Horizonte de proyección</label>
+        <div class="segmented" id="f-horizonte">
+          <button data-v="1">1 año</button>
+          <button data-v="3">3 años</button>
+          <button data-v="5">5 años</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Nivel de riesgo aceptable</label>
+        <div class="segmented" id="f-riesgo">
+          <button data-v="conservador">Conservador</button>
+          <button data-v="alto_impacto">Alto impacto</button>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span class="field-label">Lectura del semáforo</span>
+        <div class="legend-row"><span class="dot rojo"></span><span><strong>Rojo</strong> — oferta per cápita ya alta y sin crecer: zona probablemente saturada.</span></div>
+        <div class="legend-row"><span class="dot amarillo"></span><span><strong>Amarillo</strong> — señal mixta: crece rápido desde una base intermedia, o el dato es insuficiente.</span></div>
+        <div class="legend-row"><span class="dot verde"></span><span><strong>Verde</strong> — oferta per cápita baja frente al resto de la ciudad: candidata a zona de oportunidad.</span></div>
+      </div>
+
+      <div class="rank-list">
+        <span class="field-label">Candidatas a oportunidad (por población)</span>
+        <div id="rank-items"></div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="panel" style="margin-bottom:22px;">
+        <div id="map"></div>
+        <div class="map-note">Posición aproximada de cada alcaldía (centroide de los establecimientos observados). El contorno es la envolvente de los puntos DENUE, no un límite administrativo — el v1 debería usar los polígonos AGEB del Marco Geoestadístico.</div>
+      </div>
+
+      <div class="panel" id="detail-panel"></div>
+    </main>
+  </div>
+
+  <footer>
+    Fuente: DENUE (INEGI), ediciones nov-2022, nov-2023, nov-2024, may-2025 y may-2026, depuradas por SCIAN (713941–44, 611621–22, 623311–12, 624121–22). Población de referencia: Censo de Población y Vivienda 2020, INEGI. Próximo paso: cruzar con Censo por AGEB, Espacio Público CDMX, PILARES, INAPAM y uso de suelo (SEDUVI) para pasar de un semáforo de oferta a uno de demanda insatisfecha, como pide el planteamiento original del reto.
+  </footer>
+
+</div>
+
+<script>
+const DATA = {"generado":"prototipo v0 - solo oferta DENUE, sin cruce demográfico ni de espacio público","ediciones":["2022-11","2023-11","2024-11","2025-05","2026-05"],"categorias":["Gimnasios y espacios deportivos","Servicios para personas adultas mayores"],"contorno_referencia":[[-99.33504,19.30781],[-99.19555,19.11484],[-99.19554,19.11484],[-98.99939,19.1738],[-98.97295,19.21164],[-98.96559,19.22297],[-98.96549,19.2238],[-98.96531,19.22591],[-98.96353,19.32541],[-99.06527,19.49579],[-99.13024,19.57928],[-99.13024,19.57928],[-99.13488,19.57629],[-99.20509,19.51469],[-99.31894,19.35441],[-99.32806,19.33094]],"zonas":[{"alcaldia":"Azcapotzalco","categoria":"Gimnasios y espacios deportivos","poblacion_2020":432205,"centroide":{"lat":19.47929,"lon":-99.18287},"serie_historica":[{"edicion":"2022-11","conteo":98},{"edicion":"2023-11","conteo":102},{"edicion":"2024-11","conteo":105},{"edicion":"2025-05","conteo":105},{"edicion":"2026-05","conteo":107}],"oferta_percapita_100k":24.76,"oferta_percapita_percentil":0.0,"tendencia_pendiente_anual":2.521,"tendencia_percentil":0.6,"tendencia_r2":0.943,"proyeccion":{"1":{"estimado":110.2,"banda_95":2.8},"3":{"estimado":115.2,"banda_95":3.9},"5":{"estimado":120.3,"banda_95":5.2}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":106.9,"observado":105,"error_abs":1.9,"error_pct":1.8},{"edicion":"2026-05","predicho":110.4,"observado":107,"error_abs":3.4,"error_pct":3.2}],"semaforo":"verde"},{"alcaldia":"Azcapotzalco","categoria":"Servicios para personas adultas mayores","poblacion_2020":432205,"centroide":{"lat":19.47929,"lon":-99.18287},"serie_historica":[{"edicion":"2022-11","conteo":9},{"edicion":"2023-11","conteo":10},{"edicion":"2024-11","conteo":6},{"edicion":"2025-05","conteo":5},{"edicion":"2026-05","conteo":6}],"oferta_percapita_100k":1.39,"oferta_percapita_percentil":0.07,"tendencia_pendiente_anual":-1.274,"tendencia_percentil":0.13,"tendencia_r2":0.63,"proyeccion":{"1":{"estimado":3.8,"banda_95":4.4},"3":{"estimado":1.2,"banda_95":6.1},"5":{"estimado":0.0,"banda_95":8.1}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":6.1,"observado":5,"error_abs":1.1,"error_pct":21.7},{"edicion":"2026-05","predicho":4.6,"observado":6,"error_abs":1.4,"error_pct":23.6}],"semaforo":"verde"},{"alcaldia":"Benito Juárez","categoria":"Gimnasios y espacios deportivos","poblacion_2020":434153,"centroide":{"lat":19.38204,"lon":-99.16268},"serie_historica":[{"edicion":"2022-11","conteo":185},{"edicion":"2023-11","conteo":191},{"edicion":"2024-11","conteo":181},{"edicion":"2025-05","conteo":184},{"edicion":"2026-05","conteo":192}],"oferta_percapita_100k":44.22,"oferta_percapita_percentil":1.0,"tendencia_pendiente_anual":0.767,"tendencia_percentil":0.33,"tendencia_r2":0.048,"proyeccion":{"1":{"estimado":188.7,"banda_95":15.5},"3":{"estimado":190.2,"banda_95":21.4},"5":{"estimado":191.7,"banda_95":28.3}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":182.7,"observado":184,"error_abs":1.3,"error_pct":0.7},{"edicion":"2026-05","predicho":180.7,"observado":192,"error_abs":11.3,"error_pct":5.9}],"semaforo":"amarillo"},{"alcaldia":"Benito Juárez","categoria":"Servicios para personas adultas mayores","poblacion_2020":434153,"centroide":{"lat":19.38204,"lon":-99.16268},"serie_historica":[{"edicion":"2022-11","conteo":22},{"edicion":"2023-11","conteo":23},{"edicion":"2024-11","conteo":17},{"edicion":"2025-05","conteo":17},{"edicion":"2026-05","conteo":18}],"oferta_percapita_100k":4.15,"oferta_percapita_percentil":0.93,"tendencia_pendiente_anual":-1.658,"tendencia_percentil":0.07,"tendencia_r2":0.604,"proyeccion":{"1":{"estimado":14.9,"banda_95":6.1},"3":{"estimado":11.6,"banda_95":8.4},"5":{"estimado":8.3,"banda_95":11.1}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":16.9,"observado":17,"error_abs":0.1,"error_pct":0.5},{"edicion":"2026-05","predicho":14.4,"observado":18,"error_abs":3.6,"error_pct":19.9}],"semaforo":"rojo"},{"alcaldia":"Coyoacán","categoria":"Gimnasios y espacios deportivos","poblacion_2020":614447,"centroide":{"lat":19.32633,"lon":-99.14517},"serie_historica":[{"edicion":"2022-11","conteo":194},{"edicion":"2023-11","conteo":199},{"edicion":"2024-11","conteo":200},{"edicion":"2025-05","conteo":198},{"edicion":"2026-05","conteo":200}],"oferta_percapita_100k":32.55,"oferta_percapita_percentil":0.4,"tendencia_pendiente_anual":1.397,"tendencia_percentil":0.47,"tendencia_r2":0.575,"proyeccion":{"1":{"estimado":202.0,"banda_95":5.4},"3":{"estimado":204.8,"banda_95":7.6},"5":{"estimado":207.6,"banda_95":10.0}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":202.2,"observado":198,"error_abs":4.2,"error_pct":2.1},{"edicion":"2026-05","predicho":205.2,"observado":200,"error_abs":5.2,"error_pct":2.6}],"semaforo":"amarillo"},{"alcaldia":"Coyoacán","categoria":"Servicios para personas adultas mayores","poblacion_2020":614447,"centroide":{"lat":19.32633,"lon":-99.14517},"serie_historica":[{"edicion":"2022-11","conteo":25},{"edicion":"2023-11","conteo":25},{"edicion":"2024-11","conteo":24},{"edicion":"2025-05","conteo":23},{"edicion":"2026-05","conteo":23}],"oferta_percapita_100k":3.74,"oferta_percapita_percentil":0.8,"tendencia_pendiente_anual":-0.685,"tendencia_percentil":0.27,"tendencia_r2":0.856,"proyeccion":{"1":{"estimado":22.2,"banda_95":1.3},"3":{"estimado":20.8,"banda_95":1.8},"5":{"estimado":19.4,"banda_95":2.3}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":23.9,"observado":23,"error_abs":0.9,"error_pct":4.0},{"edicion":"2026-05","predicho":23.4,"observado":23,"error_abs":0.4,"error_pct":1.8}],"semaforo":"rojo"},{"alcaldia":"Cuajimalpa de Morelos","categoria":"Gimnasios y espacios deportivos","poblacion_2020":217686,"centroide":{"lat":19.35977,"lon":-99.28723},"serie_historica":[{"edicion":"2022-11","conteo":76},{"edicion":"2023-11","conteo":79},{"edicion":"2024-11","conteo":83},{"edicion":"2025-05","conteo":78},{"edicion":"2026-05","conteo":82}],"oferta_percapita_100k":37.67,"oferta_percapita_percentil":0.87,"tendencia_pendiente_anual":1.452,"tendencia_percentil":0.53,"tendencia_r2":0.464,"proyeccion":{"1":{"estimado":83.5,"banda_95":7.1},"3":{"estimado":86.4,"banda_95":9.8},"5":{"estimado":89.3,"banda_95":12.9}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":84.6,"observado":78,"error_abs":6.6,"error_pct":8.4},{"edicion":"2026-05","predicho":88.1,"observado":82,"error_abs":6.1,"error_pct":7.4}],"semaforo":"amarillo"},{"alcaldia":"Cuajimalpa de Morelos","categoria":"Servicios para personas adultas mayores","poblacion_2020":217686,"centroide":{"lat":19.35977,"lon":-99.28723},"serie_historica":[{"edicion":"2022-11","conteo":8},{"edicion":"2023-11","conteo":8},{"edicion":"2024-11","conteo":5},{"edicion":"2025-05","conteo":5},{"edicion":"2026-05","conteo":5}],"oferta_percapita_100k":2.3,"oferta_percapita_percentil":0.4,"tendencia_pendiente_anual":-1.068,"tendencia_percentil":0.2,"tendencia_r2":0.772,"proyeccion":{"1":{"estimado":3.3,"banda_95":2.6},"3":{"estimado":1.2,"banda_95":3.7},"5":{"estimado":0.0,"banda_95":4.8}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":4.8,"observado":5,"error_abs":0.2,"error_pct":5.0},{"edicion":"2026-05","predicho":3.2,"observado":5,"error_abs":1.8,"error_pct":35.0}],"semaforo":"amarillo"},{"alcaldia":"Cuauhtémoc","categoria":"Gimnasios y espacios deportivos","poblacion_2020":545884,"centroide":{"lat":19.42845,"lon":-99.15286},"serie_historica":[{"edicion":"2022-11","conteo":193},{"edicion":"2023-11","conteo":204},{"edicion":"2024-11","conteo":215},{"edicion":"2025-05","conteo":212},{"edicion":"2026-05","conteo":219}],"oferta_percapita_100k":40.12,"oferta_percapita_percentil":0.93,"tendencia_pendiente_anual":7.274,"tendencia_percentil":0.93,"tendencia_r2":0.908,"proyeccion":{"1":{"estimado":228.2,"banda_95":10.5},"3":{"estimado":242.8,"banda_95":14.5},"5":{"estimado":257.3,"banda_95":19.1}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":220.5,"observado":212,"error_abs":8.5,"error_pct":4.0},{"edicion":"2026-05","predicho":231.5,"observado":219,"error_abs":12.5,"error_pct":5.7}],"semaforo":"amarillo"},{"alcaldia":"Cuauhtémoc","categoria":"Servicios para personas adultas mayores","poblacion_2020":545884,"centroide":{"lat":19.42845,"lon":-99.15286},"serie_historica":[{"edicion":"2022-11","conteo":12},{"edicion":"2023-11","conteo":12},{"edicion":"2024-11","conteo":7},{"edicion":"2025-05","conteo":7},{"edicion":"2026-05","conteo":7}],"oferta_percapita_100k":1.28,"oferta_percapita_percentil":0.0,"tendencia_pendiente_anual":-1.781,"tendencia_percentil":0.0,"tendencia_r2":0.772,"proyeccion":{"1":{"estimado":4.2,"banda_95":4.4},"3":{"estimado":0.6,"banda_95":6.1},"5":{"estimado":0.0,"banda_95":8.0}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":6.6,"observado":7,"error_abs":0.4,"error_pct":6.0},{"edicion":"2026-05","predicho":4.1,"observado":7,"error_abs":2.9,"error_pct":41.7}],"semaforo":"verde"},{"alcaldia":"Gustavo A. Madero","categoria":"Gimnasios y espacios deportivos","poblacion_2020":1173351,"centroide":{"lat":19.50129,"lon":-99.11535},"serie_historica":[{"edicion":"2022-11","conteo":350},{"edicion":"2023-11","conteo":356},{"edicion":"2024-11","conteo":384},{"edicion":"2025-05","conteo":389},{"edicion":"2026-05","conteo":393}],"oferta_percapita_100k":33.49,"oferta_percapita_percentil":0.53,"tendencia_pendiente_anual":14.027,"tendencia_percentil":1.0,"tendencia_r2":0.906,"proyeccion":{"1":{"estimado":412.3,"banda_95":20.5},"3":{"estimado":440.3,"banda_95":28.4},"5":{"estimado":468.4,"banda_95":37.4}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":388.8,"observado":389,"error_abs":0.2,"error_pct":0.0},{"edicion":"2026-05","predicho":405.8,"observado":393,"error_abs":12.8,"error_pct":3.3}],"semaforo":"amarillo"},{"alcaldia":"Gustavo A. Madero","categoria":"Servicios para personas adultas mayores","poblacion_2020":1173351,"centroide":{"lat":19.50129,"lon":-99.11535},"serie_historica":[{"edicion":"2022-11","conteo":26},{"edicion":"2023-11","conteo":26},{"edicion":"2024-11","conteo":25},{"edicion":"2025-05","conteo":25},{"edicion":"2026-05","conteo":25}],"oferta_percapita_100k":2.13,"oferta_percapita_percentil":0.27,"tendencia_pendiente_anual":-0.356,"tendencia_percentil":0.4,"tendencia_r2":0.772,"proyeccion":{"1":{"estimado":24.4,"banda_95":0.9},"3":{"estimado":23.7,"banda_95":1.2},"5":{"estimado":23.0,"banda_95":1.6}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":24.9,"observado":25,"error_abs":0.1,"error_pct":0.3},{"edicion":"2026-05","predicho":24.4,"observado":25,"error_abs":0.6,"error_pct":2.3}],"semaforo":"verde"},{"alcaldia":"Iztacalco","categoria":"Gimnasios y espacios deportivos","poblacion_2020":404695,"centroide":{"lat":19.39926,"lon":-99.08689},"serie_historica":[{"edicion":"2022-11","conteo":120},{"edicion":"2023-11","conteo":121},{"edicion":"2024-11","conteo":136},{"edicion":"2025-05","conteo":136},{"edicion":"2026-05","conteo":136}],"oferta_percapita_100k":33.61,"oferta_percapita_percentil":0.6,"tendencia_pendiente_anual":5.589,"tendencia_percentil":0.8,"tendencia_r2":0.79,"proyeccion":{"1":{"estimado":144.9,"banda_95":13.1},"3":{"estimado":156.1,"banda_95":18.1},"5":{"estimado":167.2,"banda_95":23.9}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":137.7,"observado":136,"error_abs":1.7,"error_pct":1.2},{"edicion":"2026-05","predicho":145.7,"observado":136,"error_abs":9.7,"error_pct":7.1}],"semaforo":"amarillo"},{"alcaldia":"Iztacalco","categoria":"Servicios para personas adultas mayores","poblacion_2020":404695,"centroide":{"lat":19.39926,"lon":-99.08689},"serie_historica":[{"edicion":"2022-11","conteo":5},{"edicion":"2023-11","conteo":5},{"edicion":"2024-11","conteo":6},{"edicion":"2025-05","conteo":6},{"edicion":"2026-05","conteo":6}],"oferta_percapita_100k":1.48,"oferta_percapita_percentil":0.13,"tendencia_pendiente_anual":0.356,"tendencia_percentil":0.6,"tendencia_r2":0.772,"proyeccion":{"1":{"estimado":6.6,"banda_95":0.9},"3":{"estimado":7.3,"banda_95":1.2},"5":{"estimado":8.0,"banda_95":1.6}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":6.1,"observado":6,"error_abs":0.1,"error_pct":1.4},{"edicion":"2026-05","predicho":6.6,"observado":6,"error_abs":0.6,"error_pct":9.7}],"semaforo":"verde"},{"alcaldia":"Iztapalapa","categoria":"Gimnasios y espacios deportivos","poblacion_2020":1835486,"centroide":{"lat":19.34608,"lon":-99.05475},"serie_historica":[{"edicion":"2022-11","conteo":537},{"edicion":"2023-11","conteo":544},{"edicion":"2024-11","conteo":535},{"edicion":"2025-05","conteo":538},{"edicion":"2026-05","conteo":546}],"oferta_percapita_100k":29.75,"oferta_percapita_percentil":0.2,"tendencia_pendiente_anual":1.37,"tendencia_percentil":0.4,"tendencia_r2":0.152,"proyeccion":{"1":{"estimado":543.7,"banda_95":14.7},"3":{"estimado":546.4,"banda_95":20.3},"5":{"estimado":549.2,"banda_95":26.8}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":537.2,"observado":538,"error_abs":0.8,"error_pct":0.2},{"edicion":"2026-05","predicho":536.2,"observado":546,"error_abs":9.8,"error_pct":1.8}],"semaforo":"verde"},{"alcaldia":"Iztapalapa","categoria":"Servicios para personas adultas mayores","poblacion_2020":1835486,"centroide":{"lat":19.34608,"lon":-99.05475},"serie_historica":[{"edicion":"2022-11","conteo":31},{"edicion":"2023-11","conteo":31},{"edicion":"2024-11","conteo":35},{"edicion":"2025-05","conteo":37},{"edicion":"2026-05","conteo":37}],"oferta_percapita_100k":2.02,"oferta_percapita_percentil":0.2,"tendencia_pendiente_anual":2.082,"tendencia_percentil":1.0,"tendencia_r2":0.86,"proyeccion":{"1":{"estimado":39.8,"banda_95":3.8},"3":{"estimado":44.0,"banda_95":5.3},"5":{"estimado":48.2,"banda_95":7.0}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":35.3,"observado":37,"error_abs":1.7,"error_pct":4.5},{"edicion":"2026-05","predicho":37.3,"observado":37,"error_abs":0.3,"error_pct":0.9}],"semaforo":"verde"},{"alcaldia":"La Magdalena Contreras","categoria":"Gimnasios y espacios deportivos","poblacion_2020":247622,"centroide":{"lat":19.3148,"lon":-99.24022},"serie_historica":[{"edicion":"2022-11","conteo":78},{"edicion":"2023-11","conteo":81},{"edicion":"2024-11","conteo":85},{"edicion":"2025-05","conteo":86},{"edicion":"2026-05","conteo":88}],"oferta_percapita_100k":35.54,"oferta_percapita_percentil":0.73,"tendencia_pendiente_anual":2.959,"tendencia_percentil":0.73,"tendencia_r2":0.98,"proyeccion":{"1":{"estimado":91.6,"banda_95":1.9},"3":{"estimado":97.5,"banda_95":2.6},"5":{"estimado":103.4,"banda_95":3.5}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":86.6,"observado":86,"error_abs":0.6,"error_pct":0.7},{"edicion":"2026-05","predicho":90.1,"observado":88,"error_abs":2.1,"error_pct":2.4}],"semaforo":"amarillo"},{"alcaldia":"La Magdalena Contreras","categoria":"Servicios para personas adultas mayores","poblacion_2020":247622,"centroide":{"lat":19.3148,"lon":-99.24022},"serie_historica":[{"edicion":"2022-11","conteo":9},{"edicion":"2023-11","conteo":9},{"edicion":"2024-11","conteo":9},{"edicion":"2025-05","conteo":9},{"edicion":"2026-05","conteo":9}],"oferta_percapita_100k":3.63,"oferta_percapita_percentil":0.73,"tendencia_pendiente_anual":0.0,"tendencia_percentil":0.53,"tendencia_r2":0.0,"proyeccion":{"1":{"estimado":9.0,"banda_95":0.0},"3":{"estimado":9.0,"banda_95":0.0},"5":{"estimado":9.0,"banda_95":0.0}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":9.0,"observado":9,"error_abs":0.0,"error_pct":0.0},{"edicion":"2026-05","predicho":9.0,"observado":9,"error_abs":0.0,"error_pct":0.0}],"semaforo":"rojo"},{"alcaldia":"Miguel Hidalgo","categoria":"Gimnasios y espacios deportivos","poblacion_2020":414470,"centroide":{"lat":19.43059,"lon":-99.1944},"serie_historica":[{"edicion":"2022-11","conteo":134},{"edicion":"2023-11","conteo":143},{"edicion":"2024-11","conteo":147},{"edicion":"2025-05","conteo":149},{"edicion":"2026-05","conteo":156}],"oferta_percapita_100k":37.64,"oferta_percapita_percentil":0.8,"tendencia_pendiente_anual":5.932,"tendencia_percentil":0.87,"tendencia_r2":0.977,"proyeccion":{"1":{"estimado":161.8,"banda_95":4.1},"3":{"estimado":173.7,"banda_95":5.7},"5":{"estimado":185.5,"banda_95":7.5}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":151.1,"observado":149,"error_abs":2.1,"error_pct":1.4},{"edicion":"2026-05","predicho":157.6,"observado":156,"error_abs":1.6,"error_pct":1.0}],"semaforo":"amarillo"},{"alcaldia":"Miguel Hidalgo","categoria":"Servicios para personas adultas mayores","poblacion_2020":414470,"centroide":{"lat":19.43059,"lon":-99.1944},"serie_historica":[{"edicion":"2022-11","conteo":8},{"edicion":"2023-11","conteo":8},{"edicion":"2024-11","conteo":11},{"edicion":"2025-05","conteo":11},{"edicion":"2026-05","conteo":11}],"oferta_percapita_100k":2.65,"oferta_percapita_percentil":0.53,"tendencia_pendiente_anual":1.068,"tendencia_percentil":0.8,"tendencia_r2":0.772,"proyeccion":{"1":{"estimado":12.7,"banda_95":2.6},"3":{"estimado":14.8,"banda_95":3.7},"5":{"estimado":17.0,"banda_95":4.8}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":11.2,"observado":11,"error_abs":0.2,"error_pct":2.3},{"edicion":"2026-05","predicho":12.8,"observado":11,"error_abs":1.8,"error_pct":15.9}],"semaforo":"amarillo"},{"alcaldia":"Milpa Alta","categoria":"Gimnasios y espacios deportivos","poblacion_2020":152685,"centroide":{"lat":19.20096,"lon":-99.0236},"serie_historica":[{"edicion":"2022-11","conteo":52},{"edicion":"2023-11","conteo":52},{"edicion":"2024-11","conteo":45},{"edicion":"2025-05","conteo":46},{"edicion":"2026-05","conteo":47}],"oferta_percapita_100k":30.78,"oferta_percapita_percentil":0.27,"tendencia_pendiente_anual":-1.932,"tendencia_percentil":0.13,"tendencia_r2":0.603,"proyeccion":{"1":{"estimado":43.2,"banda_95":7.1},"3":{"estimado":39.3,"banda_95":9.9},"5":{"estimado":35.5,"banda_95":13.0}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":44.4,"observado":46,"error_abs":1.6,"error_pct":3.4},{"edicion":"2026-05","predicho":40.9,"observado":47,"error_abs":6.1,"error_pct":12.9}],"semaforo":"verde"},{"alcaldia":"Milpa Alta","categoria":"Servicios para personas adultas mayores","poblacion_2020":152685,"centroide":{"lat":19.20096,"lon":-99.0236},"serie_historica":[{"edicion":"2022-11","conteo":3},{"edicion":"2023-11","conteo":3},{"edicion":"2024-11","conteo":5},{"edicion":"2025-05","conteo":6},{"edicion":"2026-05","conteo":6}],"oferta_percapita_100k":3.93,"oferta_percapita_percentil":0.87,"tendencia_pendiente_anual":1.041,"tendencia_percentil":0.73,"tendencia_r2":0.86,"proyeccion":{"1":{"estimado":7.4,"banda_95":1.9},"3":{"estimado":9.5,"banda_95":2.6},"5":{"estimado":11.6,"banda_95":3.5}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":5.2,"observado":6,"error_abs":0.8,"error_pct":13.9},{"edicion":"2026-05","predicho":6.2,"observado":6,"error_abs":0.2,"error_pct":2.8}],"semaforo":"amarillo"},{"alcaldia":"Tlalpan","categoria":"Gimnasios y espacios deportivos","poblacion_2020":699928,"centroide":{"lat":19.27403,"lon":-99.17633},"serie_historica":[{"edicion":"2022-11","conteo":242},{"edicion":"2023-11","conteo":250},{"edicion":"2024-11","conteo":217},{"edicion":"2025-05","conteo":220},{"edicion":"2026-05","conteo":225}],"oferta_percapita_100k":32.15,"oferta_percapita_percentil":0.33,"tendencia_pendiente_anual":-7.63,"tendencia_percentil":0.07,"tendencia_r2":0.509,"proyeccion":{"1":{"estimado":210.2,"banda_95":34.0},"3":{"estimado":194.9,"banda_95":47.1},"5":{"estimado":179.7,"banda_95":62.1}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":217.6,"observado":220,"error_abs":2.4,"error_pct":1.1},{"edicion":"2026-05","predicho":205.1,"observado":225,"error_abs":19.9,"error_pct":8.9}],"semaforo":"amarillo"},{"alcaldia":"Tlalpan","categoria":"Servicios para personas adultas mayores","poblacion_2020":699928,"centroide":{"lat":19.27403,"lon":-99.17633},"serie_historica":[{"edicion":"2022-11","conteo":20},{"edicion":"2023-11","conteo":19},{"edicion":"2024-11","conteo":19},{"edicion":"2025-05","conteo":21},{"edicion":"2026-05","conteo":21}],"oferta_percapita_100k":3.0,"oferta_percapita_percentil":0.67,"tendencia_pendiente_anual":0.411,"tendencia_percentil":0.67,"tendencia_r2":0.308,"proyeccion":{"1":{"estimado":21.1,"banda_95":2.8},"3":{"estimado":21.9,"banda_95":3.9},"5":{"estimado":22.8,"banda_95":5.1}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":18.6,"observado":21,"error_abs":2.4,"error_pct":11.5},{"edicion":"2026-05","predicho":18.1,"observado":21,"error_abs":2.9,"error_pct":13.9}],"semaforo":"amarillo"},{"alcaldia":"Tláhuac","categoria":"Gimnasios y espacios deportivos","poblacion_2020":392313,"centroide":{"lat":19.28151,"lon":-99.0244},"serie_historica":[{"edicion":"2022-11","conteo":161},{"edicion":"2023-11","conteo":162},{"edicion":"2024-11","conteo":136},{"edicion":"2025-05","conteo":138},{"edicion":"2026-05","conteo":138}],"oferta_percapita_100k":35.18,"oferta_percapita_percentil":0.67,"tendencia_pendiente_anual":-8.356,"tendencia_percentil":0.0,"tendencia_r2":0.724,"proyeccion":{"1":{"estimado":124.4,"banda_95":23.4},"3":{"estimado":107.7,"banda_95":32.4},"5":{"estimado":91.0,"banda_95":42.8}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":134.2,"observado":138,"error_abs":3.8,"error_pct":2.7},{"edicion":"2026-05","predicho":121.8,"observado":138,"error_abs":16.2,"error_pct":11.8}],"semaforo":"rojo"},{"alcaldia":"Tláhuac","categoria":"Servicios para personas adultas mayores","poblacion_2020":392313,"centroide":{"lat":19.28151,"lon":-99.0244},"serie_historica":[{"edicion":"2022-11","conteo":11},{"edicion":"2023-11","conteo":11},{"edicion":"2024-11","conteo":10},{"edicion":"2025-05","conteo":10},{"edicion":"2026-05","conteo":10}],"oferta_percapita_100k":2.55,"oferta_percapita_percentil":0.47,"tendencia_pendiente_anual":-0.356,"tendencia_percentil":0.4,"tendencia_r2":0.772,"proyeccion":{"1":{"estimado":9.4,"banda_95":0.9},"3":{"estimado":8.7,"banda_95":1.2},"5":{"estimado":8.0,"banda_95":1.6}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":9.9,"observado":10,"error_abs":0.1,"error_pct":0.8},{"edicion":"2026-05","predicho":9.4,"observado":10,"error_abs":0.6,"error_pct":5.8}],"semaforo":"amarillo"},{"alcaldia":"Venustiano Carranza","categoria":"Gimnasios y espacios deportivos","poblacion_2020":442798,"centroide":{"lat":19.42871,"lon":-99.09932},"serie_historica":[{"edicion":"2022-11","conteo":125},{"edicion":"2023-11","conteo":127},{"edicion":"2024-11","conteo":116},{"edicion":"2025-05","conteo":120},{"edicion":"2026-05","conteo":121}],"oferta_percapita_100k":27.33,"oferta_percapita_percentil":0.07,"tendencia_pendiente_anual":-1.877,"tendencia_percentil":0.2,"tendencia_r2":0.344,"proyeccion":{"1":{"estimado":116.7,"banda_95":11.8},"3":{"estimado":113.0,"banda_95":16.3},"5":{"estimado":109.2,"banda_95":21.5}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":115.9,"observado":120,"error_abs":4.1,"error_pct":3.4},{"edicion":"2026-05","predicho":111.4,"observado":121,"error_abs":9.6,"error_pct":7.9}],"semaforo":"verde"},{"alcaldia":"Venustiano Carranza","categoria":"Servicios para personas adultas mayores","poblacion_2020":442798,"centroide":{"lat":19.42871,"lon":-99.09932},"serie_historica":[{"edicion":"2022-11","conteo":6},{"edicion":"2023-11","conteo":6},{"edicion":"2024-11","conteo":10},{"edicion":"2025-05","conteo":10},{"edicion":"2026-05","conteo":10}],"oferta_percapita_100k":2.26,"oferta_percapita_percentil":0.33,"tendencia_pendiente_anual":1.425,"tendencia_percentil":0.87,"tendencia_r2":0.772,"proyeccion":{"1":{"estimado":12.2,"banda_95":3.5},"3":{"estimado":15.1,"banda_95":4.9},"5":{"estimado":17.9,"banda_95":6.4}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":10.3,"observado":10,"error_abs":0.3,"error_pct":3.3},{"edicion":"2026-05","predicho":12.3,"observado":10,"error_abs":2.3,"error_pct":23.3}],"semaforo":"amarillo"},{"alcaldia":"Xochimilco","categoria":"Gimnasios y espacios deportivos","poblacion_2020":442178,"centroide":{"lat":19.26151,"lon":-99.09791},"serie_historica":[{"edicion":"2022-11","conteo":148},{"edicion":"2023-11","conteo":155},{"edicion":"2024-11","conteo":144},{"edicion":"2025-05","conteo":146},{"edicion":"2026-05","conteo":148}],"oferta_percapita_100k":33.47,"oferta_percapita_percentil":0.47,"tendencia_pendiente_anual":-1.068,"tendencia_percentil":0.27,"tendencia_r2":0.121,"proyeccion":{"1":{"estimado":145.3,"banda_95":13.0},"3":{"estimado":143.2,"banda_95":18.1},"5":{"estimado":141.0,"banda_95":23.9}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":146.0,"observado":146,"error_abs":0.0,"error_pct":0.0},{"edicion":"2026-05","predicho":144.0,"observado":148,"error_abs":4.0,"error_pct":2.7}],"semaforo":"amarillo"},{"alcaldia":"Xochimilco","categoria":"Servicios para personas adultas mayores","poblacion_2020":442178,"centroide":{"lat":19.26151,"lon":-99.09791},"serie_historica":[{"edicion":"2022-11","conteo":20},{"edicion":"2023-11","conteo":21},{"edicion":"2024-11","conteo":19},{"edicion":"2025-05","conteo":19},{"edicion":"2026-05","conteo":19}],"oferta_percapita_100k":4.3,"oferta_percapita_percentil":1.0,"tendencia_pendiente_anual":-0.466,"tendencia_percentil":0.33,"tendencia_r2":0.495,"proyeccion":{"1":{"estimado":18.3,"banda_95":2.1},"3":{"estimado":17.4,"banda_95":3.0},"5":{"estimado":16.5,"banda_95":3.9}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":19.2,"observado":19,"error_abs":0.2,"error_pct":1.3},{"edicion":"2026-05","predicho":18.8,"observado":19,"error_abs":0.2,"error_pct":1.3}],"semaforo":"rojo"},{"alcaldia":"Álvaro Obregón","categoria":"Gimnasios y espacios deportivos","poblacion_2020":759137,"centroide":{"lat":19.35673,"lon":-99.22137},"serie_historica":[{"edicion":"2022-11","conteo":205},{"edicion":"2023-11","conteo":224},{"edicion":"2024-11","conteo":212},{"edicion":"2025-05","conteo":217},{"edicion":"2026-05","conteo":219}],"oferta_percapita_100k":28.85,"oferta_percapita_percentil":0.13,"tendencia_pendiente_anual":2.521,"tendencia_percentil":0.6,"tendencia_r2":0.222,"proyeccion":{"1":{"estimado":222.2,"banda_95":21.4},"3":{"estimado":227.2,"banda_95":29.7},"5":{"estimado":232.3,"banda_95":39.1}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":218.9,"observado":217,"error_abs":1.9,"error_pct":0.9},{"edicion":"2026-05","predicho":222.4,"observado":219,"error_abs":3.4,"error_pct":1.6}],"semaforo":"verde"},{"alcaldia":"Álvaro Obregón","categoria":"Servicios para personas adultas mayores","poblacion_2020":759137,"centroide":{"lat":19.35673,"lon":-99.22137},"serie_historica":[{"edicion":"2022-11","conteo":16},{"edicion":"2023-11","conteo":17},{"edicion":"2024-11","conteo":22},{"edicion":"2025-05","conteo":21},{"edicion":"2026-05","conteo":22}],"oferta_percapita_100k":2.9,"oferta_percapita_percentil":0.6,"tendencia_pendiente_anual":1.932,"tendencia_percentil":0.93,"tendencia_r2":0.82,"proyeccion":{"1":{"estimado":24.8,"banda_95":4.1},"3":{"estimado":28.7,"banda_95":5.7},"5":{"estimado":32.5,"banda_95":7.5}},"validacion_retrospectiva":[{"edicion":"2025-05","predicho":22.8,"observado":21,"error_abs":1.8,"error_pct":8.7},{"edicion":"2026-05","predicho":25.8,"observado":22,"error_abs":3.8,"error_pct":17.4}],"semaforo":"amarillo"}]};
+
+const CATEGORIAS = DATA.categorias;
+const ZONES = DATA.zonas;
+
+const state = {
+  categoria: CATEGORIAS[0],
+  horizonte: "3",
+  riesgo: "alto_impacto",
+  selected: null,
+};
+
+const THRESHOLDS = {
+  conservador: { alto: 0.75, bajo: 0.20, crece: 0.70 },
+  alto_impacto: { alto: 0.60, bajo: 0.40, crece: 0.50 },
+};
+
+function classify(zone, riesgoKey){
+  const t = THRESHOLDS[riesgoKey];
+  const pc = zone.oferta_percapita_percentil;
+  const sl = zone.tendencia_percentil;
+  const slope = zone.tendencia_pendiente_anual;
+  const ofertaAlta = pc >= t.alto;
+  const ofertaBaja = pc <= t.bajo;
+  const estableOBaja = sl <= (1 - t.crece) || slope <= 0;
+  if(ofertaAlta && estableOBaja) return "rojo";
+  if(ofertaBaja) return "verde";
+  return "amarillo";
 }
 
-CATEGORIES = ["Gimnasios y espacios deportivos", "Servicios para personas adultas mayores"]
-
-HORIZONS_YEARS = [1, 3, 5]
-
-# t=0 fijado en la primera edición (nov-2022); años transcurridos reales
-# (no asumimos espaciado uniforme entre ediciones).
-EDITION_YEARS = {
-    "2022-11": 0 / 12,
-    "2023-11": 12 / 12,
-    "2024-11": 24 / 12,
-    "2025-05": 30 / 12,
-    "2026-05": 42 / 12,
+function zonesFor(categoria){
+  return ZONES.filter(z => z.categoria === categoria);
 }
 
+function fmt(n, dec=0){
+  return Number(n).toLocaleString('es-MX', {minimumFractionDigits:dec, maximumFractionDigits:dec});
+}
 
-def load_all_editions() -> pd.DataFrame:
-    frames = []
-    for folder, fname in EDITIONS:
-        path = DATA_DIR / folder / fname
-        cols = [
-            "edicion_denue", "anio_denue", "mes_denue",
-            "categoria_proyecto", "subcategoria_proyecto",
-            "municipio", "latitud", "longitud", "revision_manual",
-        ]
-        df = pd.read_csv(path, usecols=cols)
-        frames.append(df)
-    full = pd.concat(frames, ignore_index=True)
-    full["years_elapsed"] = full["edicion_denue"].map(EDITION_YEARS)
-    return full
+function colorFor(sem){
+  return sem === 'rojo' ? '#B23A32' : sem === 'verde' ? '#2F7A52' : '#A8730F';
+}
 
+function initFilters(){
+  const sel = document.getElementById('f-categoria');
+  CATEGORIAS.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    sel.appendChild(opt);
+  });
+  sel.value = state.categoria;
+  sel.addEventListener('change', () => { state.categoria = sel.value; onFilterChange(true); });
 
-def ols_fit(x: np.ndarray, y: np.ndarray):
-    """Regresión lineal simple con error estándar de predicción.
-    Devuelve dict con pendiente, intercepto, r2 y una función predict(x0)
-    -> (y_hat, intervalo_95)."""
-    n = len(x)
-    x_mean, y_mean = x.mean(), y.mean()
-    sxx = np.sum((x - x_mean) ** 2)
-    if sxx == 0 or n < 3:
-        slope, intercept = 0.0, y_mean
-        resid_se = 0.0
-    else:
-        slope = np.sum((x - x_mean) * (y - y_mean)) / sxx
-        intercept = y_mean - slope * x_mean
-        y_hat = intercept + slope * x
-        resid = y - y_hat
-        dof = max(n - 2, 1)
-        resid_se = float(np.sqrt(np.sum(resid ** 2) / dof))
-    y_hat_full = intercept + slope * x
-    ss_res = np.sum((y - y_hat_full) ** 2)
-    ss_tot = np.sum((y - y_mean) ** 2)
-    r2 = 1 - ss_res / ss_tot if ss_tot > 0 else 0.0
+  document.querySelectorAll('#f-horizonte button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.horizonte = btn.dataset.v;
+      syncSegmented('f-horizonte', state.horizonte);
+      renderDetail();
+    });
+  });
+  document.querySelectorAll('#f-riesgo button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.riesgo = btn.dataset.v;
+      syncSegmented('f-riesgo', state.riesgo);
+      onFilterChange(false);
+    });
+  });
+  syncSegmented('f-horizonte', state.horizonte);
+  syncSegmented('f-riesgo', state.riesgo);
+}
 
-    def predict(x0: float):
-        y0 = intercept + slope * x0
-        if sxx == 0 or n < 3:
-            se = resid_se
-        else:
-            se = resid_se * np.sqrt(1 + 1 / n + (x0 - x_mean) ** 2 / sxx)
-        # ~95% con z=1.96 (aproximación normal; n es pequeño, se trata
-        # como una banda indicativa, no una garantía formal).
-        return max(y0, 0.0), 1.96 * se
+function syncSegmented(id, value){
+  document.querySelectorAll('#' + id + ' button').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === value);
+  });
+}
 
-    return {
-        "slope_per_year": round(float(slope), 3),
-        "r2": round(float(r2), 3),
-        "predict": predict,
-    }
+function onFilterChange(resetSelection){
+  const zs = zonesFor(state.categoria);
+  if(resetSelection || !zs.find(z => z.alcaldia === (state.selected||{}).alcaldia)){
+    state.selected = pickDefault(zs);
+  }
+  renderMap();
+  renderRankList();
+  renderDetail();
+}
 
+function pickDefault(zs){
+  const verdes = zs.filter(z => classify(z, state.riesgo) === 'verde')
+    .sort((a,b) => b.poblacion_2020 - a.poblacion_2020);
+  return verdes[0] || zs[0];
+}
 
-def classify_semaforo(percapita_percentile: float, slope: float, slope_percentile: float) -> str:
-    """Proxy de semáforo SOLO-OFERTA (ver limitación en el docstring del
-    módulo): compara nivel de oferta per cápita contra el resto de
-    alcaldías (terciles) y la tendencia de crecimiento reciente.
-    """
-    oferta_alta = percapita_percentile >= 0.66
-    oferta_baja = percapita_percentile <= 0.33
-    crece = slope_percentile >= 0.66 or slope > 0
-    estable_o_baja = slope_percentile <= 0.33 or slope <= 0
+function renderMap(){
+  const zs = zonesFor(state.categoria);
+  const lats = zs.map(z => z.centroide.lat);
+  const lons = zs.map(z => z.centroide.lon);
+  const colors = zs.map(z => colorFor(classify(z, state.riesgo)));
+  const sizes = zs.map(z => 14 + 22 * Math.sqrt(z.poblacion_2020 / 1835486));
+  const text = zs.map(z => {
+    const sem = classify(z, state.riesgo);
+    return `<b>${z.alcaldia}</b><br>` +
+      `Oferta actual: ${z.serie_historica[z.serie_historica.length-1].conteo} establecimientos<br>` +
+      `Per cápita: ${fmt(z.oferta_percapita_100k,1)} por 100k hab.<br>` +
+      `Tendencia: ${z.tendencia_pendiente_anual>=0?'+':''}${fmt(z.tendencia_pendiente_anual,2)} / año<br>` +
+      `Semáforo: ${sem}`;
+  });
 
-    if oferta_alta and estable_o_baja:
-        return "rojo"
-    if oferta_baja and (crece or True):
-        # baja oferta relativa siempre es al menos zona a vigilar;
-        # se vuelve verde franco si además no está saturándose rápido
-        return "verde"
-    return "amarillo"
+  const outline = DATA.contorno_referencia;
+  const outlineTrace = {
+    type: 'scatter', mode: 'lines',
+    x: outline.map(p => p[0]).concat([outline[0][0]]),
+    y: outline.map(p => p[1]).concat([outline[0][1]]),
+    line: {color: '#D6DAD1', width: 1},
+    fill: 'toself', fillcolor: '#F6F7F4',
+    hoverinfo: 'skip', showlegend: false,
+  };
 
+  const labelTrace = {
+    type: 'scatter', mode: 'text',
+    x: lons, y: lats,
+    text: zs.map(z => z.alcaldia),
+    textposition: 'top center',
+    textfont: {size: 10, color: '#7C8880'},
+    hoverinfo: 'skip', showlegend: false,
+  };
 
-def compute_centroids(raw: pd.DataFrame) -> dict:
-    """Centroide (promedio de lat/lon de los establecimientos) por alcaldía,
-    usando la edición más reciente. Es un proxy razonable de dónde se
-    concentra la actividad relevante para el reto dentro de cada alcaldía;
-    no es el centroide administrativo oficial."""
-    last = raw[raw.edicion_denue == "2026-05"]
-    out = {}
-    for municipio, sub in last.groupby("municipio"):
-        out[municipio] = {
-            "lat": round(float(sub["latitud"].mean()), 5),
-            "lon": round(float(sub["longitud"].mean()), 5),
-        }
-    return out
+  const trace = {
+    type: 'scatter', mode: 'markers',
+    x: lons, y: lats,
+    marker: { size: sizes, color: colors, opacity: 0.88, line:{width:1, color:'#fff'} },
+    text: text,
+    hoverinfo: 'text',
+    customdata: zs.map(z => z.alcaldia),
+    showlegend: false,
+  };
 
+  const layout = {
+    margin: {t:10,b:10,l:10,r:10},
+    xaxis: {visible:false, scaleanchor:'y', scaleratio: 1/Math.cos(19.37*Math.PI/180)},
+    yaxis: {visible:false},
+    plot_bgcolor:'#fff', paper_bgcolor:'#fff',
+    showlegend: false,
+  };
 
-def compute_outline(raw: pd.DataFrame) -> list:
-    """Envolvente convexa de todos los puntos DENUE observados (todas las
-    ediciones y categorías). Sirve como contorno de referencia muy
-    aproximado de la zona urbana cubierta por los datos -- no es un límite
-    administrativo real, sólo evita depender de un basemap externo en el
-    prototipo v0."""
-    from scipy.spatial import ConvexHull
-    pts = raw[["longitud", "latitud"]].dropna().to_numpy()
-    hull = ConvexHull(pts)
-    ring = pts[hull.vertices]
-    return [[round(float(lon), 5), round(float(lat), 5)] for lon, lat in ring]
+  Plotly.react('map', [outlineTrace, labelTrace, trace], layout, {displayModeBar:false, responsive:true});
 
+  document.getElementById('map').on('plotly_click', (ev) => {
+    const alc = ev.points[0].customdata;
+    const z = zs.find(z => z.alcaldia === alc);
+    if(z){ state.selected = z; renderDetail(); renderRankList(); }
+  });
+}
 
-def build_dataset() -> dict:
-    raw = load_all_editions()
-    centroids = compute_centroids(raw)
-    outline = compute_outline(raw)
+function renderRankList(){
+  const zs = zonesFor(state.categoria)
+    .filter(z => classify(z, state.riesgo) === 'verde')
+    .sort((a,b) => b.poblacion_2020 - a.poblacion_2020)
+    .slice(0,6);
+  const container = document.getElementById('rank-items');
+  container.innerHTML = '';
+  if(zs.length === 0){
+    container.innerHTML = '<div style="font-size:12.5px;color:var(--muted);">Ninguna con el nivel de riesgo actual.</div>';
+    return;
+  }
+  zs.forEach(z => {
+    const btn = document.createElement('button');
+    btn.className = 'rank-item';
+    const sel = state.selected && state.selected.alcaldia === z.alcaldia;
+    btn.innerHTML = `<span class="name" style="${sel?'color:var(--accent);font-weight:600;':''}">${z.alcaldia}</span>` +
+      `<span class="meta">${fmt(z.poblacion_2020)} hab. · ${fmt(z.oferta_percapita_100k,1)} / 100k</span>`;
+    btn.addEventListener('click', () => { state.selected = z; renderDetail(); renderRankList(); });
+    container.appendChild(btn);
+  });
+}
 
-    agg = (
-        raw.groupby(["municipio", "categoria_proyecto", "edicion_denue", "years_elapsed"])
-        .size()
-        .reset_index(name="conteo")
-        .sort_values(["municipio", "categoria_proyecto", "years_elapsed"])
-    )
+function explainText(z, sem){
+  const pctPc = Math.round(z.oferta_percapita_percentil * 100);
+  const pctSl = Math.round(z.tendencia_percentil * 100);
+  const dir = z.tendencia_pendiente_anual > 0 ? 'creciendo' : (z.tendencia_pendiente_anual < 0 ? 'reduciéndose' : 'estancada');
+  const r2 = z.tendencia_r2;
+  const r2Note = r2 >= 0.5 ? 'una tendencia razonablemente consistente' : 'una tendencia ruidosa — hay que tomarla con cautela';
+  let verdict;
+  if(sem === 'rojo'){
+    verdict = `Está entre las alcaldías con más oferta relativa de esta categoría (percentil ${pctPc} de 16) y esa oferta no está creciendo con fuerza, lo que sugiere una zona ya cubierta.`;
+  } else if(sem === 'verde'){
+    verdict = `Tiene una de las ofertas per cápita más bajas de la ciudad en esta categoría (percentil ${pctPc} de 16), lo que la vuelve candidata a zona de oportunidad — sujeto a confirmar con datos de demanda real.`;
+  } else {
+    verdict = `Muestra una señal mixta: ni claramente saturada ni claramente desatendida (percentil de oferta ${pctPc}, percentil de tendencia ${pctSl}).`;
+  }
+  return `<p>${verdict}</p><p>La oferta está ${dir} a un ritmo de ${z.tendencia_pendiente_anual>=0?'+':''}${fmt(z.tendencia_pendiente_anual,2)} establecimientos por año desde 2022, con ${r2Note} (R² = ${fmt(r2,2)}).</p>`;
+}
 
-    alcaldias = sorted(POBLACION_2020_ALCALDIA.keys())
-    last_edition = "2026-05"
-    last_years = EDITION_YEARS[last_edition]
+function renderDetail(){
+  const z = state.selected;
+  const panel = document.getElementById('detail-panel');
+  if(!z){ panel.innerHTML = ''; return; }
+  const sem = classify(z, state.riesgo);
+  const last = z.serie_historica[z.serie_historica.length-1];
+  const proy = z.proyeccion[state.horizonte];
 
-    zones = []
-    # Para calcular terciles necesitamos primero todas las métricas crudas.
-    raw_metrics = []  # (municipio, categoria, percapita_actual, slope)
+  panel.innerHTML = `
+    <div class="detail-head">
+      <h2>${z.alcaldia}</h2>
+      <span class="pill ${sem}">${sem === 'rojo' ? 'Zona saturada' : sem === 'verde' ? 'Zona de oportunidad' : 'Zona en transición'}</span>
+    </div>
+    <div style="font-size:13.5px;color:var(--muted);">${z.categoria} · población de referencia (Censo 2020): ${fmt(z.poblacion_2020)} hab.</div>
 
-    fits_cache = {}
-    for municipio in alcaldias:
-        poblacion = POBLACION_2020_ALCALDIA[municipio]
-        for categoria in CATEGORIES:
-            sub = agg[(agg.municipio == municipio) & (agg.categoria_proyecto == categoria)]
-            series = {row.edicion_denue: int(row.conteo) for row in sub.itertuples()}
-            # completar ediciones sin registros con 0
-            for ed in EDITION_YEARS:
-                series.setdefault(ed, 0)
-            x = np.array([EDITION_YEARS[ed] for ed in EDITION_YEARS])
-            y = np.array([series[ed] for ed in EDITION_YEARS], dtype=float)
+    <div class="stat-row">
+      <div class="stat"><div class="v">${last.conteo}</div><div class="l">Establecimientos hoy (may-2026)</div></div>
+      <div class="stat"><div class="v">${fmt(z.oferta_percapita_100k,1)}</div><div class="l">Por cada 100,000 hab.</div></div>
+      <div class="stat"><div class="v">${fmt(proy.estimado,0)} ± ${fmt(proy.banda_95,0)}</div><div class="l">Proyección a ${state.horizonte} año(s)</div></div>
+      <div class="stat"><div class="v">${fmt(z.tendencia_r2,2)}</div><div class="l">R² de la tendencia</div></div>
+    </div>
 
-            fit_full = ols_fit(x, y)
-            conteo_actual = series[last_edition]
-            percapita = conteo_actual / poblacion * 100000
+    <div id="trend"></div>
 
-            fits_cache[(municipio, categoria)] = (fit_full, series, percapita, poblacion)
-            raw_metrics.append((municipio, categoria, percapita, fit_full["slope_per_year"]))
+    <table class="validation-table">
+      <caption>Validación retrospectiva: modelo entrenado sólo con 2022–2024, comparado contra lo observado</caption>
+      <thead><tr><th>Edición</th><th>Predicho</th><th>Observado</th><th>Error</th></tr></thead>
+      <tbody>
+        ${z.validacion_retrospectiva.map(v => `<tr><td>${v.edicion}</td><td>${fmt(v.predicho,1)}</td><td>${v.observado}</td><td>${v.error_pct !== null ? fmt(v.error_pct,1)+'%' : fmt(v.error_abs,1)}</td></tr>`).join('')}
+      </tbody>
+    </table>
 
-    percapita_vals = {}
-    slope_vals = {}
-    for categoria in CATEGORIES:
-        pcs = sorted(v[2] for v in raw_metrics if v[1] == categoria)
-        sls = sorted(v[3] for v in raw_metrics if v[1] == categoria)
-        percapita_vals[categoria] = pcs
-        slope_vals[categoria] = sls
+    <div class="explain">${explainText(z, sem)}</div>
+  `;
 
-    def percentile_rank(value, sorted_vals):
-        if not sorted_vals:
-            return 0.5
-        import bisect
-        i = bisect.bisect_left(sorted_vals, value)
-        return i / max(len(sorted_vals) - 1, 1)
+  renderTrendChart(z, proy);
+}
 
-    for municipio in alcaldias:
-        for categoria in CATEGORIES:
-            fit_full, series, percapita, poblacion = fits_cache[(municipio, categoria)]
+function renderTrendChart(z, proy){
+  const eds = DATA.ediciones;
+  const xHist = z.serie_historica.map(s => s.edicion);
+  const yHist = z.serie_historica.map(s => s.conteo);
 
-            # --- validación retrospectiva: entrena solo con 2022-2024 ---
-            train_eds = ["2022-11", "2023-11", "2024-11"]
-            x_train = np.array([EDITION_YEARS[e] for e in train_eds])
-            y_train = np.array([series[e] for e in train_eds], dtype=float)
-            fit_train = ols_fit(x_train, y_train)
-            validation = []
-            for test_ed in ["2025-05", "2026-05"]:
-                y_pred, band = fit_train["predict"](EDITION_YEARS[test_ed])
-                y_real = series[test_ed]
-                err_abs = abs(y_pred - y_real)
-                err_pct = (err_abs / y_real * 100) if y_real > 0 else (0.0 if y_pred == 0 else None)
-                validation.append({
-                    "edicion": test_ed,
-                    "predicho": round(y_pred, 1),
-                    "observado": y_real,
-                    "error_abs": round(err_abs, 1),
-                    "error_pct": round(err_pct, 1) if err_pct is not None else None,
-                })
+  const lastLabel = xHist[xHist.length-1];
+  const horizonLabel = `+${state.horizonte}a`;
 
-            # --- proyección a futuro con todos los puntos reales ---
-            proyecciones = {}
-            for h in HORIZONS_YEARS:
-                y_pred, band = fit_full["predict"](last_years + h)
-                proyecciones[str(h)] = {
-                    "estimado": round(y_pred, 1),
-                    "banda_95": round(band, 1),
-                }
+  const histTrace = {
+    x: xHist, y: yHist, mode: 'lines+markers', name: 'Observado',
+    line: {color: '#1F4B44', width: 2}, marker: {size: 7, color:'#1F4B44'},
+  };
 
-            pc_rank = percentile_rank(percapita, percapita_vals[categoria])
-            sl_rank = percentile_rank(fit_full["slope_per_year"], slope_vals[categoria])
-            semaforo = classify_semaforo(pc_rank, fit_full["slope_per_year"], sl_rank)
+  const projTrace = {
+    x: [lastLabel, horizonLabel], y: [yHist[yHist.length-1], proy.estimado],
+    mode: 'lines+markers', name: 'Proyección',
+    line: {color:'#7C8880', width:2, dash:'dot'},
+    marker: {size:8, color:'#7C8880', symbol:'diamond'},
+    error_y: {type:'data', array:[0, proy.banda_95], visible:true, color:'#7C8880'},
+  };
 
-            zones.append({
-                "alcaldia": municipio,
-                "categoria": categoria,
-                "poblacion_2020": poblacion,
-                "centroide": centroids.get(municipio, {"lat": 19.4326, "lon": -99.1332}),
-                "serie_historica": [
-                    {"edicion": ed, "conteo": series[ed]} for ed in EDITION_YEARS
-                ],
-                "oferta_percapita_100k": round(percapita, 2),
-                "oferta_percapita_percentil": round(pc_rank, 2),
-                "tendencia_pendiente_anual": fit_full["slope_per_year"],
-                "tendencia_percentil": round(sl_rank, 2),
-                "tendencia_r2": fit_full["r2"],
-                "proyeccion": proyecciones,
-                "validacion_retrospectiva": validation,
-                "semaforo": semaforo,
-            })
+  const valX = z.validacion_retrospectiva.map(v => v.edicion);
+  const valY = z.validacion_retrospectiva.map(v => v.predicho);
+  const valTrace = {
+    x: valX, y: valY, mode:'markers', name:'Predicho (backtest 2022–24)',
+    marker: {size:9, color:'#B23A32', symbol:'x'},
+  };
 
-    return {
-        "generado": "prototipo v0 - solo oferta DENUE, sin cruce demográfico ni de espacio público",
-        "ediciones": list(EDITION_YEARS.keys()),
-        "categorias": CATEGORIES,
-        "contorno_referencia": outline,
-        "zonas": zones,
-    }
+  const layout = {
+    margin:{t:10,b:34,l:44,r:10},
+    font:{family:'IBM Plex Sans', size:11.5, color:'#4C574F'},
+    xaxis:{type:'category', categoryarray: xHist.concat([horizonLabel]), gridcolor:'#EAEDE7'},
+    yaxis:{gridcolor:'#EAEDE7', rangemode:'tozero'},
+    legend:{orientation:'h', y:-0.22, font:{size:11}},
+    plot_bgcolor:'#fff', paper_bgcolor:'#fff',
+  };
 
+  Plotly.react('trend', [histTrace, projTrace, valTrace], layout, {displayModeBar:false, responsive:true});
+}
 
-if __name__ == "__main__":
-    dataset = build_dataset()
-    out_path = Path(__file__).resolve().parent.parent / "data" / "semaforo_v0.json"
-    out_path.write_text(json.dumps(dataset, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"OK -> {out_path} ({len(dataset['zonas'])} filas alcaldía x categoría)")
+initFilters();
+onFilterChange(true);
+</script>
+</body>
+</html>
