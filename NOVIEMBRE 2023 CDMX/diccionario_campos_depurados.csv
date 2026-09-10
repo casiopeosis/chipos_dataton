@@ -1,0 +1,53 @@
+﻿campo,tipo,descripcion
+edicion_denue,Texto,Mes y año de la edición del DENUE: 2023-11.
+anio_denue,Entero,Año estadístico de la edición.
+mes_denue,Entero,Mes estadístico de la edición.
+categoria_proyecto,Texto,Categoría de la propuesta del Datatón.
+subcategoria_proyecto,Texto,Clasificación analítica derivada del código SCIAN.
+sector_gestion,Texto,Sector público o privado derivado del SCIAN.
+alcance_analitico,Texto,Principal si el PDF cita el código; complementario en los demás casos.
+revision_manual,Sí/No,Indica si conviene revisar el registro antes de modelar.
+motivo_revision,Texto,Razón concreta de la bandera de revisión.
+cve_geo_ageb,Texto,Concatenación cve_ent+cve_mun+cve_loc+ageb para facilitar uniones.
+id,DBF N,Campo original del DENUE; consultar el diccionario incluido.
+clee,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+nom_estab,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+raz_social,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+codigo_act,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+nombre_act,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+per_ocu,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+tipo_vial,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+nom_vial,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+tipo_v_e_1,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+nom_v_e_1,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+tipo_v_e_2,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+nom_v_e_2,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+tipo_v_e_3,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+nom_v_e_3,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+numero_ext,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+letra_ext,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+edificio,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+edificio_e,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+numero_int,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+letra_int,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+tipo_asent,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+nomb_asent,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+tipoCenCom,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+nom_CenCom,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+num_local,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+cod_postal,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+cve_ent,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+entidad,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+cve_mun,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+municipio,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+cve_loc,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+localidad,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+ageb,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+manzana,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+telefono,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+correoelec,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+www,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+tipoUniEco,DBF C,Campo original del DENUE; consultar el diccionario incluido.
+latitud,DBF N,Campo original del DENUE; consultar el diccionario incluido.
+longitud,DBF N,Campo original del DENUE; consultar el diccionario incluido.
+fecha_alta,DBF C,Campo original del DENUE; consultar el diccionario incluido.
