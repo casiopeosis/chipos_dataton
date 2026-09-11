@@ -145,4 +145,3 @@ Nota: fuente colaborativa; requiere control de calidad y detección de duplicado
 - CDMX — Uso de suelo
 - OpenStreetMap — Overpass API
 - Geofabrik — México
-Prueba de edición desde Ubuntu/WSL.
