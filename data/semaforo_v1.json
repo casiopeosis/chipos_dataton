@@ -1,0 +1,3742 @@
+{
+  "generado": "v1 — oferta DENUE con proyecciones insesgadas (t de Student)",
+  "ediciones": [
+    "2022-11",
+    "2023-11",
+    "2024-11",
+    "2025-05",
+    "2026-05"
+  ],
+  "categorias": [
+    "Gimnasios y espacios deportivos",
+    "Servicios para personas adultas mayores"
+  ],
+  "horizontes": [
+    3,
+    5,
+    7
+  ],
+  "contorno_referencia": [
+    [
+      -99.33504,
+      19.30781
+    ],
+    [
+      -99.19555,
+      19.11484
+    ],
+    [
+      -99.19554,
+      19.11484
+    ],
+    [
+      -98.99939,
+      19.1738
+    ],
+    [
+      -98.97295,
+      19.21164
+    ],
+    [
+      -98.96559,
+      19.22297
+    ],
+    [
+      -98.96549,
+      19.2238
+    ],
+    [
+      -98.96531,
+      19.22591
+    ],
+    [
+      -98.96353,
+      19.32541
+    ],
+    [
+      -99.06527,
+      19.49579
+    ],
+    [
+      -99.13024,
+      19.57928
+    ],
+    [
+      -99.13024,
+      19.57928
+    ],
+    [
+      -99.13488,
+      19.57629
+    ],
+    [
+      -99.20509,
+      19.51469
+    ],
+    [
+      -99.31894,
+      19.35441
+    ],
+    [
+      -99.32806,
+      19.33094
+    ]
+  ],
+  "zonas": [
+    {
+      "alcaldia": "Azcapotzalco",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 432205,
+      "centroide": {
+        "lat": 19.47929,
+        "lon": -99.18287
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 98
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 102
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 105
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 105
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 107
+        }
+      ],
+      "oferta_percapita_100k": 24.76,
+      "oferta_percapita_percentil": 0.0,
+      "tendencia_pendiente_anual": 2.5205,
+      "tendencia_percentil": 0.6,
+      "tendencia_r2": 0.9426,
+      "tendencia_resid_se": 0.9699,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 115.2,
+          "lower_95": 108.9,
+          "upper_95": 121.6,
+          "banda_95": 6.3
+        },
+        "5": {
+          "estimado": 120.3,
+          "lower_95": 111.9,
+          "upper_95": 128.7,
+          "banda_95": 8.4
+        },
+        "7": {
+          "estimado": 125.3,
+          "lower_95": 114.8,
+          "upper_95": 135.8,
+          "banda_95": 10.5
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 106.9,
+          "observado": 105,
+          "lower_95": 98.8,
+          "upper_95": 115.0,
+          "error_abs": 1.9,
+          "error_pct": 1.8,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 110.4,
+          "observado": 107,
+          "lower_95": 99.5,
+          "upper_95": 121.4,
+          "error_abs": 3.4,
+          "error_pct": 3.2,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 1.32,
+        "loo_mape": 1.29
+      },
+      "semaforo": "verde",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 75
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 9
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Privado",
+          "conteo": 3
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Público",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 19
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta baja: 24.8 establecimientos por 100k hab (percentil 0% dentro de la categoría «Gimnasios y espacios deportivos»).",
+        "Tendencia creciente: +2.52 establecimientos/año (percentil de crecimiento: 60%).",
+        "Clasificación: Zona de oportunidad — baja oferta relativa, posible inversión beneficiosa."
+      ]
+    },
+    {
+      "alcaldia": "Azcapotzalco",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 432205,
+      "centroide": {
+        "lat": 19.47929,
+        "lon": -99.18287
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 9
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 10
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 6
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 5
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 6
+        }
+      ],
+      "oferta_percapita_100k": 1.39,
+      "oferta_percapita_percentil": 0.07,
+      "tendencia_pendiente_anual": -1.274,
+      "tendencia_percentil": 0.13,
+      "tendencia_r2": 0.6302,
+      "tendencia_resid_se": 1.5223,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 1.2,
+          "lower_95": 0.0,
+          "upper_95": 11.2,
+          "banda_95": 10.0
+        },
+        "5": {
+          "estimado": 0.0,
+          "lower_95": 0.0,
+          "upper_95": 11.8,
+          "banda_95": 11.8
+        },
+        "7": {
+          "estimado": 0.0,
+          "lower_95": 0.0,
+          "upper_95": 12.6,
+          "banda_95": 12.6
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 6.1,
+          "observado": 5,
+          "lower_95": 0.0,
+          "upper_95": 46.7,
+          "error_abs": 1.1,
+          "error_pct": 21.7,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 4.6,
+          "observado": 6,
+          "lower_95": 0.0,
+          "upper_95": 59.3,
+          "error_abs": 1.4,
+          "error_pct": 23.6,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 1.85,
+        "loo_mape": 27.15
+      },
+      "semaforo": "verde",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Privado",
+          "conteo": 3
+        },
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Público",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 2
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta baja: 1.4 establecimientos por 100k hab (percentil 7% dentro de la categoría «Servicios para personas adultas mayores»).",
+        "Tendencia decreciente: -1.27 establecimientos/año (la oferta se está reduciendo).",
+        "Clasificación: Zona de oportunidad — baja oferta relativa, posible inversión beneficiosa."
+      ]
+    },
+    {
+      "alcaldia": "Benito Juárez",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 434153,
+      "centroide": {
+        "lat": 19.38204,
+        "lon": -99.16268
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 185
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 191
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 181
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 184
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 192
+        }
+      ],
+      "oferta_percapita_100k": 44.22,
+      "oferta_percapita_percentil": 1.0,
+      "tendencia_pendiente_anual": 0.7671,
+      "tendencia_percentil": 0.33,
+      "tendencia_r2": 0.0482,
+      "tendencia_resid_se": 5.3199,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 190.2,
+          "lower_95": 155.4,
+          "upper_95": 225.0,
+          "banda_95": 34.8
+        },
+        "5": {
+          "estimado": 191.7,
+          "lower_95": 145.8,
+          "upper_95": 237.6,
+          "banda_95": 45.9
+        },
+        "7": {
+          "estimado": 193.3,
+          "lower_95": 135.7,
+          "upper_95": 250.9,
+          "banda_95": 57.6
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 182.7,
+          "observado": 184,
+          "lower_95": 52.5,
+          "upper_95": 312.8,
+          "error_abs": 1.3,
+          "error_pct": 0.7,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 180.7,
+          "observado": 192,
+          "lower_95": 5.4,
+          "upper_95": 355.9,
+          "error_abs": 11.3,
+          "error_pct": 5.9,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 5.86,
+        "loo_mape": 3.12
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 127
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 8
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Privado",
+          "conteo": 4
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 52
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Público",
+          "conteo": 1
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta alta: 44.2 establecimientos por 100k hab (percentil 100% dentro de la categoría «Gimnasios y espacios deportivos»).",
+        "Tendencia creciente: +0.77 establecimientos/año (percentil de crecimiento: 33%).",
+        "Precaución: el ajuste lineal explica poco de la variación (R²=0.05); las proyecciones tienen alta incertidumbre.",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Benito Juárez",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 434153,
+      "centroide": {
+        "lat": 19.38204,
+        "lon": -99.16268
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 22
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 23
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 17
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 17
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 18
+        }
+      ],
+      "oferta_percapita_100k": 4.15,
+      "oferta_percapita_percentil": 0.93,
+      "tendencia_pendiente_anual": -1.6575,
+      "tendencia_percentil": 0.07,
+      "tendencia_r2": 0.6041,
+      "tendencia_resid_se": 2.0932,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 11.6,
+          "lower_95": 0.0,
+          "upper_95": 25.3,
+          "banda_95": 13.7
+        },
+        "5": {
+          "estimado": 8.3,
+          "lower_95": 0.0,
+          "upper_95": 26.4,
+          "banda_95": 18.1
+        },
+        "7": {
+          "estimado": 5.0,
+          "lower_95": 0.0,
+          "upper_95": 27.6,
+          "banda_95": 22.7
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 16.9,
+          "observado": 17,
+          "lower_95": 0.0,
+          "upper_95": 73.8,
+          "error_abs": 0.1,
+          "error_pct": 0.5,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 14.4,
+          "observado": 18,
+          "lower_95": 0.0,
+          "upper_95": 91.1,
+          "error_abs": 3.6,
+          "error_pct": 19.9,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 2.41,
+        "loo_mape": 12.71
+      },
+      "semaforo": "rojo",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Privado",
+          "conteo": 8
+        },
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Público",
+          "conteo": 3
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Privado",
+          "conteo": 3
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 4
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta alta: 4.1 establecimientos por 100k hab (percentil 93% dentro de la categoría «Servicios para personas adultas mayores»).",
+        "Tendencia decreciente: -1.66 establecimientos/año (la oferta se está reduciendo).",
+        "Clasificación: Zona saturada — alta oferta con crecimiento estancado."
+      ]
+    },
+    {
+      "alcaldia": "Coyoacán",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 614447,
+      "centroide": {
+        "lat": 19.32633,
+        "lon": -99.14517
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 194
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 199
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 200
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 198
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 200
+        }
+      ],
+      "oferta_percapita_100k": 32.55,
+      "oferta_percapita_percentil": 0.4,
+      "tendencia_pendiente_anual": 1.3973,
+      "tendencia_percentil": 0.47,
+      "tendencia_r2": 0.5747,
+      "tendencia_resid_se": 1.8751,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 204.8,
+          "lower_95": 192.5,
+          "upper_95": 217.0,
+          "banda_95": 12.3
+        },
+        "5": {
+          "estimado": 207.6,
+          "lower_95": 191.4,
+          "upper_95": 223.7,
+          "banda_95": 16.2
+        },
+        "7": {
+          "estimado": 210.4,
+          "lower_95": 190.1,
+          "upper_95": 230.7,
+          "banda_95": 20.3
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 202.2,
+          "observado": 198,
+          "lower_95": 169.6,
+          "upper_95": 234.7,
+          "error_abs": 4.2,
+          "error_pct": 2.1,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 205.2,
+          "observado": 200,
+          "lower_95": 161.4,
+          "upper_95": 249.0,
+          "error_abs": 5.2,
+          "error_pct": 2.6,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 2.47,
+        "loo_mape": 1.25
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 117
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 17
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Privado",
+          "conteo": 8
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 52
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Público",
+          "conteo": 6
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta intermedia: 32.5 establecimientos por 100k hab (percentil 40%).",
+        "Tendencia creciente: +1.40 establecimientos/año (percentil de crecimiento: 47%).",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Coyoacán",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 614447,
+      "centroide": {
+        "lat": 19.32633,
+        "lon": -99.14517
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 25
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 25
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 24
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 23
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 23
+        }
+      ],
+      "oferta_percapita_100k": 3.74,
+      "oferta_percapita_percentil": 0.8,
+      "tendencia_pendiente_anual": -0.6849,
+      "tendencia_percentil": 0.27,
+      "tendencia_r2": 0.8562,
+      "tendencia_resid_se": 0.4379,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 20.8,
+          "lower_95": 17.9,
+          "upper_95": 23.6,
+          "banda_95": 2.9
+        },
+        "5": {
+          "estimado": 19.4,
+          "lower_95": 15.6,
+          "upper_95": 23.2,
+          "banda_95": 3.8
+        },
+        "7": {
+          "estimado": 18.0,
+          "lower_95": 13.3,
+          "upper_95": 22.8,
+          "banda_95": 4.7
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 23.9,
+          "observado": 23,
+          "lower_95": 15.8,
+          "upper_95": 32.0,
+          "error_abs": 0.9,
+          "error_pct": 4.0,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 23.4,
+          "observado": 23,
+          "lower_95": 12.5,
+          "upper_95": 34.4,
+          "error_abs": 0.4,
+          "error_pct": 1.8,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 0.52,
+        "loo_mape": 2.15
+      },
+      "semaforo": "rojo",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Privado",
+          "conteo": 11
+        },
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Público",
+          "conteo": 2
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Privado",
+          "conteo": 2
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 8
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta alta: 3.7 establecimientos por 100k hab (percentil 80% dentro de la categoría «Servicios para personas adultas mayores»).",
+        "Tendencia decreciente: -0.68 establecimientos/año (la oferta se está reduciendo).",
+        "Clasificación: Zona saturada — alta oferta con crecimiento estancado."
+      ]
+    },
+    {
+      "alcaldia": "Cuajimalpa de Morelos",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 217686,
+      "centroide": {
+        "lat": 19.35977,
+        "lon": -99.28723
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 76
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 79
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 83
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 78
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 82
+        }
+      ],
+      "oferta_percapita_100k": 37.67,
+      "oferta_percapita_percentil": 0.87,
+      "tendencia_pendiente_anual": 1.4521,
+      "tendencia_percentil": 0.53,
+      "tendencia_r2": 0.4636,
+      "tendencia_resid_se": 2.4364,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 86.4,
+          "lower_95": 70.5,
+          "upper_95": 102.4,
+          "banda_95": 15.9
+        },
+        "5": {
+          "estimado": 89.3,
+          "lower_95": 68.3,
+          "upper_95": 110.3,
+          "banda_95": 21.0
+        },
+        "7": {
+          "estimado": 92.2,
+          "lower_95": 65.9,
+          "upper_95": 118.6,
+          "banda_95": 26.4
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 84.6,
+          "observado": 78,
+          "lower_95": 76.5,
+          "upper_95": 92.7,
+          "error_abs": 6.6,
+          "error_pct": 8.4,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 88.1,
+          "observado": 82,
+          "lower_95": 77.1,
+          "upper_95": 99.0,
+          "error_abs": 6.1,
+          "error_pct": 7.4,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 2.24,
+        "loo_mape": 2.83
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 52
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 9
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Privado",
+          "conteo": 3
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Público",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 15
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Público",
+          "conteo": 2
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta alta: 37.7 establecimientos por 100k hab (percentil 87% dentro de la categoría «Gimnasios y espacios deportivos»).",
+        "Tendencia creciente: +1.45 establecimientos/año (percentil de crecimiento: 53%).",
+        "Precaución: el ajuste lineal explica poco de la variación (R²=0.46); las proyecciones tienen alta incertidumbre.",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Cuajimalpa de Morelos",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 217686,
+      "centroide": {
+        "lat": 19.35977,
+        "lon": -99.28723
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 8
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 8
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 5
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 5
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 5
+        }
+      ],
+      "oferta_percapita_100k": 2.3,
+      "oferta_percapita_percentil": 0.4,
+      "tendencia_pendiente_anual": -1.0685,
+      "tendencia_percentil": 0.2,
+      "tendencia_r2": 0.7717,
+      "tendencia_resid_se": 0.9066,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 1.2,
+          "lower_95": 0.0,
+          "upper_95": 7.1,
+          "banda_95": 5.9
+        },
+        "5": {
+          "estimado": 0.0,
+          "lower_95": 0.0,
+          "upper_95": 6.9,
+          "banda_95": 6.9
+        },
+        "7": {
+          "estimado": 0.0,
+          "lower_95": 0.0,
+          "upper_95": 6.7,
+          "banda_95": 6.7
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 4.8,
+          "observado": 5,
+          "lower_95": 0.0,
+          "upper_95": 29.1,
+          "error_abs": 0.2,
+          "error_pct": 5.0,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 3.2,
+          "observado": 5,
+          "lower_95": 0.0,
+          "upper_95": 36.1,
+          "error_abs": 1.8,
+          "error_pct": 35.0,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 1.01,
+        "loo_mape": 17.72
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Privado",
+          "conteo": 2
+        },
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Público",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Privado",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 1
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta intermedia: 2.3 establecimientos por 100k hab (percentil 40%).",
+        "Tendencia decreciente: -1.07 establecimientos/año (la oferta se está reduciendo).",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 545884,
+      "centroide": {
+        "lat": 19.42845,
+        "lon": -99.15286
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 193
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 204
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 215
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 212
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 219
+        }
+      ],
+      "oferta_percapita_100k": 40.12,
+      "oferta_percapita_percentil": 0.93,
+      "tendencia_pendiente_anual": 7.274,
+      "tendencia_percentil": 0.93,
+      "tendencia_r2": 0.9084,
+      "tendencia_resid_se": 3.6033,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 242.8,
+          "lower_95": 219.2,
+          "upper_95": 266.4,
+          "banda_95": 23.6
+        },
+        "5": {
+          "estimado": 257.3,
+          "lower_95": 226.2,
+          "upper_95": 288.4,
+          "banda_95": 31.1
+        },
+        "7": {
+          "estimado": 271.9,
+          "lower_95": 232.9,
+          "upper_95": 310.9,
+          "banda_95": 39.0
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 220.5,
+          "observado": 212,
+          "lower_95": 220.5,
+          "upper_95": 220.5,
+          "error_abs": 8.5,
+          "error_pct": 4.0,
+          "dentro_IC": false
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 231.5,
+          "observado": 219,
+          "lower_95": 231.5,
+          "upper_95": 231.5,
+          "error_abs": 12.5,
+          "error_pct": 5.7,
+          "dentro_IC": false
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 4.43,
+        "loo_mape": 2.14
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 151
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 12
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Privado",
+          "conteo": 6
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Público",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 48
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Público",
+          "conteo": 1
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta alta: 40.1 establecimientos por 100k hab (percentil 93% dentro de la categoría «Gimnasios y espacios deportivos»).",
+        "Tendencia creciente: +7.27 establecimientos/año (percentil de crecimiento: 93%).",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 545884,
+      "centroide": {
+        "lat": 19.42845,
+        "lon": -99.15286
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 12
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 12
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 7
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 7
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 7
+        }
+      ],
+      "oferta_percapita_100k": 1.28,
+      "oferta_percapita_percentil": 0.0,
+      "tendencia_pendiente_anual": -1.7808,
+      "tendencia_percentil": 0.0,
+      "tendencia_r2": 0.7717,
+      "tendencia_resid_se": 1.511,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 0.6,
+          "lower_95": 0.0,
+          "upper_95": 10.5,
+          "banda_95": 9.9
+        },
+        "5": {
+          "estimado": 0.0,
+          "lower_95": 0.0,
+          "upper_95": 10.1,
+          "banda_95": 10.1
+        },
+        "7": {
+          "estimado": 0.0,
+          "lower_95": 0.0,
+          "upper_95": 9.9,
+          "banda_95": 9.9
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 6.6,
+          "observado": 7,
+          "lower_95": 0.0,
+          "upper_95": 47.2,
+          "error_abs": 0.4,
+          "error_pct": 6.0,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 4.1,
+          "observado": 7,
+          "lower_95": 0.0,
+          "upper_95": 58.8,
+          "error_abs": 2.9,
+          "error_pct": 41.7,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 1.69,
+        "loo_mape": 20.76
+      },
+      "semaforo": "verde",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Privado",
+          "conteo": 5
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 2
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta baja: 1.3 establecimientos por 100k hab (percentil 0% dentro de la categoría «Servicios para personas adultas mayores»).",
+        "Tendencia decreciente: -1.78 establecimientos/año (la oferta se está reduciendo).",
+        "Clasificación: Zona de oportunidad — baja oferta relativa, posible inversión beneficiosa."
+      ]
+    },
+    {
+      "alcaldia": "Gustavo A. Madero",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 1173351,
+      "centroide": {
+        "lat": 19.50129,
+        "lon": -99.11535
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 350
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 356
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 384
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 389
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 393
+        }
+      ],
+      "oferta_percapita_100k": 33.49,
+      "oferta_percapita_percentil": 0.53,
+      "tendencia_pendiente_anual": 14.0274,
+      "tendencia_percentil": 1.0,
+      "tendencia_r2": 0.9061,
+      "tendencia_resid_se": 7.0426,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 440.3,
+          "lower_95": 394.3,
+          "upper_95": 486.4,
+          "banda_95": 46.1
+        },
+        "5": {
+          "estimado": 468.4,
+          "lower_95": 407.6,
+          "upper_95": 529.1,
+          "banda_95": 60.8
+        },
+        "7": {
+          "estimado": 496.4,
+          "lower_95": 420.2,
+          "upper_95": 572.7,
+          "banda_95": 76.2
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 388.8,
+          "observado": 389,
+          "lower_95": 209.9,
+          "upper_95": 567.8,
+          "error_abs": 0.2,
+          "error_pct": 0.0,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 405.8,
+          "observado": 393,
+          "lower_95": 164.9,
+          "upper_95": 646.8,
+          "error_abs": 12.8,
+          "error_pct": 3.3,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 8.1,
+        "loo_mape": 2.14
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 269
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 34
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Privado",
+          "conteo": 2
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Público",
+          "conteo": 3
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 84
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Público",
+          "conteo": 1
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta intermedia: 33.5 establecimientos por 100k hab (percentil 53%).",
+        "Tendencia creciente: +14.03 establecimientos/año (percentil de crecimiento: 100%).",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Gustavo A. Madero",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 1173351,
+      "centroide": {
+        "lat": 19.50129,
+        "lon": -99.11535
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 26
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 26
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 25
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 25
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 25
+        }
+      ],
+      "oferta_percapita_100k": 2.13,
+      "oferta_percapita_percentil": 0.27,
+      "tendencia_pendiente_anual": -0.3562,
+      "tendencia_percentil": 0.4,
+      "tendencia_r2": 0.7717,
+      "tendencia_resid_se": 0.3022,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 23.7,
+          "lower_95": 21.7,
+          "upper_95": 25.7,
+          "banda_95": 2.0
+        },
+        "5": {
+          "estimado": 23.0,
+          "lower_95": 20.4,
+          "upper_95": 25.6,
+          "banda_95": 2.6
+        },
+        "7": {
+          "estimado": 22.3,
+          "lower_95": 19.0,
+          "upper_95": 25.6,
+          "banda_95": 3.3
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 24.9,
+          "observado": 25,
+          "lower_95": 16.8,
+          "upper_95": 33.0,
+          "error_abs": 0.1,
+          "error_pct": 0.3,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 24.4,
+          "observado": 25,
+          "lower_95": 13.5,
+          "upper_95": 35.4,
+          "error_abs": 0.6,
+          "error_pct": 2.3,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 0.34,
+        "loo_mape": 1.33
+      },
+      "semaforo": "verde",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Privado",
+          "conteo": 8
+        },
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Público",
+          "conteo": 4
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Privado",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 12
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta baja: 2.1 establecimientos por 100k hab (percentil 27% dentro de la categoría «Servicios para personas adultas mayores»).",
+        "Tendencia decreciente: -0.36 establecimientos/año (la oferta se está reduciendo).",
+        "Clasificación: Zona de oportunidad — baja oferta relativa, posible inversión beneficiosa."
+      ]
+    },
+    {
+      "alcaldia": "Iztacalco",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 404695,
+      "centroide": {
+        "lat": 19.39926,
+        "lon": -99.08689
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 120
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 121
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 136
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 136
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 136
+        }
+      ],
+      "oferta_percapita_100k": 33.61,
+      "oferta_percapita_percentil": 0.6,
+      "tendencia_pendiente_anual": 5.589,
+      "tendencia_percentil": 0.8,
+      "tendencia_r2": 0.7896,
+      "tendencia_resid_se": 4.5006,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 156.1,
+          "lower_95": 126.6,
+          "upper_95": 185.5,
+          "banda_95": 29.4
+        },
+        "5": {
+          "estimado": 167.2,
+          "lower_95": 128.4,
+          "upper_95": 206.1,
+          "banda_95": 38.8
+        },
+        "7": {
+          "estimado": 178.4,
+          "lower_95": 129.7,
+          "upper_95": 227.1,
+          "banda_95": 48.7
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 137.7,
+          "observado": 136,
+          "lower_95": 23.8,
+          "upper_95": 251.5,
+          "error_abs": 1.7,
+          "error_pct": 1.2,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 145.7,
+          "observado": 136,
+          "lower_95": 0.0,
+          "upper_95": 299.0,
+          "error_abs": 9.7,
+          "error_pct": 7.1,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 4.9,
+        "loo_mape": 3.73
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 78
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 16
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 27
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Público",
+          "conteo": 15
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta intermedia: 33.6 establecimientos por 100k hab (percentil 60%).",
+        "Tendencia creciente: +5.59 establecimientos/año (percentil de crecimiento: 80%).",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Iztacalco",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 404695,
+      "centroide": {
+        "lat": 19.39926,
+        "lon": -99.08689
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 5
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 5
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 6
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 6
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 6
+        }
+      ],
+      "oferta_percapita_100k": 1.48,
+      "oferta_percapita_percentil": 0.13,
+      "tendencia_pendiente_anual": 0.3562,
+      "tendencia_percentil": 0.6,
+      "tendencia_r2": 0.7717,
+      "tendencia_resid_se": 0.3022,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 7.3,
+          "lower_95": 5.3,
+          "upper_95": 9.3,
+          "banda_95": 2.0
+        },
+        "5": {
+          "estimado": 8.0,
+          "lower_95": 5.4,
+          "upper_95": 10.6,
+          "banda_95": 2.6
+        },
+        "7": {
+          "estimado": 8.7,
+          "lower_95": 5.4,
+          "upper_95": 12.0,
+          "banda_95": 3.3
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 6.1,
+          "observado": 6,
+          "lower_95": 0.0,
+          "upper_95": 14.2,
+          "error_abs": 0.1,
+          "error_pct": 1.4,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 6.6,
+          "observado": 6,
+          "lower_95": 0.0,
+          "upper_95": 17.5,
+          "error_abs": 0.6,
+          "error_pct": 9.7,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 0.34,
+        "loo_mape": 5.99
+      },
+      "semaforo": "verde",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Privado",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Público",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 4
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta baja: 1.5 establecimientos por 100k hab (percentil 13% dentro de la categoría «Servicios para personas adultas mayores»).",
+        "Tendencia creciente: +0.36 establecimientos/año (percentil de crecimiento: 60%).",
+        "Clasificación: Zona de oportunidad — baja oferta relativa, posible inversión beneficiosa."
+      ]
+    },
+    {
+      "alcaldia": "Iztapalapa",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 1835486,
+      "centroide": {
+        "lat": 19.34608,
+        "lon": -99.05475
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 537
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 544
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 535
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 538
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 546
+        }
+      ],
+      "oferta_percapita_100k": 29.75,
+      "oferta_percapita_percentil": 0.2,
+      "tendencia_pendiente_anual": 1.3699,
+      "tendencia_percentil": 0.4,
+      "tendencia_r2": 0.1522,
+      "tendencia_resid_se": 5.0432,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 546.4,
+          "lower_95": 513.4,
+          "upper_95": 579.4,
+          "banda_95": 33.0
+        },
+        "5": {
+          "estimado": 549.2,
+          "lower_95": 505.7,
+          "upper_95": 592.7,
+          "banda_95": 43.5
+        },
+        "7": {
+          "estimado": 551.9,
+          "lower_95": 497.3,
+          "upper_95": 606.5,
+          "banda_95": 54.6
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 537.2,
+          "observado": 538,
+          "lower_95": 407.0,
+          "upper_95": 667.3,
+          "error_abs": 0.8,
+          "error_pct": 0.2,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 536.2,
+          "observado": 546,
+          "lower_95": 360.9,
+          "upper_95": 711.4,
+          "error_abs": 9.8,
+          "error_pct": 1.8,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 5.68,
+        "loo_mape": 1.05
+      },
+      "semaforo": "verde",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 396
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 26
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Privado",
+          "conteo": 4
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 120
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta baja: 29.7 establecimientos por 100k hab (percentil 20% dentro de la categoría «Gimnasios y espacios deportivos»).",
+        "Tendencia creciente: +1.37 establecimientos/año (percentil de crecimiento: 40%).",
+        "Precaución: el ajuste lineal explica poco de la variación (R²=0.15); las proyecciones tienen alta incertidumbre.",
+        "Clasificación: Zona de oportunidad — baja oferta relativa, posible inversión beneficiosa."
+      ]
+    },
+    {
+      "alcaldia": "Iztapalapa",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 1835486,
+      "centroide": {
+        "lat": 19.34608,
+        "lon": -99.05475
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 31
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 31
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 35
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 37
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 37
+        }
+      ],
+      "oferta_percapita_100k": 2.02,
+      "oferta_percapita_percentil": 0.2,
+      "tendencia_pendiente_anual": 2.0822,
+      "tendencia_percentil": 1.0,
+      "tendencia_r2": 0.86,
+      "tendencia_resid_se": 1.3103,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 44.0,
+          "lower_95": 35.4,
+          "upper_95": 52.6,
+          "banda_95": 8.6
+        },
+        "5": {
+          "estimado": 48.2,
+          "lower_95": 36.8,
+          "upper_95": 59.5,
+          "banda_95": 11.3
+        },
+        "7": {
+          "estimado": 52.3,
+          "lower_95": 38.1,
+          "upper_95": 66.5,
+          "banda_95": 14.2
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 35.3,
+          "observado": 37,
+          "lower_95": 2.8,
+          "upper_95": 67.9,
+          "error_abs": 1.7,
+          "error_pct": 4.5,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 37.3,
+          "observado": 37,
+          "lower_95": 0.0,
+          "upper_95": 81.1,
+          "error_abs": 0.3,
+          "error_pct": 0.9,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 1.57,
+        "loo_mape": 4.64
+      },
+      "semaforo": "verde",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Privado",
+          "conteo": 9
+        },
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Público",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Privado",
+          "conteo": 6
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 21
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta baja: 2.0 establecimientos por 100k hab (percentil 20% dentro de la categoría «Servicios para personas adultas mayores»).",
+        "Tendencia creciente: +2.08 establecimientos/año (percentil de crecimiento: 100%).",
+        "Clasificación: Zona de oportunidad — baja oferta relativa, posible inversión beneficiosa."
+      ]
+    },
+    {
+      "alcaldia": "La Magdalena Contreras",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 247622,
+      "centroide": {
+        "lat": 19.3148,
+        "lon": -99.24022
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 78
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 81
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 85
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 86
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 88
+        }
+      ],
+      "oferta_percapita_100k": 35.54,
+      "oferta_percapita_percentil": 0.73,
+      "tendencia_pendiente_anual": 2.9589,
+      "tendencia_percentil": 0.73,
+      "tendencia_r2": 0.9803,
+      "tendencia_resid_se": 0.6552,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 97.5,
+          "lower_95": 93.2,
+          "upper_95": 101.8,
+          "banda_95": 4.3
+        },
+        "5": {
+          "estimado": 103.4,
+          "lower_95": 97.8,
+          "upper_95": 109.1,
+          "banda_95": 5.7
+        },
+        "7": {
+          "estimado": 109.3,
+          "lower_95": 102.3,
+          "upper_95": 116.4,
+          "banda_95": 7.1
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 86.6,
+          "observado": 86,
+          "lower_95": 78.5,
+          "upper_95": 94.7,
+          "error_abs": 0.6,
+          "error_pct": 0.7,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 90.1,
+          "observado": 88,
+          "lower_95": 79.1,
+          "upper_95": 101.0,
+          "error_abs": 2.1,
+          "error_pct": 2.4,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 0.82,
+        "loo_mape": 0.98
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 50
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 19
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Privado",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Público",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 16
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Público",
+          "conteo": 1
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta alta: 35.5 establecimientos por 100k hab (percentil 73% dentro de la categoría «Gimnasios y espacios deportivos»).",
+        "Tendencia creciente: +2.96 establecimientos/año (percentil de crecimiento: 73%).",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "La Magdalena Contreras",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 247622,
+      "centroide": {
+        "lat": 19.3148,
+        "lon": -99.24022
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 9
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 9
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 9
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 9
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 9
+        }
+      ],
+      "oferta_percapita_100k": 3.63,
+      "oferta_percapita_percentil": 0.73,
+      "tendencia_pendiente_anual": 0.0,
+      "tendencia_percentil": 0.53,
+      "tendencia_r2": 0.0,
+      "tendencia_resid_se": 0.0,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 9.0,
+          "lower_95": 9.0,
+          "upper_95": 9.0,
+          "banda_95": 0.0
+        },
+        "5": {
+          "estimado": 9.0,
+          "lower_95": 9.0,
+          "upper_95": 9.0,
+          "banda_95": 0.0
+        },
+        "7": {
+          "estimado": 9.0,
+          "lower_95": 9.0,
+          "upper_95": 9.0,
+          "banda_95": 0.0
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 9.0,
+          "observado": 9,
+          "lower_95": 9.0,
+          "upper_95": 9.0,
+          "error_abs": 0.0,
+          "error_pct": 0.0,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 9.0,
+          "observado": 9,
+          "lower_95": 9.0,
+          "upper_95": 9.0,
+          "error_abs": 0.0,
+          "error_pct": 0.0,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 0.0,
+        "loo_mape": 0.0
+      },
+      "semaforo": "rojo",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Privado",
+          "conteo": 4
+        },
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Público",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Privado",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 3
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta alta: 3.6 establecimientos por 100k hab (percentil 73% dentro de la categoría «Servicios para personas adultas mayores»).",
+        "Tendencia estable: sin cambio neto en la oferta.",
+        "Precaución: el ajuste lineal explica poco de la variación (R²=0.00); las proyecciones tienen alta incertidumbre.",
+        "Clasificación: Zona saturada — alta oferta con crecimiento estancado."
+      ]
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 414470,
+      "centroide": {
+        "lat": 19.43059,
+        "lon": -99.1944
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 134
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 143
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 147
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 149
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 156
+        }
+      ],
+      "oferta_percapita_100k": 37.64,
+      "oferta_percapita_percentil": 0.8,
+      "tendencia_pendiente_anual": 5.9315,
+      "tendencia_percentil": 0.87,
+      "tendencia_r2": 0.9773,
+      "tendencia_resid_se": 1.4102,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 173.7,
+          "lower_95": 164.5,
+          "upper_95": 182.9,
+          "banda_95": 9.2
+        },
+        "5": {
+          "estimado": 185.5,
+          "lower_95": 173.4,
+          "upper_95": 197.7,
+          "banda_95": 12.2
+        },
+        "7": {
+          "estimado": 197.4,
+          "lower_95": 182.1,
+          "upper_95": 212.7,
+          "banda_95": 15.3
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 151.1,
+          "observado": 149,
+          "lower_95": 110.4,
+          "upper_95": 191.7,
+          "error_abs": 2.1,
+          "error_pct": 1.4,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 157.6,
+          "observado": 156,
+          "lower_95": 102.8,
+          "upper_95": 212.3,
+          "error_abs": 1.6,
+          "error_pct": 1.0,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 1.5,
+        "loo_mape": 1.07
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 97
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 13
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Privado",
+          "conteo": 8
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 37
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Público",
+          "conteo": 1
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta alta: 37.6 establecimientos por 100k hab (percentil 80% dentro de la categoría «Gimnasios y espacios deportivos»).",
+        "Tendencia creciente: +5.93 establecimientos/año (percentil de crecimiento: 87%).",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 414470,
+      "centroide": {
+        "lat": 19.43059,
+        "lon": -99.1944
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 8
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 8
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 11
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 11
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 11
+        }
+      ],
+      "oferta_percapita_100k": 2.65,
+      "oferta_percapita_percentil": 0.53,
+      "tendencia_pendiente_anual": 1.0685,
+      "tendencia_percentil": 0.8,
+      "tendencia_r2": 0.7717,
+      "tendencia_resid_se": 0.9066,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 14.8,
+          "lower_95": 8.9,
+          "upper_95": 20.8,
+          "banda_95": 5.9
+        },
+        "5": {
+          "estimado": 17.0,
+          "lower_95": 9.1,
+          "upper_95": 24.8,
+          "banda_95": 7.8
+        },
+        "7": {
+          "estimado": 19.1,
+          "lower_95": 9.3,
+          "upper_95": 28.9,
+          "banda_95": 9.8
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 11.2,
+          "observado": 11,
+          "lower_95": 0.0,
+          "upper_95": 35.6,
+          "error_abs": 0.2,
+          "error_pct": 2.3,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 12.8,
+          "observado": 11,
+          "lower_95": 0.0,
+          "upper_95": 45.6,
+          "error_abs": 1.8,
+          "error_pct": 15.9,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 1.01,
+        "loo_mape": 10.33
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Privado",
+          "conteo": 7
+        },
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Público",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Privado",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 2
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta intermedia: 2.7 establecimientos por 100k hab (percentil 53%).",
+        "Tendencia creciente: +1.07 establecimientos/año (percentil de crecimiento: 80%).",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Milpa Alta",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 152685,
+      "centroide": {
+        "lat": 19.20096,
+        "lon": -99.0236
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 52
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 52
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 45
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 46
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 47
+        }
+      ],
+      "oferta_percapita_100k": 30.78,
+      "oferta_percapita_percentil": 0.27,
+      "tendencia_pendiente_anual": -1.9315,
+      "tendencia_percentil": 0.13,
+      "tendencia_r2": 0.6025,
+      "tendencia_resid_se": 2.4472,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 39.3,
+          "lower_95": 23.3,
+          "upper_95": 55.3,
+          "banda_95": 16.0
+        },
+        "5": {
+          "estimado": 35.5,
+          "lower_95": 14.3,
+          "upper_95": 56.6,
+          "banda_95": 21.1
+        },
+        "7": {
+          "estimado": 31.6,
+          "lower_95": 5.1,
+          "upper_95": 58.1,
+          "banda_95": 26.5
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 44.4,
+          "observado": 46,
+          "lower_95": 0.0,
+          "upper_95": 101.3,
+          "error_abs": 1.6,
+          "error_pct": 3.4,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 40.9,
+          "observado": 47,
+          "lower_95": 0.0,
+          "upper_95": 117.6,
+          "error_abs": 6.1,
+          "error_pct": 12.9,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 2.62,
+        "loo_mape": 5.53
+      },
+      "semaforo": "verde",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 30
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 13
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 3
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Público",
+          "conteo": 1
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta baja: 30.8 establecimientos por 100k hab (percentil 27% dentro de la categoría «Gimnasios y espacios deportivos»).",
+        "Tendencia decreciente: -1.93 establecimientos/año (la oferta se está reduciendo).",
+        "Clasificación: Zona de oportunidad — baja oferta relativa, posible inversión beneficiosa."
+      ]
+    },
+    {
+      "alcaldia": "Milpa Alta",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 152685,
+      "centroide": {
+        "lat": 19.20096,
+        "lon": -99.0236
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 3
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 3
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 5
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 6
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 6
+        }
+      ],
+      "oferta_percapita_100k": 3.93,
+      "oferta_percapita_percentil": 0.87,
+      "tendencia_pendiente_anual": 1.0411,
+      "tendencia_percentil": 0.73,
+      "tendencia_r2": 0.86,
+      "tendencia_resid_se": 0.6552,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 9.5,
+          "lower_95": 5.2,
+          "upper_95": 13.8,
+          "banda_95": 4.3
+        },
+        "5": {
+          "estimado": 11.6,
+          "lower_95": 5.9,
+          "upper_95": 17.2,
+          "banda_95": 5.7
+        },
+        "7": {
+          "estimado": 13.7,
+          "lower_95": 6.6,
+          "upper_95": 20.7,
+          "banda_95": 7.1
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 5.2,
+          "observado": 6,
+          "lower_95": 0.0,
+          "upper_95": 21.4,
+          "error_abs": 0.8,
+          "error_pct": 13.9,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 6.2,
+          "observado": 6,
+          "lower_95": 0.0,
+          "upper_95": 28.1,
+          "error_abs": 0.2,
+          "error_pct": 2.8,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 0.78,
+        "loo_mape": 19.38
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 6
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta alta: 3.9 establecimientos por 100k hab (percentil 87% dentro de la categoría «Servicios para personas adultas mayores»).",
+        "Tendencia creciente: +1.04 establecimientos/año (percentil de crecimiento: 73%).",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Tlalpan",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 699928,
+      "centroide": {
+        "lat": 19.27403,
+        "lon": -99.17633
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 242
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 250
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 217
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 220
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 225
+        }
+      ],
+      "oferta_percapita_100k": 32.15,
+      "oferta_percapita_percentil": 0.33,
+      "tendencia_pendiente_anual": -7.6301,
+      "tendencia_percentil": 0.07,
+      "tendencia_r2": 0.5091,
+      "tendencia_resid_se": 11.6876,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 194.9,
+          "lower_95": 118.5,
+          "upper_95": 271.4,
+          "banda_95": 76.5
+        },
+        "5": {
+          "estimado": 179.7,
+          "lower_95": 78.8,
+          "upper_95": 280.5,
+          "banda_95": 100.8
+        },
+        "7": {
+          "estimado": 164.4,
+          "lower_95": 37.9,
+          "upper_95": 290.9,
+          "banda_95": 126.5
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 217.6,
+          "observado": 220,
+          "lower_95": 0.0,
+          "upper_95": 551.0,
+          "error_abs": 2.4,
+          "error_pct": 1.1,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 205.1,
+          "observado": 225,
+          "lower_95": 0.0,
+          "upper_95": 654.1,
+          "error_abs": 19.9,
+          "error_pct": 8.9,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 13.23,
+        "loo_mape": 5.74
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 144
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 23
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Privado",
+          "conteo": 5
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Público",
+          "conteo": 2
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 49
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Público",
+          "conteo": 2
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta intermedia: 32.1 establecimientos por 100k hab (percentil 33%).",
+        "Tendencia decreciente: -7.63 establecimientos/año (la oferta se está reduciendo).",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Tlalpan",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 699928,
+      "centroide": {
+        "lat": 19.27403,
+        "lon": -99.17633
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 20
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 19
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 19
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 21
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 21
+        }
+      ],
+      "oferta_percapita_100k": 3.0,
+      "oferta_percapita_percentil": 0.67,
+      "tendencia_pendiente_anual": 0.411,
+      "tendencia_percentil": 0.67,
+      "tendencia_r2": 0.3082,
+      "tendencia_resid_se": 0.9604,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 21.9,
+          "lower_95": 15.6,
+          "upper_95": 28.2,
+          "banda_95": 6.3
+        },
+        "5": {
+          "estimado": 22.8,
+          "lower_95": 14.5,
+          "upper_95": 31.0,
+          "banda_95": 8.3
+        },
+        "7": {
+          "estimado": 23.6,
+          "lower_95": 13.2,
+          "upper_95": 34.0,
+          "banda_95": 10.4
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 18.6,
+          "observado": 21,
+          "lower_95": 10.5,
+          "upper_95": 26.7,
+          "error_abs": 2.4,
+          "error_pct": 11.5,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 18.1,
+          "observado": 21,
+          "lower_95": 7.1,
+          "upper_95": 29.0,
+          "error_abs": 2.9,
+          "error_pct": 13.9,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 1.22,
+        "loo_mape": 6.14
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Privado",
+          "conteo": 15
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Privado",
+          "conteo": 3
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 3
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta alta: 3.0 establecimientos por 100k hab (percentil 67% dentro de la categoría «Servicios para personas adultas mayores»).",
+        "Tendencia creciente: +0.41 establecimientos/año (percentil de crecimiento: 67%).",
+        "Precaución: el ajuste lineal explica poco de la variación (R²=0.31); las proyecciones tienen alta incertidumbre.",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Tláhuac",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 392313,
+      "centroide": {
+        "lat": 19.28151,
+        "lon": -99.0244
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 161
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 162
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 136
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 138
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 138
+        }
+      ],
+      "oferta_percapita_100k": 35.18,
+      "oferta_percapita_percentil": 0.67,
+      "tendencia_pendiente_anual": -8.3562,
+      "tendencia_percentil": 0.0,
+      "tendencia_r2": 0.724,
+      "tendencia_resid_se": 8.0472,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 107.7,
+          "lower_95": 55.1,
+          "upper_95": 160.4,
+          "banda_95": 52.6
+        },
+        "5": {
+          "estimado": 91.0,
+          "lower_95": 21.6,
+          "upper_95": 160.4,
+          "banda_95": 69.4
+        },
+        "7": {
+          "estimado": 74.3,
+          "lower_95": 0.0,
+          "upper_95": 161.4,
+          "banda_95": 87.1
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 134.2,
+          "observado": 138,
+          "lower_95": 0.0,
+          "upper_95": 353.8,
+          "error_abs": 3.8,
+          "error_pct": 2.7,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 121.8,
+          "observado": 138,
+          "lower_95": 0.0,
+          "upper_95": 417.5,
+          "error_abs": 16.2,
+          "error_pct": 11.8,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 8.7,
+        "loo_mape": 6.02
+      },
+      "semaforo": "rojo",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 97
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 14
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 22
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Público",
+          "conteo": 5
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta alta: 35.2 establecimientos por 100k hab (percentil 67% dentro de la categoría «Gimnasios y espacios deportivos»).",
+        "Tendencia decreciente: -8.36 establecimientos/año (la oferta se está reduciendo).",
+        "Clasificación: Zona saturada — alta oferta con crecimiento estancado."
+      ]
+    },
+    {
+      "alcaldia": "Tláhuac",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 392313,
+      "centroide": {
+        "lat": 19.28151,
+        "lon": -99.0244
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 11
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 11
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 10
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 10
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 10
+        }
+      ],
+      "oferta_percapita_100k": 2.55,
+      "oferta_percapita_percentil": 0.47,
+      "tendencia_pendiente_anual": -0.3562,
+      "tendencia_percentil": 0.4,
+      "tendencia_r2": 0.7717,
+      "tendencia_resid_se": 0.3022,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 8.7,
+          "lower_95": 6.7,
+          "upper_95": 10.7,
+          "banda_95": 2.0
+        },
+        "5": {
+          "estimado": 8.0,
+          "lower_95": 5.4,
+          "upper_95": 10.6,
+          "banda_95": 2.6
+        },
+        "7": {
+          "estimado": 7.3,
+          "lower_95": 4.0,
+          "upper_95": 10.6,
+          "banda_95": 3.3
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 9.9,
+          "observado": 10,
+          "lower_95": 1.8,
+          "upper_95": 18.0,
+          "error_abs": 0.1,
+          "error_pct": 0.8,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 9.4,
+          "observado": 10,
+          "lower_95": 0.0,
+          "upper_95": 20.4,
+          "error_abs": 0.6,
+          "error_pct": 5.8,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 0.34,
+        "loo_mape": 3.27
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Público",
+          "conteo": 2
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 8
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta intermedia: 2.5 establecimientos por 100k hab (percentil 47%).",
+        "Tendencia decreciente: -0.36 establecimientos/año (la oferta se está reduciendo).",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Venustiano Carranza",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 442798,
+      "centroide": {
+        "lat": 19.42871,
+        "lon": -99.09932
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 125
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 127
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 116
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 120
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 121
+        }
+      ],
+      "oferta_percapita_100k": 27.33,
+      "oferta_percapita_percentil": 0.07,
+      "tendencia_pendiente_anual": -1.8767,
+      "tendencia_percentil": 0.2,
+      "tendencia_r2": 0.3437,
+      "tendencia_resid_se": 4.0451,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 113.0,
+          "lower_95": 86.5,
+          "upper_95": 139.4,
+          "banda_95": 26.5
+        },
+        "5": {
+          "estimado": 109.2,
+          "lower_95": 74.3,
+          "upper_95": 144.1,
+          "banda_95": 34.9
+        },
+        "7": {
+          "estimado": 105.5,
+          "lower_95": 61.7,
+          "upper_95": 149.3,
+          "banda_95": 43.8
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 115.9,
+          "observado": 120,
+          "lower_95": 10.2,
+          "upper_95": 221.6,
+          "error_abs": 4.1,
+          "error_pct": 3.4,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 111.4,
+          "observado": 121,
+          "lower_95": 0.0,
+          "upper_95": 253.8,
+          "error_abs": 9.6,
+          "error_pct": 7.9,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 3.82,
+        "loo_mape": 3.16
+      },
+      "semaforo": "verde",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 79
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 14
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 27
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Público",
+          "conteo": 1
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta baja: 27.3 establecimientos por 100k hab (percentil 7% dentro de la categoría «Gimnasios y espacios deportivos»).",
+        "Tendencia decreciente: -1.88 establecimientos/año (la oferta se está reduciendo).",
+        "Precaución: el ajuste lineal explica poco de la variación (R²=0.34); las proyecciones tienen alta incertidumbre.",
+        "Clasificación: Zona de oportunidad — baja oferta relativa, posible inversión beneficiosa."
+      ]
+    },
+    {
+      "alcaldia": "Venustiano Carranza",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 442798,
+      "centroide": {
+        "lat": 19.42871,
+        "lon": -99.09932
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 6
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 6
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 10
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 10
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 10
+        }
+      ],
+      "oferta_percapita_100k": 2.26,
+      "oferta_percapita_percentil": 0.33,
+      "tendencia_pendiente_anual": 1.4247,
+      "tendencia_percentil": 0.87,
+      "tendencia_r2": 0.7717,
+      "tendencia_resid_se": 1.2088,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 15.1,
+          "lower_95": 7.2,
+          "upper_95": 23.0,
+          "banda_95": 7.9
+        },
+        "5": {
+          "estimado": 17.9,
+          "lower_95": 7.5,
+          "upper_95": 28.4,
+          "banda_95": 10.4
+        },
+        "7": {
+          "estimado": 20.8,
+          "lower_95": 7.7,
+          "upper_95": 33.9,
+          "banda_95": 13.1
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 10.3,
+          "observado": 10,
+          "lower_95": 0.0,
+          "upper_95": 42.9,
+          "error_abs": 0.3,
+          "error_pct": 3.3,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 12.3,
+          "observado": 10,
+          "lower_95": 0.0,
+          "upper_95": 56.1,
+          "error_abs": 2.3,
+          "error_pct": 23.3,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 1.35,
+        "loo_mape": 16.46
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Privado",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Público",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 8
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta intermedia: 2.3 establecimientos por 100k hab (percentil 33%).",
+        "Tendencia creciente: +1.42 establecimientos/año (percentil de crecimiento: 87%).",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Xochimilco",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 442178,
+      "centroide": {
+        "lat": 19.26151,
+        "lon": -99.09791
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 148
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 155
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 144
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 146
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 148
+        }
+      ],
+      "oferta_percapita_100k": 33.47,
+      "oferta_percapita_percentil": 0.47,
+      "tendencia_pendiente_anual": -1.0685,
+      "tendencia_percentil": 0.27,
+      "tendencia_r2": 0.1211,
+      "tendencia_resid_se": 4.4895,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 143.2,
+          "lower_95": 113.8,
+          "upper_95": 172.5,
+          "banda_95": 29.4
+        },
+        "5": {
+          "estimado": 141.0,
+          "lower_95": 102.3,
+          "upper_95": 179.8,
+          "banda_95": 38.7
+        },
+        "7": {
+          "estimado": 138.9,
+          "lower_95": 90.3,
+          "upper_95": 187.5,
+          "banda_95": 48.6
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 146.0,
+          "observado": 146,
+          "lower_95": 0.0,
+          "upper_95": 292.4,
+          "error_abs": 0.0,
+          "error_pct": 0.0,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 144.0,
+          "observado": 148,
+          "lower_95": 0.0,
+          "upper_95": 341.2,
+          "error_abs": 4.0,
+          "error_pct": 2.7,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 5.06,
+        "loo_mape": 3.39
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 99
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 17
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Privado",
+          "conteo": 5
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 26
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Público",
+          "conteo": 1
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta intermedia: 33.5 establecimientos por 100k hab (percentil 47%).",
+        "Tendencia decreciente: -1.07 establecimientos/año (la oferta se está reduciendo).",
+        "Precaución: el ajuste lineal explica poco de la variación (R²=0.12); las proyecciones tienen alta incertidumbre.",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    },
+    {
+      "alcaldia": "Xochimilco",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 442178,
+      "centroide": {
+        "lat": 19.26151,
+        "lon": -99.09791
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 20
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 21
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 19
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 19
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 19
+        }
+      ],
+      "oferta_percapita_100k": 4.3,
+      "oferta_percapita_percentil": 1.0,
+      "tendencia_pendiente_anual": -0.4658,
+      "tendencia_percentil": 0.33,
+      "tendencia_r2": 0.4949,
+      "tendencia_resid_se": 0.734,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 17.4,
+          "lower_95": 12.6,
+          "upper_95": 22.2,
+          "banda_95": 4.8
+        },
+        "5": {
+          "estimado": 16.5,
+          "lower_95": 10.1,
+          "upper_95": 22.8,
+          "banda_95": 6.3
+        },
+        "7": {
+          "estimado": 15.5,
+          "lower_95": 7.6,
+          "upper_95": 23.5,
+          "banda_95": 7.9
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 19.2,
+          "observado": 19,
+          "lower_95": 0.0,
+          "upper_95": 43.6,
+          "error_abs": 0.2,
+          "error_pct": 1.3,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 18.8,
+          "observado": 19,
+          "lower_95": 0.0,
+          "upper_95": 51.6,
+          "error_abs": 0.2,
+          "error_pct": 1.3,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 0.83,
+        "loo_mape": 4.17
+      },
+      "semaforo": "rojo",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Privado",
+          "conteo": 7
+        },
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Público",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Privado",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 10
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta alta: 4.3 establecimientos por 100k hab (percentil 100% dentro de la categoría «Servicios para personas adultas mayores»).",
+        "Tendencia decreciente: -0.47 establecimientos/año (la oferta se está reduciendo).",
+        "Precaución: el ajuste lineal explica poco de la variación (R²=0.49); las proyecciones tienen alta incertidumbre.",
+        "Clasificación: Zona saturada — alta oferta con crecimiento estancado."
+      ]
+    },
+    {
+      "alcaldia": "Álvaro Obregón",
+      "categoria": "Gimnasios y espacios deportivos",
+      "poblacion_2020": 759137,
+      "centroide": {
+        "lat": 19.35673,
+        "lon": -99.22137
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 205
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 224
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 212
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 217
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 219
+        }
+      ],
+      "oferta_percapita_100k": 28.85,
+      "oferta_percapita_percentil": 0.13,
+      "tendencia_pendiente_anual": 2.5205,
+      "tendencia_percentil": 0.6,
+      "tendencia_r2": 0.2217,
+      "tendencia_resid_se": 7.3671,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 227.2,
+          "lower_95": 179.0,
+          "upper_95": 275.4,
+          "banda_95": 48.2
+        },
+        "5": {
+          "estimado": 232.3,
+          "lower_95": 168.7,
+          "upper_95": 295.8,
+          "banda_95": 63.6
+        },
+        "7": {
+          "estimado": 237.3,
+          "lower_95": 157.6,
+          "upper_95": 317.1,
+          "banda_95": 79.7
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 218.9,
+          "observado": 217,
+          "lower_95": 0.0,
+          "upper_95": 471.0,
+          "error_abs": 1.9,
+          "error_pct": 0.9,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 222.4,
+          "observado": 219,
+          "lower_95": 0.0,
+          "upper_95": 562.0,
+          "error_abs": 3.4,
+          "error_pct": 1.6,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 7.64,
+        "loo_mape": 3.58
+      },
+      "semaforo": "verde",
+      "subcategorias": [
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Privado",
+          "conteo": 147
+        },
+        {
+          "subcategoria": "Centro de acondicionamiento físico",
+          "sector": "Público",
+          "conteo": 23
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Privado",
+          "conteo": 6
+        },
+        {
+          "subcategoria": "Club deportivo",
+          "sector": "Público",
+          "conteo": 1
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Privado",
+          "conteo": 40
+        },
+        {
+          "subcategoria": "Escuela de deporte",
+          "sector": "Público",
+          "conteo": 2
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta baja: 28.8 establecimientos por 100k hab (percentil 13% dentro de la categoría «Gimnasios y espacios deportivos»).",
+        "Tendencia creciente: +2.52 establecimientos/año (percentil de crecimiento: 60%).",
+        "Precaución: el ajuste lineal explica poco de la variación (R²=0.22); las proyecciones tienen alta incertidumbre.",
+        "Clasificación: Zona de oportunidad — baja oferta relativa, posible inversión beneficiosa."
+      ]
+    },
+    {
+      "alcaldia": "Álvaro Obregón",
+      "categoria": "Servicios para personas adultas mayores",
+      "poblacion_2020": 759137,
+      "centroide": {
+        "lat": 19.35673,
+        "lon": -99.22137
+      },
+      "serie_historica": [
+        {
+          "edicion": "2022-11",
+          "conteo": 16
+        },
+        {
+          "edicion": "2023-11",
+          "conteo": 17
+        },
+        {
+          "edicion": "2024-11",
+          "conteo": 22
+        },
+        {
+          "edicion": "2025-05",
+          "conteo": 21
+        },
+        {
+          "edicion": "2026-05",
+          "conteo": 22
+        }
+      ],
+      "oferta_percapita_100k": 2.9,
+      "oferta_percapita_percentil": 0.6,
+      "tendencia_pendiente_anual": 1.9315,
+      "tendencia_percentil": 0.93,
+      "tendencia_r2": 0.8203,
+      "tendencia_resid_se": 1.4102,
+      "tendencia_t_crit": 3.1824,
+      "tendencia_dof": 3,
+      "proyeccion": {
+        "3": {
+          "estimado": 28.7,
+          "lower_95": 19.5,
+          "upper_95": 37.9,
+          "banda_95": 9.2
+        },
+        "5": {
+          "estimado": 32.5,
+          "lower_95": 20.4,
+          "upper_95": 44.7,
+          "banda_95": 12.2
+        },
+        "7": {
+          "estimado": 36.4,
+          "lower_95": 21.1,
+          "upper_95": 51.7,
+          "banda_95": 15.3
+        }
+      },
+      "validacion_retrospectiva": [
+        {
+          "edicion": "2025-05",
+          "predicho": 22.8,
+          "observado": 21,
+          "lower_95": 0.0,
+          "upper_95": 55.4,
+          "error_abs": 1.8,
+          "error_pct": 8.7,
+          "dentro_IC": true
+        },
+        {
+          "edicion": "2026-05",
+          "predicho": 25.8,
+          "observado": 22,
+          "lower_95": 0.0,
+          "upper_95": 69.6,
+          "error_abs": 3.8,
+          "error_pct": 17.4,
+          "dentro_IC": true
+        }
+      ],
+      "loo_cv": {
+        "loo_mae": 1.32,
+        "loo_mape": 6.53
+      },
+      "semaforo": "amarillo",
+      "subcategorias": [
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Privado",
+          "conteo": 7
+        },
+        {
+          "subcategoria": "Asilo o residencia para el cuidado de personas mayores",
+          "sector": "Público",
+          "conteo": 2
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Privado",
+          "conteo": 3
+        },
+        {
+          "subcategoria": "Centro de cuidado diurno para ancianos o personas con discapacidad",
+          "sector": "Público",
+          "conteo": 10
+        }
+      ],
+      "factores_determinantes": [
+        "Oferta intermedia: 2.9 establecimientos por 100k hab (percentil 60%).",
+        "Tendencia creciente: +1.93 establecimientos/año (percentil de crecimiento: 93%).",
+        "Clasificación: Zona en transición — oferta y crecimiento intermedios."
+      ]
+    }
+  ]
+}

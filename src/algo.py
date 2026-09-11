@@ -76,7 +76,7 @@ POBLACION_2020_ALCALDIA = {
 
 CATEGORIES = ["Gimnasios y espacios deportivos", "Servicios para personas adultas mayores"]
 
-HORIZONS_YEARS = [1, 3, 5]
+HORIZONS_YEARS = [3, 5, 7]
 
 # t=0 fijado en la primera edición (nov-2022); años transcurridos reales
 # (no asumimos espaciado uniforme entre ediciones).
@@ -108,7 +108,11 @@ def load_all_editions() -> pd.DataFrame:
 def ols_fit(x: np.ndarray, y: np.ndarray):
     """Regresión lineal simple con error estándar de predicción.
     Devuelve dict con pendiente, intercepto, r2 y una función predict(x0)
-    -> (y_hat, intervalo_95)."""
+    -> (y_hat, intervalo_95).
+    Usa distribución t de Student (no z=1.96) para intervalos de predicción
+    correctos con n pequeño."""
+    from scipy.stats import t as t_dist
+
     n = len(x)
     x_mean, y_mean = x.mean(), y.mean()
     sxx = np.sum((x - x_mean) ** 2)
@@ -127,15 +131,17 @@ def ols_fit(x: np.ndarray, y: np.ndarray):
     ss_tot = np.sum((y - y_mean) ** 2)
     r2 = 1 - ss_res / ss_tot if ss_tot > 0 else 0.0
 
+    # t de Student bilateral 95 %, correcto para n pequeño (n=5 → df=3 → t≈3.18)
+    dof = max(n - 2, 1)
+    t_crit = float(t_dist.ppf(0.975, df=dof))
+
     def predict(x0: float):
         y0 = intercept + slope * x0
         if sxx == 0 or n < 3:
             se = resid_se
         else:
             se = resid_se * np.sqrt(1 + 1 / n + (x0 - x_mean) ** 2 / sxx)
-        # ~95% con z=1.96 (aproximación normal; n es pequeño, se trata
-        # como una banda indicativa, no una garantía formal).
-        return max(y0, 0.0), 1.96 * se
+        return max(y0, 0.0), t_crit * se
 
     return {
         "slope_per_year": round(float(slope), 3),

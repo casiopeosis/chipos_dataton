@@ -114,17 +114,17 @@
       "tendencia_percentil": 0.6,
       "tendencia_r2": 0.943,
       "proyeccion": {
-        "1": {
-          "estimado": 110.2,
-          "banda_95": 2.8
-        },
         "3": {
           "estimado": 115.2,
-          "banda_95": 3.9
+          "banda_95": 6.3
         },
         "5": {
           "estimado": 120.3,
-          "banda_95": 5.2
+          "banda_95": 8.4
+        },
+        "7": {
+          "estimado": 125.3,
+          "banda_95": 10.5
         }
       },
       "validacion_retrospectiva": [
@@ -181,17 +181,17 @@
       "tendencia_percentil": 0.13,
       "tendencia_r2": 0.63,
       "proyeccion": {
-        "1": {
-          "estimado": 3.8,
-          "banda_95": 4.4
-        },
         "3": {
           "estimado": 1.2,
-          "banda_95": 6.1
+          "banda_95": 10.0
         },
         "5": {
           "estimado": 0.0,
-          "banda_95": 8.1
+          "banda_95": 13.1
+        },
+        "7": {
+          "estimado": 0.0,
+          "banda_95": 16.5
         }
       },
       "validacion_retrospectiva": [
@@ -248,17 +248,17 @@
       "tendencia_percentil": 0.33,
       "tendencia_r2": 0.048,
       "proyeccion": {
-        "1": {
-          "estimado": 188.7,
-          "banda_95": 15.5
-        },
         "3": {
           "estimado": 190.2,
-          "banda_95": 21.4
+          "banda_95": 34.8
         },
         "5": {
           "estimado": 191.7,
-          "banda_95": 28.3
+          "banda_95": 45.9
+        },
+        "7": {
+          "estimado": 193.3,
+          "banda_95": 57.6
         }
       },
       "validacion_retrospectiva": [
@@ -315,17 +315,17 @@
       "tendencia_percentil": 0.07,
       "tendencia_r2": 0.604,
       "proyeccion": {
-        "1": {
-          "estimado": 14.9,
-          "banda_95": 6.1
-        },
         "3": {
           "estimado": 11.6,
-          "banda_95": 8.4
+          "banda_95": 13.7
         },
         "5": {
           "estimado": 8.3,
-          "banda_95": 11.1
+          "banda_95": 18.1
+        },
+        "7": {
+          "estimado": 5.0,
+          "banda_95": 22.7
         }
       },
       "validacion_retrospectiva": [
@@ -382,17 +382,17 @@
       "tendencia_percentil": 0.47,
       "tendencia_r2": 0.575,
       "proyeccion": {
-        "1": {
-          "estimado": 202.0,
-          "banda_95": 5.4
-        },
         "3": {
           "estimado": 204.8,
-          "banda_95": 7.6
+          "banda_95": 12.3
         },
         "5": {
           "estimado": 207.6,
-          "banda_95": 10.0
+          "banda_95": 16.2
+        },
+        "7": {
+          "estimado": 210.4,
+          "banda_95": 20.3
         }
       },
       "validacion_retrospectiva": [
@@ -449,17 +449,17 @@
       "tendencia_percentil": 0.27,
       "tendencia_r2": 0.856,
       "proyeccion": {
-        "1": {
-          "estimado": 22.2,
-          "banda_95": 1.3
-        },
         "3": {
           "estimado": 20.8,
-          "banda_95": 1.8
+          "banda_95": 2.9
         },
         "5": {
           "estimado": 19.4,
-          "banda_95": 2.3
+          "banda_95": 3.8
+        },
+        "7": {
+          "estimado": 18.0,
+          "banda_95": 4.7
         }
       },
       "validacion_retrospectiva": [
@@ -516,17 +516,17 @@
       "tendencia_percentil": 0.53,
       "tendencia_r2": 0.464,
       "proyeccion": {
-        "1": {
-          "estimado": 83.5,
-          "banda_95": 7.1
-        },
         "3": {
           "estimado": 86.4,
-          "banda_95": 9.8
+          "banda_95": 15.9
         },
         "5": {
           "estimado": 89.3,
-          "banda_95": 12.9
+          "banda_95": 21.0
+        },
+        "7": {
+          "estimado": 92.2,
+          "banda_95": 26.4
         }
       },
       "validacion_retrospectiva": [
@@ -583,17 +583,17 @@
       "tendencia_percentil": 0.2,
       "tendencia_r2": 0.772,
       "proyeccion": {
-        "1": {
-          "estimado": 3.3,
-          "banda_95": 2.6
-        },
         "3": {
           "estimado": 1.2,
-          "banda_95": 3.7
+          "banda_95": 5.9
         },
         "5": {
           "estimado": 0.0,
-          "banda_95": 4.8
+          "banda_95": 7.8
+        },
+        "7": {
+          "estimado": 0.0,
+          "banda_95": 9.8
         }
       },
       "validacion_retrospectiva": [
@@ -650,17 +650,17 @@
       "tendencia_percentil": 0.93,
       "tendencia_r2": 0.908,
       "proyeccion": {
-        "1": {
-          "estimado": 228.2,
-          "banda_95": 10.5
-        },
         "3": {
           "estimado": 242.8,
-          "banda_95": 14.5
+          "banda_95": 23.6
         },
         "5": {
           "estimado": 257.3,
-          "banda_95": 19.1
+          "banda_95": 31.1
+        },
+        "7": {
+          "estimado": 271.9,
+          "banda_95": 39.0
         }
       },
       "validacion_retrospectiva": [
@@ -717,17 +717,17 @@
       "tendencia_percentil": 0.0,
       "tendencia_r2": 0.772,
       "proyeccion": {
-        "1": {
-          "estimado": 4.2,
-          "banda_95": 4.4
-        },
         "3": {
           "estimado": 0.6,
-          "banda_95": 6.1
+          "banda_95": 9.9
         },
         "5": {
           "estimado": 0.0,
-          "banda_95": 8.0
+          "banda_95": 13.0
+        },
+        "7": {
+          "estimado": 0.0,
+          "banda_95": 16.4
         }
       },
       "validacion_retrospectiva": [
@@ -784,17 +784,17 @@
       "tendencia_percentil": 1.0,
       "tendencia_r2": 0.906,
       "proyeccion": {
-        "1": {
-          "estimado": 412.3,
-          "banda_95": 20.5
-        },
         "3": {
           "estimado": 440.3,
-          "banda_95": 28.4
+          "banda_95": 46.1
         },
         "5": {
           "estimado": 468.4,
-          "banda_95": 37.4
+          "banda_95": 60.8
+        },
+        "7": {
+          "estimado": 496.4,
+          "banda_95": 76.2
         }
       },
       "validacion_retrospectiva": [
@@ -851,17 +851,17 @@
       "tendencia_percentil": 0.4,
       "tendencia_r2": 0.772,
       "proyeccion": {
-        "1": {
-          "estimado": 24.4,
-          "banda_95": 0.9
-        },
         "3": {
           "estimado": 23.7,
-          "banda_95": 1.2
+          "banda_95": 2.0
         },
         "5": {
           "estimado": 23.0,
-          "banda_95": 1.6
+          "banda_95": 2.6
+        },
+        "7": {
+          "estimado": 22.3,
+          "banda_95": 3.3
         }
       },
       "validacion_retrospectiva": [
@@ -918,17 +918,17 @@
       "tendencia_percentil": 0.8,
       "tendencia_r2": 0.79,
       "proyeccion": {
-        "1": {
-          "estimado": 144.9,
-          "banda_95": 13.1
-        },
         "3": {
           "estimado": 156.1,
-          "banda_95": 18.1
+          "banda_95": 29.4
         },
         "5": {
           "estimado": 167.2,
-          "banda_95": 23.9
+          "banda_95": 38.8
+        },
+        "7": {
+          "estimado": 178.4,
+          "banda_95": 48.7
         }
       },
       "validacion_retrospectiva": [
@@ -985,17 +985,17 @@
       "tendencia_percentil": 0.6,
       "tendencia_r2": 0.772,
       "proyeccion": {
-        "1": {
-          "estimado": 6.6,
-          "banda_95": 0.9
-        },
         "3": {
           "estimado": 7.3,
-          "banda_95": 1.2
+          "banda_95": 2.0
         },
         "5": {
           "estimado": 8.0,
-          "banda_95": 1.6
+          "banda_95": 2.6
+        },
+        "7": {
+          "estimado": 8.7,
+          "banda_95": 3.3
         }
       },
       "validacion_retrospectiva": [
@@ -1052,17 +1052,17 @@
       "tendencia_percentil": 0.4,
       "tendencia_r2": 0.152,
       "proyeccion": {
-        "1": {
-          "estimado": 543.7,
-          "banda_95": 14.7
-        },
         "3": {
           "estimado": 546.4,
-          "banda_95": 20.3
+          "banda_95": 33.0
         },
         "5": {
           "estimado": 549.2,
-          "banda_95": 26.8
+          "banda_95": 43.5
+        },
+        "7": {
+          "estimado": 551.9,
+          "banda_95": 54.6
         }
       },
       "validacion_retrospectiva": [
@@ -1119,17 +1119,17 @@
       "tendencia_percentil": 1.0,
       "tendencia_r2": 0.86,
       "proyeccion": {
-        "1": {
-          "estimado": 39.8,
-          "banda_95": 3.8
-        },
         "3": {
           "estimado": 44.0,
-          "banda_95": 5.3
+          "banda_95": 8.6
         },
         "5": {
           "estimado": 48.2,
-          "banda_95": 7.0
+          "banda_95": 11.3
+        },
+        "7": {
+          "estimado": 52.3,
+          "banda_95": 14.2
         }
       },
       "validacion_retrospectiva": [
@@ -1186,17 +1186,17 @@
       "tendencia_percentil": 0.73,
       "tendencia_r2": 0.98,
       "proyeccion": {
-        "1": {
-          "estimado": 91.6,
-          "banda_95": 1.9
-        },
         "3": {
           "estimado": 97.5,
-          "banda_95": 2.6
+          "banda_95": 4.3
         },
         "5": {
           "estimado": 103.4,
-          "banda_95": 3.5
+          "banda_95": 5.7
+        },
+        "7": {
+          "estimado": 109.3,
+          "banda_95": 7.1
         }
       },
       "validacion_retrospectiva": [
@@ -1253,15 +1253,15 @@
       "tendencia_percentil": 0.53,
       "tendencia_r2": 0.0,
       "proyeccion": {
-        "1": {
-          "estimado": 9.0,
-          "banda_95": 0.0
-        },
         "3": {
           "estimado": 9.0,
           "banda_95": 0.0
         },
         "5": {
+          "estimado": 9.0,
+          "banda_95": 0.0
+        },
+        "7": {
           "estimado": 9.0,
           "banda_95": 0.0
         }
@@ -1320,17 +1320,17 @@
       "tendencia_percentil": 0.87,
       "tendencia_r2": 0.977,
       "proyeccion": {
-        "1": {
-          "estimado": 161.8,
-          "banda_95": 4.1
-        },
         "3": {
           "estimado": 173.7,
-          "banda_95": 5.7
+          "banda_95": 9.2
         },
         "5": {
           "estimado": 185.5,
-          "banda_95": 7.5
+          "banda_95": 12.2
+        },
+        "7": {
+          "estimado": 197.4,
+          "banda_95": 15.3
         }
       },
       "validacion_retrospectiva": [
@@ -1387,17 +1387,17 @@
       "tendencia_percentil": 0.8,
       "tendencia_r2": 0.772,
       "proyeccion": {
-        "1": {
-          "estimado": 12.7,
-          "banda_95": 2.6
-        },
         "3": {
           "estimado": 14.8,
-          "banda_95": 3.7
+          "banda_95": 5.9
         },
         "5": {
           "estimado": 17.0,
-          "banda_95": 4.8
+          "banda_95": 7.8
+        },
+        "7": {
+          "estimado": 19.1,
+          "banda_95": 9.8
         }
       },
       "validacion_retrospectiva": [
@@ -1454,17 +1454,17 @@
       "tendencia_percentil": 0.13,
       "tendencia_r2": 0.603,
       "proyeccion": {
-        "1": {
-          "estimado": 43.2,
-          "banda_95": 7.1
-        },
         "3": {
           "estimado": 39.3,
-          "banda_95": 9.9
+          "banda_95": 16.0
         },
         "5": {
           "estimado": 35.5,
-          "banda_95": 13.0
+          "banda_95": 21.1
+        },
+        "7": {
+          "estimado": 31.6,
+          "banda_95": 26.5
         }
       },
       "validacion_retrospectiva": [
@@ -1521,17 +1521,17 @@
       "tendencia_percentil": 0.73,
       "tendencia_r2": 0.86,
       "proyeccion": {
-        "1": {
-          "estimado": 7.4,
-          "banda_95": 1.9
-        },
         "3": {
           "estimado": 9.5,
-          "banda_95": 2.6
+          "banda_95": 4.3
         },
         "5": {
           "estimado": 11.6,
-          "banda_95": 3.5
+          "banda_95": 5.7
+        },
+        "7": {
+          "estimado": 13.7,
+          "banda_95": 7.1
         }
       },
       "validacion_retrospectiva": [
@@ -1588,17 +1588,17 @@
       "tendencia_percentil": 0.07,
       "tendencia_r2": 0.509,
       "proyeccion": {
-        "1": {
-          "estimado": 210.2,
-          "banda_95": 34.0
-        },
         "3": {
           "estimado": 194.9,
-          "banda_95": 47.1
+          "banda_95": 76.5
         },
         "5": {
           "estimado": 179.7,
-          "banda_95": 62.1
+          "banda_95": 100.8
+        },
+        "7": {
+          "estimado": 164.4,
+          "banda_95": 126.5
         }
       },
       "validacion_retrospectiva": [
@@ -1655,17 +1655,17 @@
       "tendencia_percentil": 0.67,
       "tendencia_r2": 0.308,
       "proyeccion": {
-        "1": {
-          "estimado": 21.1,
-          "banda_95": 2.8
-        },
         "3": {
           "estimado": 21.9,
-          "banda_95": 3.9
+          "banda_95": 6.3
         },
         "5": {
           "estimado": 22.8,
-          "banda_95": 5.1
+          "banda_95": 8.3
+        },
+        "7": {
+          "estimado": 23.6,
+          "banda_95": 10.4
         }
       },
       "validacion_retrospectiva": [
@@ -1722,17 +1722,17 @@
       "tendencia_percentil": 0.0,
       "tendencia_r2": 0.724,
       "proyeccion": {
-        "1": {
-          "estimado": 124.4,
-          "banda_95": 23.4
-        },
         "3": {
           "estimado": 107.7,
-          "banda_95": 32.4
+          "banda_95": 52.6
         },
         "5": {
           "estimado": 91.0,
-          "banda_95": 42.8
+          "banda_95": 69.4
+        },
+        "7": {
+          "estimado": 74.3,
+          "banda_95": 87.1
         }
       },
       "validacion_retrospectiva": [
@@ -1789,17 +1789,17 @@
       "tendencia_percentil": 0.4,
       "tendencia_r2": 0.772,
       "proyeccion": {
-        "1": {
-          "estimado": 9.4,
-          "banda_95": 0.9
-        },
         "3": {
           "estimado": 8.7,
-          "banda_95": 1.2
+          "banda_95": 2.0
         },
         "5": {
           "estimado": 8.0,
-          "banda_95": 1.6
+          "banda_95": 2.6
+        },
+        "7": {
+          "estimado": 7.3,
+          "banda_95": 3.3
         }
       },
       "validacion_retrospectiva": [
@@ -1856,17 +1856,17 @@
       "tendencia_percentil": 0.2,
       "tendencia_r2": 0.344,
       "proyeccion": {
-        "1": {
-          "estimado": 116.7,
-          "banda_95": 11.8
-        },
         "3": {
           "estimado": 113.0,
-          "banda_95": 16.3
+          "banda_95": 26.5
         },
         "5": {
           "estimado": 109.2,
-          "banda_95": 21.5
+          "banda_95": 34.9
+        },
+        "7": {
+          "estimado": 105.5,
+          "banda_95": 43.8
         }
       },
       "validacion_retrospectiva": [
@@ -1923,17 +1923,17 @@
       "tendencia_percentil": 0.87,
       "tendencia_r2": 0.772,
       "proyeccion": {
-        "1": {
-          "estimado": 12.2,
-          "banda_95": 3.5
-        },
         "3": {
           "estimado": 15.1,
-          "banda_95": 4.9
+          "banda_95": 7.9
         },
         "5": {
           "estimado": 17.9,
-          "banda_95": 6.4
+          "banda_95": 10.4
+        },
+        "7": {
+          "estimado": 20.8,
+          "banda_95": 13.1
         }
       },
       "validacion_retrospectiva": [
@@ -1990,17 +1990,17 @@
       "tendencia_percentil": 0.27,
       "tendencia_r2": 0.121,
       "proyeccion": {
-        "1": {
-          "estimado": 145.3,
-          "banda_95": 13.0
-        },
         "3": {
           "estimado": 143.2,
-          "banda_95": 18.1
+          "banda_95": 29.4
         },
         "5": {
           "estimado": 141.0,
-          "banda_95": 23.9
+          "banda_95": 38.7
+        },
+        "7": {
+          "estimado": 138.9,
+          "banda_95": 48.6
         }
       },
       "validacion_retrospectiva": [
@@ -2057,17 +2057,17 @@
       "tendencia_percentil": 0.33,
       "tendencia_r2": 0.495,
       "proyeccion": {
-        "1": {
-          "estimado": 18.3,
-          "banda_95": 2.1
-        },
         "3": {
           "estimado": 17.4,
-          "banda_95": 3.0
+          "banda_95": 4.8
         },
         "5": {
           "estimado": 16.5,
-          "banda_95": 3.9
+          "banda_95": 6.3
+        },
+        "7": {
+          "estimado": 15.5,
+          "banda_95": 7.9
         }
       },
       "validacion_retrospectiva": [
@@ -2124,17 +2124,17 @@
       "tendencia_percentil": 0.6,
       "tendencia_r2": 0.222,
       "proyeccion": {
-        "1": {
-          "estimado": 222.2,
-          "banda_95": 21.4
-        },
         "3": {
           "estimado": 227.2,
-          "banda_95": 29.7
+          "banda_95": 48.2
         },
         "5": {
           "estimado": 232.3,
-          "banda_95": 39.1
+          "banda_95": 63.6
+        },
+        "7": {
+          "estimado": 237.3,
+          "banda_95": 79.7
         }
       },
       "validacion_retrospectiva": [
@@ -2191,17 +2191,17 @@
       "tendencia_percentil": 0.93,
       "tendencia_r2": 0.82,
       "proyeccion": {
-        "1": {
-          "estimado": 24.8,
-          "banda_95": 4.1
-        },
         "3": {
           "estimado": 28.7,
-          "banda_95": 5.7
+          "banda_95": 9.2
         },
         "5": {
           "estimado": 32.5,
-          "banda_95": 7.5
+          "banda_95": 12.2
+        },
+        "7": {
+          "estimado": 36.4,
+          "banda_95": 15.3
         }
       },
       "validacion_retrospectiva": [
