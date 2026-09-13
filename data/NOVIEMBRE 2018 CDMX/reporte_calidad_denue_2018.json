@@ -1,0 +1,159 @@
+{
+  "fuente": {
+    "archivo": "denue_09_1118_shp.zip",
+    "archivo_dbf": "conjunto_de_datos/denue_inegi_09_.dbf",
+    "sha256_archivo_entrada": "e70872bb70ddefc6c08fd001d08a5c3e8c947021622ca61dae9fd141b7555cb8",
+    "institucion": "INEGI",
+    "producto": "DENUE",
+    "entidad": "Ciudad de México",
+    "anio_datos": 2020,
+    "mes_corte": 11,
+    "edicion": "2020-11",
+    "nota_temporal": "La edición es una fotografía del DENUE a noviembre de 2021. La fecha_alta_denue indica incorporación al directorio, no una fecha de apertura confirmada."
+  },
+  "lectura_dbf": {
+    "total_registros_declarados": 471957,
+    "longitud_registro": 3637,
+    "numero_campos": 41,
+    "campos": [
+      "id",
+      "nom_estab",
+      "raz_social",
+      "codigo_act",
+      "nombre_act",
+      "per_ocu",
+      "tipo_vial",
+      "nom_vial",
+      "tipo_v_e_1",
+      "nom_v_e_1",
+      "tipo_v_e_2",
+      "nom_v_e_2",
+      "tipo_v_e_3",
+      "nom_v_e_3",
+      "numero_ext",
+      "letra_ext",
+      "edificio",
+      "edificio_e",
+      "numero_int",
+      "letra_int",
+      "tipo_asent",
+      "nomb_asent",
+      "tipoCenCom",
+      "nom_CenCom",
+      "num_local",
+      "cod_postal",
+      "cve_ent",
+      "entidad",
+      "cve_mun",
+      "municipio",
+      "cve_loc",
+      "localidad",
+      "ageb",
+      "manzana",
+      "telefono",
+      "correoelec",
+      "www",
+      "tipoUniEco",
+      "latitud",
+      "longitud",
+      "fecha_alta"
+    ],
+    "registros_marcados_eliminados": 0
+  },
+  "reglas_principales": {
+    "scian_deporte": [
+      "713941",
+      "713942",
+      "713943",
+      "713944"
+    ],
+    "scian_adultos_mayores_y_discapacidad": [
+      "623311",
+      "623312",
+      "624121",
+      "624122"
+    ],
+    "terminos_adulto_mayor": [
+      "ADULTO MAYOR",
+      "ADULTOS MAYORES",
+      "ADULTA MAYOR",
+      "ADULTAS MAYORES",
+      "TERCERA EDAD",
+      "PERSONA MAYOR",
+      "PERSONAS MAYORES",
+      "ANCIANO",
+      "ANCIANOS",
+      "INAPAM",
+      "GERIATR",
+      "GERONTOLOG"
+    ],
+    "entidad_requerida": "09",
+    "rango_latitud": [
+      19.0,
+      19.7
+    ],
+    "rango_longitud": [
+      -99.4,
+      -98.8
+    ],
+    "duplicados": "Se elimina solo un ID DENUE repetido. Coincidencias de nombre y coordenadas se conservan y se marcan para revisión."
+  },
+  "resultados": {
+    "registros_maestros": 2535,
+    "oferta_deportiva": 2270,
+    "gimnasios_y_acondicionamiento": 2130,
+    "clubes_deportivos": 140,
+    "servicios_adulto_mayor": 267,
+    "interseccion_deporte_y_adulto_mayor": 2,
+    "mencion_explicita_adulto_mayor": 175,
+    "registros_rechazados": 0,
+    "registros_para_revision_manual": 125,
+    "posibles_duplicados_nombre_coordenadas": 2,
+    "codigo_postal_faltante_o_invalido": 51,
+    "conteo_deporte_por_scian": {
+      "713941": 121,
+      "713942": 19,
+      "713943": 1955,
+      "713944": 175
+    },
+    "conteo_adulto_mayor_por_scian_directo": {
+      "623311": 79,
+      "623312": 8,
+      "624121": 29,
+      "624122": 78
+    },
+    "conteo_deporte_por_alcaldia": {
+      "Azcapotzalco": 77,
+      "Benito JuÃ¡rez": 133,
+      "CoyoacÃ¡n": 165,
+      "Cuajimalpa de Morelos": 60,
+      "CuauhtÃ©moc": 164,
+      "Gustavo A. Madero": 298,
+      "Iztacalco": 87,
+      "Iztapalapa": 388,
+      "La Magdalena Contreras": 61,
+      "Miguel Hidalgo": 123,
+      "Milpa Alta": 43,
+      "Tlalpan": 173,
+      "TlÃ¡huac": 132,
+      "Venustiano Carranza": 102,
+      "Xochimilco": 134,
+      "Ã�lvaro ObregÃ³n": 130
+    }
+  },
+  "limitaciones": [
+    "El DENUE mide oferta de establecimientos; no contiene edades de clientes ni población residente.",
+    "Una mención por palabra clave requiere revisión manual y puede contener falsos positivos.",
+    "Los códigos 623311, 623312, 624121 y 624122 incluyen atención a ancianos y a personas con discapacidad.",
+    "Una sola edición 2021 no permite medir aperturas y cierres históricos de forma confiable.",
+    "Para estimar demanda de personas de 60 años o más se debe unir el Censo 2020 por clave_ageb y agregar otras ediciones DENUE."
+  ],
+  "archivos_generados": [
+    "denue_enfoque_gimnasios_adultos_mayores_cdmx_2020.csv",
+    "denue_oferta_deportiva_cdmx_2020.csv",
+    "denue_servicios_adultos_mayores_cdmx_2020.csv",
+    "registros_rechazados_denue_2020.csv",
+    "denue_enfoque_cdmx_2020.geojson",
+    "reporte_calidad_denue_2020.json"
+  ]
+}
