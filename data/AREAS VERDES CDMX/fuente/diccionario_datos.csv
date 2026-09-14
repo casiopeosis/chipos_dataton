@@ -1,0 +1,18 @@
+Clave Subsistemas Nacional de Información,Subsistemas Nacionales de Información,"                                            Nombre de la base y/o conjunto de datos
+
+","                                                     Nombre de la tabla de la base de datos / hoja del conjunto de datos
+
+",Descripción de capa,Etiqueta del campo o variable ,Descripció de Campo,"Tipo de dato
+",Rango o valores que permite el campo,"Clasificación de la información
+","Especificaciones y/o reglas de cálculo
+ 
+","Obligatoriedad del campo
+ 
+","Registro de campos vacíos 
+ 
+","Tipo de archivo:
+"
+03,Fauna y Flora,inventario_areas_verdes_1,Inventario de áreas verdes de la CDMX,"Capa de información geoespacial del Inventario de Áreas Verdes para Ciudad de México, para la proyección y ejecución de acciones que permitan visualizar el manejo, distribución y creación de áreas verdes por categorías y subcategorías de gestión.",ID,IDENTIFICADOR ,Número entero ,Número consecutivo,Pública,,Obligatorio,Sin datos vacios,Shape file (.shp)
+03,Fauna y Flora,inventario_areas_verdes_1,Inventario de áreas verdes de la CDMX,"Capa de información geoespacial del Inventario de Áreas Verdes para Ciudad de México, para la proyección y ejecución de acciones que permitan visualizar el manejo, distribución y creación de áreas verdes por categorías y subcategorías de gestión.",nombre,NOMBRE,Alfanumerico,Texto,Pública,,Obligatorio,Con datos vacios,Shape file (.shp)
+03,Fauna y Flora,inventario_areas_verdes_1,Inventario de áreas verdes de la CDMX,"Capa de información geoespacial del Inventario de Áreas Verdes para Ciudad de México, para la proyección y ejecución de acciones que permitan visualizar el manejo, distribución y creación de áreas verdes por categorías y subcategorías de gestión.",categoria_,CATEGORÍA,Alfanumerico,Texto,Pública,,Obligatorio,Sin datos vacios,Shape file (.shp)
+03,Fauna y Flora,inventario_areas_verdes_1,Inventario de áreas verdes de la CDMX,"Capa de información geoespacial del Inventario de Áreas Verdes para Ciudad de México, para la proyección y ejecución de acciones que permitan visualizar el manejo, distribución y creación de áreas verdes por categorías y subcategorías de gestión.",subcat_sed,SUBCATECORÍA,Alfanumerico,Texto,Pública,,Obligatorio,Con datos vacios,Shape file (.shp)
