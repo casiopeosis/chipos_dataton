@@ -1,0 +1,6 @@
+campo,descripcion,tipo,ejemplo
+id_espacio_publico,Identificador único generado para cada componente geométrico válido del espacio público.,Texto,EP000001
+id_fuente,Identificador original de la fuente. El shapefile original contiene un único registro con Id = 1.,Entero,1
+parte_original,Número de la parte geométrica dentro del único registro multiparte del shapefile original.,Entero,1
+area_m2,"Superficie calculada del componente geométrico en metros cuadrados, usando el CRS original WGS 84 / UTM Zone 14N.",Decimal,23794.97
+area_ha,Superficie calculada del componente geométrico en hectáreas.,Decimal,2.3795
