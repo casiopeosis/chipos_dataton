@@ -9,6 +9,8 @@ Cruzar la evolución demográfica de la CDMX (envejecimiento de la población, l
 - Áreas verdes y equipamiento comunitario
 - Servicios para personas adultas mayores
 - Gimnasios y espacios deportivos
+- Primera infancia, niñez y adolescencia
+- Servicios de salud
 
 ## Enfoque metodológico
 
