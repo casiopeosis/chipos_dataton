@@ -1,0 +1,68 @@
+{
+  "fuente": {
+    "base": "Inventario de Áreas Verdes de la Ciudad de México",
+    "edicion": "2021",
+    "entidad": "Ciudad de México",
+    "registros_fuente": 11739
+  },
+  "depuracion": {
+    "registros_conservados": 11739,
+    "registros_eliminados": 0,
+    "categorias_fuente": 11,
+    "conteo_por_categoria_fuente": {
+      "Áreas verdes complementarias o ligadas a la red vial": 5776,
+      "Áreas verdes urbanas fragmentadas": 312,
+      "Equipamientos urbanos con vegetación": 3653,
+      "Parques, arboledas y alamedas": 1538,
+      "Áreas con vegetación reminisciente": 68,
+      "Áreas con categoría de protección": 31,
+      "Plazas y jardines": 315,
+      "Forestación urbana": 4,
+      "Áreas verdes con estructura urbana": 36,
+      "Áreas con características de protección": 1,
+      "Vivero": 5
+    },
+    "conteo_por_tipo_analitico": {
+      "cobertura_verde_vial": 5753,
+      "revisar": 595,
+      "vegetacion_en_equipamiento": 3258,
+      "oferta_verde_recreativa": 1849,
+      "proteccion_ecologica": 72,
+      "cobertura_verde_no_recreativa": 45,
+      "cobertura_verde_fragmentada": 167
+    },
+    "registros_usados_como_cobertura_verde": 11539,
+    "registros_usados_como_oferta_recreativa": 1849
+  },
+  "calidad": {
+    "ids_unicos": 11739,
+    "ids_duplicados": 0,
+    "registros_sin_nombre_util": 6113,
+    "registros_sin_subcategoria": 47,
+    "registros_para_revision_manual": 595,
+    "registros_sin_geometria": 56,
+    "conteo_por_tipo_geometria": {
+      "Polygon": 10601,
+      "MultiPolygon": 1082,
+      "SIN_GEOMETRIA": 56
+    },
+    "registros_con_area_calculada": 11683,
+    "registros_sin_area_por_falta_geometria": 56,
+    "area_minima_m2": 2.26,
+    "area_maxima_m2": 2478293.69,
+    "superficie_total_m2": 67360004.02,
+    "superficie_total_ha": 6736.0,
+    "bbox_longitud_latitud": [
+      -99.33219120969677,
+      19.172257546621676,
+      -98.94234596746107,
+      19.569836219679615
+    ]
+  },
+  "notas": [
+    "Los 56 registros sin geometría se conservan porque existen como registros en la fuente oficial.",
+    "Los mismos 56 registros carecen de partes y puntos utilizables en el Shapefile oficial.",
+    "El área se reporta como null cuando no existe geometría; no se interpreta como cero.",
+    "Las categorías analíticas derivadas se documentan en criterios_areas_verdes.csv."
+  ]
+}

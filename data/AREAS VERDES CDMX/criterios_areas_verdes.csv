@@ -1,0 +1,43 @@
+categoria_fuente,subcategoria_fuente,tipo_analitico,usar_cobertura_verde,usar_oferta_recreativa,revision_manual,motivo
+"Parques, arboledas y alamedas",Parques,oferta_verde_recreativa,SI,SI,NO,Parque destinado al uso recreativo de la población
+"Parques, arboledas y alamedas",Arboledas,oferta_verde_recreativa,SI,SI,NO,Espacio arbolado con potencial de uso recreativo
+"Parques, arboledas y alamedas",Alamedas,oferta_verde_recreativa,SI,SI,NO,Espacio arbolado de uso público y recreativo
+"Parques, arboledas y alamedas",Plazas,oferta_verde_recreativa,SI,SI,NO,Espacio público con función recreativa
+"Parques, arboledas y alamedas",Jardines públicos,oferta_verde_recreativa,SI,SI,NO,Jardín de acceso público
+"Parques, arboledas y alamedas",Camellones centrales y laterales,cobertura_verde_vial,SI,NO,NO,Vegetación asociada a infraestructura vial
+"Parques, arboledas y alamedas",,revisar,SI,NO,SI,Registro sin subcategoría
+Plazas y jardines,Plazas,oferta_verde_recreativa,SI,SI,NO,Espacio público con función recreativa
+Plazas y jardines,Jardines públicos,oferta_verde_recreativa,SI,SI,NO,Jardín de acceso público
+Plazas y jardines,Parques,oferta_verde_recreativa,SI,SI,NO,Parque destinado al uso recreativo de la población
+Áreas verdes complementarias o ligadas a la red vial,Camellones centrales y laterales,cobertura_verde_vial,SI,NO,NO,Vegetación asociada a camellones de infraestructura vial
+Áreas verdes complementarias o ligadas a la red vial,"Veg. Arbórea, arbustiva y herbácea de glorietas",cobertura_verde_vial,SI,NO,NO,Vegetación asociada a glorietas viales
+Áreas verdes complementarias o ligadas a la red vial,Vialidades,cobertura_verde_vial,SI,NO,NO,Vegetación asociada a infraestructura vial
+Áreas verdes complementarias o ligadas a la red vial,Canales,revisar,NO,NO,SI,No se asume que la superficie del canal constituye cobertura verde
+Áreas verdes complementarias o ligadas a la red vial,,revisar,NO,NO,SI,Registro sin subcategoría
+Áreas verdes complementarias o ligadas a la red vial,Plazas,revisar,NO,NO,SI,La subcategoría sugiere espacio recreativo pero aparece dentro de una categoría vial
+Equipamientos urbanos con vegetación,Instituciones académicas públicas,vegetacion_en_equipamiento,SI,NO,NO,Vegetación asociada a instituciones educativas; no se asume acceso recreativo público
+Equipamientos urbanos con vegetación,Unidades habitacionales,vegetacion_en_equipamiento,SI,NO,NO,Vegetación asociada a vivienda; el acceso puede estar restringido a residentes
+Equipamientos urbanos con vegetación,Asistencia Social con vegetación CDMX,vegetacion_en_equipamiento,SI,NO,NO,Vegetación asociada a equipamiento de asistencia social; no se asume acceso recreativo
+Equipamientos urbanos con vegetación,Deportivos,revisar,SI,NO,SI,Puede representar oferta recreativa pero requiere verificar acceso y evitar duplicidad con otras fuentes deportivas
+Equipamientos urbanos con vegetación,Panteones,vegetacion_en_equipamiento,SI,NO,NO,Vegetación asociada a panteones; no se considera oferta verde recreativa
+Equipamientos urbanos con vegetación,Instituciones académicas privadas,vegetacion_en_equipamiento,SI,NO,NO,Vegetación asociada a instituciones educativas privadas; acceso restringido
+Equipamientos urbanos con vegetación,Instituciones de salud pub/priv,vegetacion_en_equipamiento,SI,NO,NO,Vegetación asociada a instituciones de salud; no se asume acceso recreativo
+Equipamientos urbanos con vegetación,,revisar,NO,NO,SI,Registro sin subcategoría
+Equipamientos urbanos con vegetación,Jardines públicos,revisar,SI,NO,SI,La subcategoría sugiere oferta recreativa pero aparece dentro de equipamiento urbano y requiere revisión
+Áreas verdes urbanas fragmentadas,Jardineras públicas y privadas,cobertura_verde_fragmentada,SI,NO,NO,Vegetación urbana fragmentada; puede ser pública o privada y no se asume uso recreativo
+Áreas verdes urbanas fragmentadas,Terrenos baldíos,revisar,NO,NO,SI,Un terreno baldío no se considera automáticamente cobertura verde útil ni oferta recreativa
+Áreas verdes urbanas fragmentadas,Canales,revisar,NO,NO,SI,No se asume que la superficie del canal constituye cobertura verde utilizable
+Áreas verdes urbanas fragmentadas,Bordos,cobertura_verde_fragmentada,SI,NO,NO,Superficie vegetada fragmentada sin función recreativa asumida
+Áreas verdes urbanas fragmentadas,Parques,revisar,SI,NO,SI,La subcategoría sugiere oferta recreativa pero aparece dentro de áreas verdes urbanas fragmentadas
+Áreas verdes urbanas fragmentadas,Camellones centrales y laterales,cobertura_verde_vial,SI,NO,NO,Vegetación asociada a infraestructura vial
+Áreas con vegetación reminisciente,Depresiones orográficas,proteccion_ecologica,SI,NO,NO,Vegetación remanente asociada a una formación natural; aporta cobertura ecológica pero no se asume uso recreativo
+Áreas con vegetación reminisciente,Colinas,proteccion_ecologica,SI,NO,NO,Vegetación remanente asociada a colinas; aporta cobertura ecológica pero no se asume uso recreativo
+Áreas con vegetación reminisciente,Cerros,proteccion_ecologica,SI,NO,NO,Vegetación remanente asociada a cerros; aporta cobertura ecológica pero no se asume uso recreativo
+Áreas con vegetación reminisciente,Promontorios,proteccion_ecologica,SI,NO,NO,Vegetación remanente asociada a una formación natural; aporta cobertura ecológica pero no se asume uso recreativo
+Áreas con vegetación reminisciente,,revisar,NO,NO,SI,Registro sin subcategoría; no se asigna uso analítico automáticamente
+Áreas con categoría de protección,ANP,proteccion_ecologica,SI,NO,NO,Área Natural Protegida; se considera cobertura de protección ecológica pero no se asume acceso recreativo
+Áreas con categoría de protección,AVA,proteccion_ecologica,SI,NO,NO,Área de Valor Ambiental; se considera cobertura de protección ecológica pero no se asume acceso recreativo
+Áreas con características de protección,Zona de recarga de manto acuíferos,proteccion_ecologica,SI,NO,NO,Zona con función ambiental de recarga; se conserva como cobertura ecológica sin asumir uso recreativo
+Áreas verdes con estructura urbana,Azoteas verdes,cobertura_verde_no_recreativa,SI,NO,NO,Vegetación integrada a estructuras urbanas sin asumir acceso recreativo
+Forestación urbana,,cobertura_verde_no_recreativa,SI,NO,NO,La categoría identifica cobertura de forestación urbana aunque no tenga subcategoría
+Vivero,,cobertura_verde_no_recreativa,SI,NO,NO,Superficie con vegetación destinada a vivero sin asumir acceso recreativo
