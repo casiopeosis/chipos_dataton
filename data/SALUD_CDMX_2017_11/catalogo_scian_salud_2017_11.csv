@@ -1,0 +1,49 @@
+﻿Código SCIAN,Actividad SCIAN encontrada,Subcategoría,Sector,Alcance,Regla de inclusión,Registros,Versión SCIAN declarada,Edición DENUE
+464111,Farmacias sin minisÃºper,Farmacia sin minisúper,No especificado,Complementario,Código SCIAN de farmacia,5656,2013,2017-11
+464112,Farmacias con minisÃºper,Farmacia con minisúper,No especificado,Complementario,Código SCIAN de farmacia,821,2013,2017-11
+621111,Consultorios de medicina general del sector privado,Consultorio de medicina general,Privado,Principal,Prefijo SCIAN 621 o 622,3440,2013,2017-11
+621112,Consultorios de medicina general del sector pÃºblico,Consultorio de medicina general,No especificado,Principal,Prefijo SCIAN 621 o 622,148,2013,2017-11
+621113,Consultorios de medicina especializada del sector privado,Consultorio de medicina especializada,Privado,Principal,Prefijo SCIAN 621 o 622,3664,2013,2017-11
+621114,Consultorios de medicina especializada del sector pÃºblico,Consultorio de medicina especializada,No especificado,Principal,Prefijo SCIAN 621 o 622,17,2013,2017-11
+621115,ClÃ­nicas de consultorios mÃ©dicos del sector privado,Clínica de consultorios médicos,Privado,Principal,Prefijo SCIAN 621 o 622,135,2013,2017-11
+621116,ClÃ­nicas de consultorios mÃ©dicos del sector pÃºblico,Clínica de consultorios médicos,No especificado,Principal,Prefijo SCIAN 621 o 622,146,2013,2017-11
+621211,Consultorios dentales del sector privado,Consultorio dental,Privado,Principal,Prefijo SCIAN 621 o 622,6861,2013,2017-11
+621212,Consultorios dentales del sector pÃºblico,Consultorio dental,No especificado,Principal,Prefijo SCIAN 621 o 622,51,2013,2017-11
+621311,Consultorios de quiroprÃ¡ctica del sector privado,Quiropráctica,Privado,Principal,Prefijo SCIAN 621 o 622,140,2013,2017-11
+621320,Consultorios de optometrÃ­a,Optometría,No especificado,Principal,Prefijo SCIAN 621 o 622,92,2013,2017-11
+621331,Consultorios de psicologÃ­a del sector privado,Psicología,Privado,Principal,Prefijo SCIAN 621 o 622,662,2013,2017-11
+621332,Consultorios de psicologÃ­a del sector pÃºblico,Psicología,No especificado,Principal,Prefijo SCIAN 621 o 622,14,2013,2017-11
+621341,"Consultorios del sector privado de audiologÃ­a y de terapia ocupacional, fÃ­sica y del lenguaje","Audiología y terapia ocupacional, física o del lenguaje",Privado,Principal,Prefijo SCIAN 621 o 622,262,2013,2017-11
+621342,"Consultorios del sector pÃºblico de audiologÃ­a y de terapia ocupacional, fÃ­sica y del lenguaje","Audiología y terapia ocupacional, física o del lenguaje",No especificado,Principal,Prefijo SCIAN 621 o 622,21,2013,2017-11
+621391,Consultorios de nutriÃ³logos y dietistas del sector privado,Nutrición y dietética,Privado,Principal,Prefijo SCIAN 621 o 622,267,2013,2017-11
+621398,Otros consultorios del sector privado para el cuidado de la salud,Otro consultorio para el cuidado de la salud,Privado,Principal,Prefijo SCIAN 621 o 622,1285,2013,2017-11
+621399,Otros consultorios del sector pÃºblico para el cuidado de la salud,Otro consultorio para el cuidado de la salud,No especificado,Principal,Prefijo SCIAN 621 o 622,15,2013,2017-11
+621411,Centros de planificaciÃ³n familiar del sector privado,Centro de planificación familiar,Privado,Principal,Prefijo SCIAN 621 o 622,9,2013,2017-11
+621421,Centros del sector privado de atenciÃ³n mÃ©dica externa para enfermos mentales y adictos,Atención ambulatoria de salud mental y adicciones,Privado,Principal,Prefijo SCIAN 621 o 622,6,2013,2017-11
+621422,Centros del sector pÃºblico de atenciÃ³n mÃ©dica externa para enfermos mentales y adictos,Atención ambulatoria de salud mental y adicciones,No especificado,Principal,Prefijo SCIAN 621 o 622,4,2013,2017-11
+621491,Otros centros del sector privado para la atenciÃ³n de pacientes que no requieren hospitalizaciÃ³n,Otro centro de atención sin hospitalización,Privado,Principal,Prefijo SCIAN 621 o 622,54,2013,2017-11
+621492,Otros centros del sector pÃºblico para la atenciÃ³n de pacientes que no requieren hospitalizaciÃ³n,Otro centro de atención sin hospitalización,No especificado,Principal,Prefijo SCIAN 621 o 622,5,2013,2017-11
+621511,Laboratorios mÃ©dicos y de diagnÃ³stico del sector privado,Laboratorio médico y de diagnóstico,Privado,Principal,Prefijo SCIAN 621 o 622,907,2013,2017-11
+621512,Laboratorios mÃ©dicos y de diagnÃ³stico del sector pÃºblico,Laboratorio médico y de diagnóstico,No especificado,Principal,Prefijo SCIAN 621 o 622,11,2013,2017-11
+621610,Servicios de enfermerÃ­a a domicilio,Enfermería a domicilio,No especificado,Principal,Prefijo SCIAN 621 o 622,26,2013,2017-11
+621910,Servicios de ambulancias,Ambulancias,No especificado,Principal,Prefijo SCIAN 621 o 622,16,2013,2017-11
+621991,"Servicios de bancos de Ã³rganos, bancos de sangre y otros servicios auxiliares al tratamiento mÃ©dico prestados por el sector privado","Banco de sangre, órganos u otro servicio auxiliar",Privado,Principal,Prefijo SCIAN 621 o 622,7,2013,2017-11
+621992,"Servicios de bancos de Ã³rganos, bancos de sangre y otros servicios auxiliares al tratamiento mÃ©dico prestados por el sector pÃºblico","Banco de sangre, órganos u otro servicio auxiliar",No especificado,Principal,Prefijo SCIAN 621 o 622,3,2013,2017-11
+622111,Hospitales generales del sector privado,Hospital general,Privado,Principal,Prefijo SCIAN 621 o 622,159,2013,2017-11
+622112,Hospitales generales del sector pÃºblico,Hospital general,No especificado,Principal,Prefijo SCIAN 621 o 622,184,2013,2017-11
+622211,Hospitales psiquiÃ¡tricos y para el tratamiento por adicciÃ³n del sector privado,Hospital psiquiátrico y de tratamiento de adicciones,Privado,Principal,Prefijo SCIAN 621 o 622,7,2013,2017-11
+622212,Hospitales psiquiÃ¡tricos y para el tratamiento por adicciÃ³n del sector pÃºblico,Hospital psiquiátrico y de tratamiento de adicciones,No especificado,Principal,Prefijo SCIAN 621 o 622,4,2013,2017-11
+622311,Hospitales del sector privado de otras especialidades mÃ©dicas,Hospital de otra especialidad médica,Privado,Principal,Prefijo SCIAN 621 o 622,101,2013,2017-11
+622312,Hospitales del sector pÃºblico de otras especialidades mÃ©dicas,Hospital de otra especialidad médica,No especificado,Principal,Prefijo SCIAN 621 o 622,23,2013,2017-11
+623111,"Residencias del sector privado con cuidados de enfermeras para enfermos convalecientes, en rehabilitaciÃ³n, incurables y terminales",Residencia con cuidados de enfermería,Privado,Complementario,Código SCIAN de residencia o asistencia relacionada,15,2013,2017-11
+623211,Residencias del sector privado para el cuidado de personas con problemas de retardo mental,Residencia para personas con discapacidad intelectual,Privado,Complementario,Código SCIAN de residencia o asistencia relacionada,6,2013,2017-11
+623221,Residencias del sector privado para el cuidado de personas con problemas de trastorno mental y adicciÃ³n,Residencia para salud mental y adicciones,Privado,Complementario,Código SCIAN de residencia o asistencia relacionada,11,2013,2017-11
+623222,Residencias del sector pÃºblico para el cuidado de personas con problemas de trastorno mental y adicciÃ³n,Residencia para salud mental y adicciones,No especificado,Complementario,Código SCIAN de residencia o asistencia relacionada,5,2013,2017-11
+623311,Asilos y otras residencias del sector privado para el cuidado de ancianos,Asilo o residencia para personas mayores,Privado,Complementario,Código SCIAN de residencia o asistencia relacionada,79,2013,2017-11
+623312,Asilos y otras residencias del sector pÃºblico para el cuidado de ancianos,Asilo o residencia para personas mayores,No especificado,Complementario,Código SCIAN de residencia o asistencia relacionada,8,2013,2017-11
+624111,Servicios de orientaciÃ³n y trabajo social para la niÃ±ez y la juventud prestados por el sector privado,Orientación o trabajo social relacionado con salud,Privado,Complementario,Código social amplio más palabra clave de salud,2,2013,2017-11
+624121,Centros del sector privado dedicados a la atenciÃ³n y cuidado diurno de ancianos y discapacitados,Centro de cuidado diurno para personas mayores o con discapacidad,Privado,Complementario,Código SCIAN de residencia o asistencia relacionada,29,2013,2017-11
+624122,Centros del sector pÃºblico dedicados a la atenciÃ³n y cuidado diurno de ancianos y discapacitados,Centro de cuidado diurno para personas mayores o con discapacidad,No especificado,Complementario,Código SCIAN de residencia o asistencia relacionada,78,2013,2017-11
+624191,Agrupaciones de autoayuda para alcohÃ³licos y personas con otras adicciones,Grupo de autoayuda para adicciones,No especificado,Complementario,Código SCIAN de residencia o asistencia relacionada,1664,2013,2017-11
+624198,Otros servicios de orientaciÃ³n y trabajo social prestados por el sector privado,Orientación o trabajo social relacionado con salud,Privado,Complementario,Código social amplio más palabra clave de salud,2,2013,2017-11
+624199,Otros servicios de orientaciÃ³n y trabajo social prestados por el sector pÃºblico,Orientación o trabajo social relacionado con salud,No especificado,Complementario,Código social amplio más palabra clave de salud,7,2013,2017-11
