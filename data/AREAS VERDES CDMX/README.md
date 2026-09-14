@@ -156,7 +156,8 @@ Resultados generales:
 
 - superficie mínima calculada: **2.26 m²**;
 - superficie máxima calculada: **2,478,293.69 m²**;
-- suma de superficies registradas: **67,360,004.02 m²**;- equivalente: **6,736.00 ha**.
+- suma de superficies registradas: **67,360,004.02 m²**;
+- equivalente: **6,736.00 ha**.
 
 La suma de superficies no debe interpretarse automáticamente como la superficie verde única de la Ciudad de México.
 
