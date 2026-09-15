@@ -51,7 +51,7 @@ Se marcan para revisión manual los establecimientos que DENUE reporta
 dentro de infraestructura comercial relevante, pero cuyo nombre de
 complejo (`nom_CenCom`) está vacío o registrado como `SIN NOMBRE`.
 
-En esta edición se identificaron 11 registros para revisión manual.
+En esta edición se identificaron 7 registros para revisión manual.
 Estos registros se conservan en el conjunto de datos; la bandera no
 indica que el establecimiento sea incorrecto, sino que existe
 información incompleta sobre el complejo comercial reportado.
@@ -63,7 +63,7 @@ información incompleta sobre el complejo comercial reportado.
 - 0 registros sin coordenadas.
 - 0 registros sin clave AGEB completa.
 - 5 tiendas IMSS detectadas.
-- 11 registros para revisión manual.
+- 7 registros para revisión manual.
 
 ## Formatos
 
