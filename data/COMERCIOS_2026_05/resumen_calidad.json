@@ -1,0 +1,64 @@
+{
+  "fuente": {
+    "archivo": "DENUE CDMX SHP 05/2026",
+    "edicion": "DENUE 05/2026",
+    "entidad": "Ciudad de México",
+    "clave_entidad": "09"
+  },
+  "depuracion": {
+    "registros_originales": 462732,
+    "registros_conservados": 88738,
+    "registros_eliminados_por_actividad": 373994,
+    "codigos_scian_conservados": 12,
+    "conteo_por_codigo": {
+      "461123": 638,
+      "462112": 3065,
+      "461110": 38996,
+      "462111": 313,
+      "461190": 3889,
+      "461121": 6411,
+      "461130": 13165,
+      "461150": 4796,
+      "464111": 6572,
+      "461122": 7123,
+      "461140": 2892,
+      "464112": 878
+    },
+    "conteo_por_categoria": {
+      "Primera necesidad": 81288,
+      "Complementario": 7450
+    },
+    "conteo_por_alcaldia": {
+      "Cuauhtémoc": 5059,
+      "Venustiano Carranza": 7325,
+      "Benito Juárez": 2401,
+      "Álvaro Obregón": 5308,
+      "Azcapotzalco": 3600,
+      "Cuajimalpa de Morelos": 1699,
+      "Tlalpan": 5789,
+      "Gustavo A. Madero": 10164,
+      "Xochimilco": 4968,
+      "Coyoacán": 4312,
+      "Iztapalapa": 22854,
+      "Tláhuac": 4348,
+      "Milpa Alta": 2239,
+      "Miguel Hidalgo": 2793,
+      "La Magdalena Contreras": 2164,
+      "Iztacalco": 3715
+    },
+    "tiendas_imss_detectadas": 5
+  },
+  "calidad": {
+    "ids_duplicados": 0,
+    "clee_duplicadas": 0,
+    "registros_sin_coordenadas": 0,
+    "registros_sin_clave_ageb_completa": 0,
+    "registros_para_revision_manual": 38
+  },
+  "formatos": {
+    "csv": "Completo: campos originales DENUE + campos derivados.",
+    "geojson": "Ligero: campos analíticos y de identificación relevantes.",
+    "shapefile": "Ligero: subconjunto de campos clave + campos derivados.",
+    "xlsx": "Archivo de análisis con datos útiles, revisión manual y resumen."
+  }
+}
