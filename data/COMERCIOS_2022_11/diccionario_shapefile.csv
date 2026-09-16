@@ -1,0 +1,21 @@
+﻿campo_shapefile,campo_equivalente,descripcion
+id,id,Identificador original DENUE.
+clee,clee,Clave Estadística Empresarial original DENUE.
+nom_estab,nom_estab,Nombre del establecimiento.
+cod_act,codigo_act,Código SCIAN de actividad.
+municipio,municipio,Alcaldía o municipio reportado por DENUE.
+ageb,ageb,Clave AGEB.
+tipo_cc,tipoCenCom,Tipo de centro o complejo comercial reportado por DENUE.
+nom_cc,nom_CenCom,Nombre del centro o complejo comercial reportado por DENUE.
+edicion,edicion_denue,Edición DENUE.
+anio,anio_denue,Año de la edición DENUE.
+mes,mes_denue,Mes de la edición DENUE.
+cat_proy,categoria_proyecto,Categoría analítica del proyecto.
+subcat,subcategoria_proyecto,Subcategoría analítica derivada del SCIAN.
+alcance,alcance_analitico,Indica si el registro es principal o complementario.
+prim_nec,es_primera_necesidad,Indica si forma parte del indicador de primera necesidad.
+es_imss,es_tienda_imss,Identifica tiendas IMSS.
+infra_com,infraestructura_comercial,Tipo de infraestructura comercial relevante.
+rev_manual,revision_manual,Indica si el registro requiere revisión manual.
+motivo_rev,motivo_revision,Motivo de revisión manual.
+cve_ageb,cve_geo_ageb,Clave geográfica compuesta de AGEB.
