@@ -1,0 +1,55 @@
+﻿campo,tipo,descripcion
+edicion_denue,Derivado,Mes y año de la edición DENUE.
+anio_denue,Derivado,Año estadístico de la edición.
+mes_denue,Derivado,Mes estadístico de la edición.
+categoria_proyecto,Derivado,Categoría analítica del proyecto.
+subcategoria_proyecto,Derivado,Subcategoría derivada del código SCIAN.
+alcance_analitico,Derivado,Principal o complementario.
+es_primera_necesidad,Derivado,Indica si el establecimiento forma parte del indicador principal.
+es_tienda_imss,Derivado,Identifica tiendas IMSS detectadas mediante actividad y nombre.
+infraestructura_comercial,Derivado,Tipo de complejo comercial relevante reportado por DENUE.
+revision_manual,Derivado,Indica si conviene revisar el registro.
+motivo_revision,Derivado,Motivo concreto de revisión.
+cve_geo_ageb,Derivado,Concatenación normalizada CVE_ENT+CVE_MUN+CVE_LOC+AGEB.
+ID,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+NOM_ESTAB,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+RAZ_SOCIAL,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+CODIGO_ACT,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+NOMBRE_ACT,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+PER_OCU,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+TIPO_VIAL,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+NOM_VIAL,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+TIPO_V_E_1,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+NOM_V_E_1,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+TIPO_V_E_2,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+NOM_V_E_2,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+TIPO_V_E_3,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+NOM_V_E_3,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+NUMERO_EXT,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+LETRA_EXT,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+EDIFICIO,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+EDIFICIO_E,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+NUMERO_INT,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+LETRA_INT,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+TIPO_ASENT,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+NOMB_ASENT,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+TIPOCENCOM,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+NOM_CENCOM,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+NUM_LOCAL,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+COD_POSTAL,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+CVE_ENT,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+ENTIDAD,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+CVE_MUN,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+MUNICIPIO,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+CVE_LOC,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+LOCALIDAD,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+AGEB,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+MANZANA,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+TELEFONO,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+CORREOELEC,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+WWW,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+TIPOUNIECO,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+LATITUD,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+LONGITUD,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+FECHA_ALTA,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
+OID,Campo original DENUE,Consultar diccionario oficial incluido en fuente.
