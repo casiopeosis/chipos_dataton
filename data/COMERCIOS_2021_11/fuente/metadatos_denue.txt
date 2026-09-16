@@ -1,0 +1,30 @@
+﻿Identifier: MEX-INEGI.EEC2.11-DENUE-2021
+
+Title: Directorio Estadístico Nacional de Unidades Económicas (DENUE) 11_2021
+
+Description: El Directorio Estadístico Nacional de Unidades Económicas ofrece datos de identificación, ubicación, actividad económica y tamaño de los negocios activos en el territorio nacional, actualizados, fundamentalmente, en el segmento de los establecimientos grandes. Esta edición del DENUE se actualizó con base en los resultados definitivos de los Censos Económicos 2019.
+
+NOTA: Para mayor detalle consultar el documento metodológico en:
+https://www.inegi.org.mx/app/biblioteca/ficha.html?upc=702825192730
+
+Modified: 2021-11-18
+
+Publisher: Instituto Nacional de Estadística y Geografía, INEGI
+
+Mbox: atencion.usuarios@inegi.org.mx
+
+License: Términos de Libre Uso de la Información del INEGI http://www.inegi.org.mx/inegi/terminos.html
+
+DataDictionary: 
+
+Keyword: directorio, unidades económicas, establecimientos, registro de establecimientos, unidades económicas nuevas, registro estadístico de unidades económicas, DENUE, DENUE Interactivo
+
+ContactPoint: Lic. José de Jesús Esquivel de la Rosa, 01800 111 4634
+
+Temporal: 2015-2021
+
+Spatial: Estados Unidos Mexicanos.
+
+AccrualPeriodicity: ANUAL
+
+Distribution: https://www.inegi.org.mx/app/descarga/?ti=6
