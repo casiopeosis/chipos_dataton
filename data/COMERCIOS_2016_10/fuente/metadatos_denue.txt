@@ -1,0 +1,33 @@
+﻿Identifier: MEX-INEGI-DENUE-2016
+
+Title: Directorio Estadístico Nacional de Unidades Económicas (DENUE) 2016
+
+Description: El Directorio Estadístico Nacional de Unidades Económicas ofrece datos de identificación, ubicación, actividad económica y tamaño de los negocios activos en el territorio nacional, actualizados, fundamentalmente, en el segmento de los establecimientos grandes. Esta edición del DENUE se actualizó con base en los resultados del operativo de actualización realizado por el INEGI en el segundo semestre del 2016. Resultado de ello, para esta versión se dieron de baja 4 mil 969 establecimientos y se incorporaron 32 486, dando un total de 5 millones 32 mil 503 establecimientos en el Directorio.
+
+NOTA: Para mayor detalle consultar el documento metodológico en:
+http://www.beta.inegi.org.mx/temas/directorio/
+
+Modified: 2016-10-31
+
+Publisher: Instituto Nacional de Estadística y Geografía, INEGI
+
+Mbox: atencion.usuarios@inegi.org.mx
+
+License: Términos de Libre Uso de la Información del INEGI http://www.inegi.org.mx/terminos/terminos_info.aspx
+
+DataDictionary: 
+
+Keyword: Directorio estadístico, establecimientos, Agricultura, Silvicultura, Pesca, Cría y Explotación de Animales, Energía eléctrica, Petróleo, Agua, Gas, 
+Minería, Energía, Construcción, Industrias Manufactureras, Bebidas, Tabaco, Textiles, Calzado, Madera, Papel, Química, Plástico, Hule, Metales, Maquinaria, Equipo, 
+Comercio, Transportes, Correos, Medios Masivos, Servicios financieros, Seguros, Inmobiliarios, Alquiler de Bienes, Profesionales, Científicos, Técnicos, Corporativos, 
+Negocios, Manejo de Desechos, Escuelas, Consultorios, Hospitales, Cultura, Deporte, Hoteles, Restaurantes, Alimentos, Bebidas
+
+ContactPoint: Lic. José de Jesús Esquivel de la Rosa, 01800 111 4634
+
+Temporal: 2015-2016
+
+Spatial: Estados Unidos Mexicanos.
+
+AccrualPeriodicity: ANUAL
+
+Distribution: http://www.beta.inegi.org.mx/app/descarga/?ti=6 
