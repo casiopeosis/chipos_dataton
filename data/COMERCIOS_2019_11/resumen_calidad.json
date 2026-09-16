@@ -1,0 +1,67 @@
+{
+  "fuente": {
+    "archivo": "DENUE CDMX SHP 11/2019",
+    "edicion": "DENUE 11/2019",
+    "entidad": "Ciudad de México",
+    "clave_entidad": "09",
+    "clee_disponible": false,
+    "nota_esquema": "La fuente utiliza nombres de campos en mayúsculas y contiene el campo adicional OID."
+  },
+  "depuracion": {
+    "registros_originales": 466301,
+    "registros_conservados": 85710,
+    "registros_eliminados_por_actividad": 380591,
+    "codigos_scian_conservados": 12,
+    "conteo_por_codigo": {
+      "461110": 40703,
+      "461140": 2609,
+      "462112": 2824,
+      "461150": 3009,
+      "462111": 454,
+      "461190": 3557,
+      "461130": 12559,
+      "461121": 6287,
+      "464112": 834,
+      "461122": 6673,
+      "464111": 5576,
+      "461123": 625
+    },
+    "conteo_por_categoria": {
+      "Primera necesidad": 79300,
+      "Complementario": 6410
+    },
+    "conteo_por_alcaldia": {
+      "Iztapalapa": 20690,
+      "Álvaro Obregón": 5101,
+      "Venustiano Carranza": 7629,
+      "Gustavo A. Madero": 10297,
+      "Tlalpan": 5565,
+      "Benito Juárez": 2355,
+      "Cuauhtémoc": 4948,
+      "Cuajimalpa de Morelos": 1578,
+      "Azcapotzalco": 3597,
+      "Tláhuac": 4258,
+      "Milpa Alta": 2243,
+      "Miguel Hidalgo": 2801,
+      "La Magdalena Contreras": 2015,
+      "Xochimilco": 4900,
+      "Iztacalco": 3545,
+      "Coyoacán": 4188
+    },
+    "tiendas_imss_detectadas": 1
+  },
+  "calidad": {
+    "ids_duplicados": 0,
+    "clee_duplicadas": null,
+    "nota_clee": "La edición DENUE 11/2019 utilizada no contiene el campo CLEE; por ello no se evaluaron duplicados CLEE.",
+    "registros_sin_coordenadas": 0,
+    "registros_sin_clave_ageb_completa": 0,
+    "registros_para_revision_manual": 9
+  },
+  "formatos": {
+    "csv": "Completo: campos originales DENUE disponibles + campos derivados.",
+    "geojson": "Ligero: campos analíticos y de identificación relevantes.",
+    "shapefile": "Ligero: subconjunto de campos clave + campos derivados.",
+    "xlsx": "Archivo de análisis con datos útiles, revisión manual y resumen."
+  }
+}
