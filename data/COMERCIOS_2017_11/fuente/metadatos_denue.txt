@@ -1,0 +1,34 @@
+﻿Identifier: MEX-INEGI-DENUE-2017
+
+Title: Directorio Estadístico Nacional de Unidades Económicas (DENUE) 2017
+
+Description: En esta su décima edición del Directorio Estadístico Nacional de Unidades Económicas (DENUE) se ofrecen los datos de identificación, ubicación, actividad económica y tamaño de 5 millones 53 mil 130 negocios activos en el territorio nacional, actualizados, fundamentalmente, en el segmento de los establecimientos grandes. 
+
+NOTA: Para mayor detalle consultar el documento metodológico en:
+http://www.beta.inegi.org.mx/temas/directorio/
+
+Modified: 2017-11-15
+
+Publisher: Instituto Nacional de Estadística y Geografía, INEGI
+
+Mbox: atencion.usuarios@inegi.org.mx
+
+License: Términos de Libre Uso de la Información del INEGI http://www.inegi.org.mx/terminos/terminos_info.aspx
+
+DataDictionary: En esta edición del Directorio Estadístico Nacional de Unidades Económicas (DENUE) se ofrecen los datos de identificación, ubicación, actividad económica y tamaño de los negocios activos en el territorio nacional, actualizados, fundamentalmente, en el segmento de los establecimientos grandes.  En esta edición el DENUE publica los datos de 5 millones 53 mil 130 negocios; de los cuales, 5 millones 32 mil 609 ya estaban registrados en la versión anterior y 20 mil 521 se incluyen en esta nueva edición.
+También, el Directorio es actualizado en forma continua por los informantes autorizados, quienes con base en el artículo 4 de la Norma Técnica para Incorporar y Actualizar Información al Directorio Estadístico Nacional de Unidades Económicas, pueden modificar o complementar los datos de sus negocios e incorporar en línea información comercial mediante la aplicación que se encuentra en la ficha técnica de cada unidad económica. Esta información es validada previamente por el INEGI. También continúan disponibles la descarga gratuita de todo el Directorio o sólo de la información específica que seleccione el usuario, así como la consulta desde dispositivos móviles  ̶ como teléfonos celulares o tabletas- en el Mapa Digital de México y en Espacio y datos de México.
+
+Keyword: Directorio estadístico, establecimientos, Agricultura, Silvicultura, Pesca, Cría y Explotación de Animales, Energía eléctrica, Petróleo, Agua, Gas, 
+Minería, Energía, Construcción, Industrias Manufactureras, Bebidas, Tabaco, Textiles, Calzado, Madera, Papel, Química, Plástico, Hule, Metales, Maquinaria, Equipo, 
+Comercio, Transportes, Correos, Medios Masivos, Servicios financieros, Seguros, Inmobiliarios, Alquiler de Bienes, Profesionales, Científicos, Técnicos, Corporativos, 
+Negocios, Manejo de Desechos, Escuelas, Consultorios, Hospitales, Cultura, Deporte, Hoteles, Restaurantes, Alimentos, Bebidas
+
+ContactPoint: Lic. José de Jesús Esquivel de la Rosa, 01800 111 4634
+
+Temporal: 2015-2017
+
+Spatial: Estados Unidos Mexicanos.
+
+AccrualPeriodicity: ANUAL
+
+Distribution: http://www.beta.inegi.org.mx/app/descarga/?ti=6 

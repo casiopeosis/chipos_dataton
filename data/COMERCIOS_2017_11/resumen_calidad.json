@@ -1,0 +1,72 @@
+{
+  "fuente": {
+    "archivo": "DENUE CDMX SHP 11/2017",
+    "edicion": "DENUE 11/2017",
+    "entidad": "Ciudad de México",
+    "clave_entidad": "09",
+    "clee_disponible": false,
+    "encoding_lectura": "utf-8",
+    "nota_encoding": "La lectura directa de la fuente fue validada con UTF-8; utilizar latin1 produce caracteres mal decodificados."
+  },
+  "depuracion": {
+    "registros_originales": 467279,
+    "registros_conservados": 86831,
+    "registros_eliminados_por_actividad": 380448,
+    "codigos_scian_conservados": 12,
+    "conteo_por_codigo": {
+      "462112": 3065,
+      "461110": 41750,
+      "464111": 5656,
+      "461121": 6420,
+      "461190": 3693,
+      "461150": 2771,
+      "462111": 458,
+      "461140": 2497,
+      "461130": 13095,
+      "464112": 821,
+      "461122": 5963,
+      "461123": 642
+    },
+    "conteo_por_categoria": {
+      "Primera necesidad": 80354,
+      "Complementario": 6477
+    },
+    "conteo_por_alcaldia": {
+      "Cuauhtémoc": 5588,
+      "Iztacalco": 3863,
+      "Venustiano Carranza": 8285,
+      "Iztapalapa": 20119,
+      "Coyoacán": 4298,
+      "Gustavo A. Madero": 10565,
+      "Milpa Alta": 1914,
+      "Tláhuac": 4084,
+      "Xochimilco": 4532,
+      "Álvaro Obregón": 5016,
+      "Benito Juárez": 2579,
+      "La Magdalena Contreras": 1923,
+      "Azcapotzalco": 4014,
+      "Tlalpan": 5405,
+      "Miguel Hidalgo": 3222,
+      "Cuajimalpa de Morelos": 1424
+    },
+    "tiendas_imss_detectadas": 1
+  },
+  "calidad": {
+    "ids_duplicados": 0,
+    "clee_duplicadas": null,
+    "nota_clee": "La edición DENUE 11/2017 utilizada no contiene el campo CLEE; por ello no se evaluaron duplicados CLEE.",
+    "registros_sin_coordenadas": 0,
+    "registros_sin_clave_ageb_completa": 0,
+    "registros_para_revision_manual": 52,
+    "revision_manual_por_tipo": {
+      "CENTRAL DE ABASTO": 46,
+      "TIANGUIS, BAZAR O PULGA": 6
+    }
+  },
+  "formatos": {
+    "csv": "Completo: campos originales DENUE disponibles + campos derivados.",
+    "geojson": "Ligero: campos analíticos y de identificación relevantes.",
+    "shapefile": "Ligero: subconjunto de campos clave + campos derivados.",
+    "xlsx": "Archivo de análisis con datos útiles, revisión manual y resumen."
+  }
+}
