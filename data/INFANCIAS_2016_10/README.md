@@ -39,7 +39,6 @@ Los nombres recibidos son identificadores automáticos. En la siguiente tabla se
 | `cc76a270-e35e-4090-bc00-c355525fca72.csv` | Base principal de establecimientos seleccionados | 11,589 | `denue_infancias_cdmx_2016_10.csv` |
 | `1ddb03ba-8f98-4c5a-8df5-41b0c59ab0cc.csv` | Subconjunto de la base principal que requiere revisión manual | 2,652 | `revision_manual_infancias_2016_10.csv` |
 | `0d14a5c5-acdb-46e8-b176-4cc6e646238b.csv` | Catálogo resumen de reglas, códigos SCIAN y cantidades | 59 | `catalogo_scian_infancias_2016_10.csv` |
-| `95086d63-69d3-4404-9fd3-4b65970264c3.csv` | Copia exactamente igual al catálogo anterior | 59 | No es necesario conservar ambas copias |
 | `ef907304-4a60-4346-b640-d1b7372dfa9f.json` | Reporte de calidad, configuración, conteos y advertencias | — | `reporte_calidad_infancias_2016_10.json` |
 
 Los dos archivos de catálogo son idénticos: tienen el mismo contenido y el mismo hash SHA-256. Para evitar confusiones, se recomienda conservar solo uno.
