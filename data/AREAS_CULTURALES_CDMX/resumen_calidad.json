@@ -1,0 +1,37 @@
+{
+  "fuente_principal": "Sistema de Información Cultural (SIC)",
+  "alcance": "Ciudad de México",
+  "tipos_incluidos": [
+    "TEATRO",
+    "CENTRO_CULTURAL",
+    "CINE"
+  ],
+  "registros": {
+    "total": 868,
+    "teatros": 157,
+    "centros_culturales": 584,
+    "cines": 127
+  },
+  "tipo_gestion": {
+    "PUBLICO": 577,
+    "PRIVADO": 228,
+    "NO_DETERMINADO": 59,
+    "MIXTO": 4
+  },
+  "calidad": {
+    "ids_culturales_duplicados": 0,
+    "registros_sin_nombre": 0,
+    "registros_sin_latitud": 0,
+    "registros_sin_longitud": 0,
+    "registros_sin_clasificacion_de_adscripcion": 0,
+    "registros_para_revision_manual": 59,
+    "registros_identificados_como_pilares": 287
+  },
+  "notas_metodologicas": [
+    "Los tres CSV originales del SIC fueron leídos utilizando latin1.",
+    "Adscripciones equivalentes que diferían únicamente por espacios iniciales o finales fueron consolidadas para fines de clasificación.",
+    "Los registros no se deduplican entre tipos culturales, porque un mismo recinto puede cumplir más de una función.",
+    "La clasificación PUBLICO, PRIVADO, MIXTO y NO_DETERMINADO es derivada de la adscripción del SIC y de revisiones documentadas.",
+    "Los PILARES se conservan en esta capa cultural y se marcan para evitar doble conteo con el dataset específico de PILARES."
+  ]
+}
