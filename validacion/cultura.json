@@ -1,0 +1,110 @@
+{
+  "dominio": "cultura",
+  "generado": "2026-09-18T17:37:32.268208+00:00",
+  "commit": "b1f327e86e3844c81cedc842c19a40938649e71d",
+  "simulacion_control": {
+    "variante": "poisson_foto_unica",
+    "n_sim": 2000,
+    "sesgo_medio_global": 0.003514595460884673,
+    "cobertura_min": 0.9305,
+    "cobertura_max": 0.9595,
+    "cobertura_dentro_rango_93_5_96_5": false,
+    "por_alcaldia": {
+      "002": {
+        "sesgo_medio": 0.01686895039863856,
+        "cobertura_ic95": 0.9385
+      },
+      "003": {
+        "sesgo_medio": -0.033315170974880015,
+        "cobertura_ic95": 0.9465
+      },
+      "004": {
+        "sesgo_medio": 0.0405305900547388,
+        "cobertura_ic95": 0.932
+      },
+      "005": {
+        "sesgo_medio": 0.008172707027683135,
+        "cobertura_ic95": 0.9535
+      },
+      "006": {
+        "sesgo_medio": -0.03863907178960746,
+        "cobertura_ic95": 0.9395
+      },
+      "007": {
+        "sesgo_medio": 0.000652445896911491,
+        "cobertura_ic95": 0.9595
+      },
+      "008": {
+        "sesgo_medio": -0.03197141456413011,
+        "cobertura_ic95": 0.939
+      },
+      "009": {
+        "sesgo_medio": 0.050978709130560684,
+        "cobertura_ic95": 0.9305
+      },
+      "010": {
+        "sesgo_medio": -0.02378683114232305,
+        "cobertura_ic95": 0.9485
+      },
+      "011": {
+        "sesgo_medio": 0.0020734160253086387,
+        "cobertura_ic95": 0.935
+      },
+      "012": {
+        "sesgo_medio": -0.0011008140910120368,
+        "cobertura_ic95": 0.947
+      },
+      "013": {
+        "sesgo_medio": -0.03882581755466741,
+        "cobertura_ic95": 0.9515
+      },
+      "014": {
+        "sesgo_medio": -0.07190278172729325,
+        "cobertura_ic95": 0.945
+      },
+      "015": {
+        "sesgo_medio": 0.018223345445388617,
+        "cobertura_ic95": 0.9475
+      },
+      "016": {
+        "sesgo_medio": 0.12660087312062673,
+        "cobertura_ic95": 0.955
+      },
+      "017": {
+        "sesgo_medio": 0.031674392118211436,
+        "cobertura_ic95": 0.937
+      }
+    }
+  },
+  "sensibilidad": {
+    "delta_5pct": {
+      "n_cambios": 0,
+      "alcaldias_cambian": []
+    },
+    "delta_20pct": {
+      "n_cambios": 1,
+      "alcaldias_cambian": [
+        "005"
+      ]
+    },
+    "bonferroni": {
+      "n_cambios": 5,
+      "alcaldias_cambian": [
+        "003",
+        "005",
+        "008",
+        "016",
+        "017"
+      ]
+    },
+    "sin_pilares": {
+      "n_cambios": 3,
+      "alcaldias_cambian": [
+        "002",
+        "011",
+        "013"
+      ]
+    },
+    "_nota_robustez": false
+  }
+}

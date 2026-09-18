@@ -1,0 +1,270 @@
+{
+  "dominio": "adultos_mayores",
+  "generado": "2026-09-18T17:37:32.267592+00:00",
+  "commit": "b1f327e86e3844c81cedc842c19a40938649e71d",
+  "calibracion_origen_movil": {
+    "n_predicciones": 80,
+    "cobertura_empirica": 0.825,
+    "criterio_90pct_cumplido": false,
+    "kappa": 3.2847567300259017,
+    "mae_tendencia": 1.0637790649351166,
+    "mae_naive_ultimo_valor": 0.4625,
+    "tendencia_supera_naive": false
+  },
+  "sesgo": {
+    "media_error": -0.42830815020107976,
+    "t_stat": -2.7338360434920332,
+    "p_value": 0.007723729977718366,
+    "significativo_1pct": true,
+    "n": 80
+  },
+  "curvatura": {
+    "f_stat": 6.637923827021628,
+    "p_value": 1.2239591337525998e-09,
+    "df1": 16,
+    "df2": 90,
+    "significativo_1pct": true
+  },
+  "escalon": {
+    "f_stat": 0.30036624988365074,
+    "p_value": 0.9955566910847397,
+    "df1": 16,
+    "df2": 90,
+    "significativo_1pct": false
+  },
+  "autocorrelacion": {
+    "rho_hat": -0.42066063745369153,
+    "rho_referencia_p95": -0.29579695036302317,
+    "significativa": false,
+    "factor_ajuste_varianza": 1.0
+  },
+  "simulacion_control": {
+    "normal": {
+      "variante": "normal",
+      "n_sim": 2000,
+      "sesgo_medio_global": -0.00035692188615852466,
+      "cobertura_min": 0.934,
+      "cobertura_max": 0.949,
+      "cobertura_dentro_rango_93_5_96_5": false,
+      "por_alcaldia": {
+        "002": {
+          "sesgo_medio": -0.005791780158241444,
+          "cobertura_ic95": 0.936
+        },
+        "003": {
+          "sesgo_medio": 0.007645054627004821,
+          "cobertura_ic95": 0.94
+        },
+        "004": {
+          "sesgo_medio": 0.011262904761704995,
+          "cobertura_ic95": 0.94
+        },
+        "005": {
+          "sesgo_medio": 0.005703146210781718,
+          "cobertura_ic95": 0.9415
+        },
+        "006": {
+          "sesgo_medio": 0.0030639407581238842,
+          "cobertura_ic95": 0.942
+        },
+        "007": {
+          "sesgo_medio": -0.003798639834295958,
+          "cobertura_ic95": 0.9455
+        },
+        "008": {
+          "sesgo_medio": -0.02042769765076624,
+          "cobertura_ic95": 0.9415
+        },
+        "009": {
+          "sesgo_medio": 0.0023741127836620635,
+          "cobertura_ic95": 0.948
+        },
+        "010": {
+          "sesgo_medio": 0.0010563665306569936,
+          "cobertura_ic95": 0.9485
+        },
+        "011": {
+          "sesgo_medio": -0.017658267528135152,
+          "cobertura_ic95": 0.9395
+        },
+        "012": {
+          "sesgo_medio": -0.004375140057515381,
+          "cobertura_ic95": 0.9475
+        },
+        "013": {
+          "sesgo_medio": 0.014663961559754135,
+          "cobertura_ic95": 0.945
+        },
+        "014": {
+          "sesgo_medio": -0.022434976332614376,
+          "cobertura_ic95": 0.949
+        },
+        "015": {
+          "sesgo_medio": 0.004489224290857852,
+          "cobertura_ic95": 0.945
+        },
+        "016": {
+          "sesgo_medio": 0.012920232802231979,
+          "cobertura_ic95": 0.9465
+        },
+        "017": {
+          "sesgo_medio": 0.005596807058253717,
+          "cobertura_ic95": 0.934
+        }
+      },
+      "rho_referencia_media": -0.4430436510689996,
+      "rho_referencia_p95": -0.29579695036302317
+    },
+    "poisson_escalada": {
+      "variante": "poisson_escalada",
+      "n_sim": 2000,
+      "sesgo_medio_global": 0.0013269705588951422,
+      "cobertura_min": 0.8845,
+      "cobertura_max": 0.9755,
+      "cobertura_dentro_rango_93_5_96_5": false,
+      "por_alcaldia": {
+        "002": {
+          "sesgo_medio": -0.004489550495994088,
+          "cobertura_ic95": 0.951
+        },
+        "003": {
+          "sesgo_medio": -0.02134844072733877,
+          "cobertura_ic95": 0.9475
+        },
+        "004": {
+          "sesgo_medio": -0.006054287522712087,
+          "cobertura_ic95": 0.9755
+        },
+        "005": {
+          "sesgo_medio": 0.0006057593678392426,
+          "cobertura_ic95": 0.9395
+        },
+        "006": {
+          "sesgo_medio": -0.005593131297792375,
+          "cobertura_ic95": 0.928
+        },
+        "007": {
+          "sesgo_medio": -0.0006449251127000899,
+          "cobertura_ic95": 0.9305
+        },
+        "008": {
+          "sesgo_medio": 0.0045618162970271214,
+          "cobertura_ic95": 0.95
+        },
+        "009": {
+          "sesgo_medio": 0.0017189924233145248,
+          "cobertura_ic95": 0.9435
+        },
+        "010": {
+          "sesgo_medio": 0.016470644032796744,
+          "cobertura_ic95": 0.9135
+        },
+        "011": {
+          "sesgo_medio": 0.013923531423607471,
+          "cobertura_ic95": 0.9555
+        },
+        "012": {
+          "sesgo_medio": -0.01568360825226911,
+          "cobertura_ic95": 0.927
+        },
+        "013": {
+          "sesgo_medio": 0.006777952662099906,
+          "cobertura_ic95": 0.9545
+        },
+        "014": {
+          "sesgo_medio": -0.027441361352823712,
+          "cobertura_ic95": 0.9445
+        },
+        "015": {
+          "sesgo_medio": 0.012174556130482461,
+          "cobertura_ic95": 0.9635
+        },
+        "016": {
+          "sesgo_medio": 0.03931435217569046,
+          "cobertura_ic95": 0.915
+        },
+        "017": {
+          "sesgo_medio": 0.006939229191094576,
+          "cobertura_ic95": 0.8845
+        }
+      },
+      "rho_referencia_media": -0.44581110351182845,
+      "rho_referencia_p95": -0.29035891287334376
+    }
+  },
+  "decision": {
+    "metodo_final": "ventana_5_recientes",
+    "escalon_activado": false,
+    "fallback_ventana_activado": true,
+    "ediciones_finales": [
+      "2022-11",
+      "2023-11",
+      "2024-11",
+      "2025-05",
+      "2026-05"
+    ],
+    "kappa": 3.2847567300259017,
+    "factor_rho": 1.0
+  },
+  "sensibilidad": {
+    "delta_5pct": {
+      "n_cambios": 0,
+      "alcaldias_cambian": []
+    },
+    "delta_20pct": {
+      "n_cambios": 1,
+      "alcaldias_cambian": [
+        "005"
+      ]
+    },
+    "bonferroni": {
+      "n_cambios": 8,
+      "alcaldias_cambian": [
+        "002",
+        "003",
+        "005",
+        "008",
+        "011",
+        "013",
+        "014",
+        "015"
+      ]
+    },
+    "fecha_referencia_cruda": {
+      "n_cambios": 5,
+      "alcaldias_cambian": [
+        "002",
+        "005",
+        "008",
+        "011",
+        "015"
+      ]
+    },
+    "mas_cuidado_diurno": {
+      "n_cambios": 5,
+      "alcaldias_cambian": [
+        "007",
+        "009",
+        "010",
+        "011",
+        "016"
+      ]
+    },
+    "denominador_65mas": {
+      "n_cambios": 0,
+      "alcaldias_cambian": []
+    },
+    "mas_edicion_2021_11": {
+      "n_cambios": 6,
+      "alcaldias_cambian": [
+        "002",
+        "005",
+        "008",
+        "011",
+        "015",
+        "016"
+      ]
+    },
+    "_nota_robustez": true
+  }
+}
