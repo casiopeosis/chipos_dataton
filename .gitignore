@@ -99,6 +99,7 @@ node_modules/
 jspm_packages/
 bower_components/
 vendor/
+!src/app/vendor/
 .pnp/
 .pnp.js
 .yarn/cache
