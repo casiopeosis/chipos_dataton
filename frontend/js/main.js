@@ -48,8 +48,8 @@ const dialogoEl = document.getElementById("drawer-metodologia");
 // alcaldia.js y ficha.js (cada uno documenta su forma esperada en su propio módulo).
 // ---------------------------------------------------------------------------------------------
 
-function registroPlano(entrada, capa) {
-  return entrada?.[capa] ?? null;
+function registroPlano(entrada, capa, claveHorizonte) {
+  return entrada?.[capa]?.h?.[claveHorizonte] ?? null;
 }
 
 const REGISTRO_SIN_DATOS = Object.freeze({
@@ -61,28 +61,28 @@ const REGISTRO_SIN_DATOS = Object.freeze({
   n_obs: 0,
 });
 
-function listaAlcaldiasParaTabla(datosAlcaldia, capa, nombresAlcaldia) {
+function listaAlcaldiasParaTabla(datosAlcaldia, capa, nombresAlcaldia, claveHorizonte) {
   const lista = [];
   for (const [cveMun, entrada] of datosAlcaldia.indices.porCveMun) {
-    const reg = registroPlano(entrada, capa) ?? REGISTRO_SIN_DATOS;
+    const reg = registroPlano(entrada, capa, claveHorizonte) ?? REGISTRO_SIN_DATOS;
     lista.push({ ...reg, cve_mun: cveMun, nombre: nombresAlcaldia.get(cveMun) ?? cveMun });
   }
   return lista;
 }
 
-function mapaCapaAgebPorCvegeo(datosAgeb, capa) {
+function mapaCapaAgebPorCvegeo(datosAgeb, capa, claveHorizonte) {
   const mapa = new Map();
   for (const [cvegeo, entrada] of datosAgeb.indices.porCvegeo) {
-    mapa.set(cvegeo, registroPlano(entrada, capa) ?? REGISTRO_SIN_DATOS);
+    mapa.set(cvegeo, registroPlano(entrada, capa, claveHorizonte) ?? REGISTRO_SIN_DATOS);
   }
   return mapa;
 }
 
-function listaAgebDeAlcaldia(datosAgeb, cveMun, capa) {
+function listaAgebDeAlcaldia(datosAgeb, cveMun, capa, claveHorizonte) {
   const claves = datosAgeb.indices.porCveMun.get(cveMun) ?? [];
   return claves.map((cvegeo) => {
     const entrada = datosAgeb.indices.porCvegeo.get(cvegeo);
-    const reg = registroPlano(entrada, capa) ?? REGISTRO_SIN_DATOS;
+    const reg = registroPlano(entrada, capa, claveHorizonte) ?? REGISTRO_SIN_DATOS;
     return { ...reg, cvegeo };
   });
 }
@@ -202,7 +202,8 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
   function renderCiudad(estado) {
     const capa = estado.capa;
     const horizonte = horizonteActivo(estado);
-    const registros = listaAlcaldiasParaTabla(datosAlcaldia, capa, nombresAlcaldia);
+    const claveHorizonte = horizonte.clave;
+    const registros = listaAlcaldiasParaTabla(datosAlcaldia, capa, nombresAlcaldia, claveHorizonte);
 
     if (montado?.tipo !== "ciudad") {
       montado?.destruir?.();
@@ -217,7 +218,7 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
         horizonte,
         generadoIso: datosAlcaldia.generado,
         geojsonAgeb: agebGeoJSON,
-        registrosAgebPorCvegeo: mapaCapaAgebPorCvegeo(datosAgeb, capa),
+        registrosAgebPorCvegeo: mapaCapaAgebPorCvegeo(datosAgeb, capa, claveHorizonte),
       });
       montado = { tipo: "ciudad", titular, tabla, destruir: () => tabla.destruir() };
     } else {
@@ -225,7 +226,7 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
         capa,
         horizonte,
         generadoIso: datosAlcaldia.generado,
-        registrosAgebPorCvegeo: mapaCapaAgebPorCvegeo(datosAgeb, capa),
+        registrosAgebPorCvegeo: mapaCapaAgebPorCvegeo(datosAgeb, capa, claveHorizonte),
       });
     }
     montado.titular.actualizar(
@@ -237,8 +238,9 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
     const capa = estado.capa;
     const cveMun = estado.cve_mun;
     const horizonte = horizonteActivo(estado);
-    const registrosAgeb = listaAgebDeAlcaldia(datosAgeb, cveMun, capa);
-    const registroAlcaldia = registroPlano(datosAlcaldia.indices.porCveMun.get(cveMun), capa);
+    const claveHorizonte = horizonte.clave;
+    const registrosAgeb = listaAgebDeAlcaldia(datosAgeb, cveMun, capa, claveHorizonte);
+    const registroAlcaldia = registroPlano(datosAlcaldia.indices.porCveMun.get(cveMun), capa, claveHorizonte);
     const alcaldiaNombre = nombresAlcaldia.get(cveMun) ?? cveMun;
 
     if (montado?.tipo !== "alcaldia" || montado.claveActiva !== cveMun) {
@@ -285,12 +287,24 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
     const capa = estado.capa;
     const cvegeo = estado.cvegeo;
     const horizonte = horizonteActivo(estado);
+    const claveHorizonte = horizonte.clave;
     const entrada = datosAgeb.indices.porCvegeo.get(cvegeo);
-    const registro = registroPlano(entrada, capa) ?? REGISTRO_SIN_DATOS;
-    const cveMun = estado.cve_mun ?? registro.cve_mun;
+    const entradaCapa = entrada?.[capa] ?? null;
+    const registro = registroPlano(entrada, capa, claveHorizonte) ?? REGISTRO_SIN_DATOS;
+    const cveMun = estado.cve_mun ?? entradaCapa?.cve_mun ?? registro.cve_mun;
     const alcaldiaNombre = nombresAlcaldia.get(cveMun) ?? cveMun;
     const feature = (agebGeoJSON.features ?? []).find((f) => f.properties.cvegeo === cvegeo);
     const tipoAgeb = feature?.properties.ambito === "rural" ? "rural" : "urbana";
+    // Datos reales para la mini-gráfica (js/graficas.js, ya genérico): con el contrato v1.1
+    // (`entradaCapa.serie` siempre ausente) esto degrada solo con `horizontes:[]`, igual que
+    // antes; con v1.2 la ficha recibe la serie censal/DENUE y los 3 horizontes con su `.h`.
+    const opcionesGrafica = {
+      serie: entradaCapa?.serie ?? null,
+      nivelBase: typeof entradaCapa?.nivel_base === "number" ? entradaCapa.nivel_base : null,
+      horizontes: datosAgeb.horizontes ?? [],
+      registrosPorHorizonte: new Map(Object.entries(entradaCapa?.h ?? {})),
+      fechaBase: datosAgeb.fecha_base ?? null,
+    };
 
     if (montado?.tipo !== "ageb" || montado.claveActiva !== cvegeo) {
       montado?.destruir?.();
@@ -304,10 +318,18 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
         alcaldiaNombre,
         tipoAgeb,
         cveMun,
+        ...opcionesGrafica,
       });
       montado = { tipo: "ageb", claveActiva: cvegeo, ficha, destruir: () => ficha.destruir() };
     } else {
-      montado.ficha.actualizar(cvegeo, registro, { capa, horizonte, generadoIso: datosAlcaldia.generado, alcaldiaNombre, tipoAgeb });
+      montado.ficha.actualizar(cvegeo, registro, {
+        capa,
+        horizonte,
+        generadoIso: datosAlcaldia.generado,
+        alcaldiaNombre,
+        tipoAgeb,
+        ...opcionesGrafica,
+      });
     }
   }
 

@@ -1,8 +1,10 @@
 // frontend/js/ficha.js
 //
 // Ficha de AGEB (plans/frontend_specs.md §7.4): cifras del registro (veredicto, cambio, rango,
-// confianza, observaciones) más la mini-gráfica de js/graficas.js (o su nota de degradación fija,
-// porque el contrato v1.1 — el único que produce hoy el backend — nunca trae `serie`).
+// confianza, observaciones) más la mini-gráfica de js/graficas.js. Con el contrato v1.1 (vía el
+// adaptador de `api.js`) `serie`/`nivel_base` siempre llegan `null` y `horizontes` vacío, así que
+// `graficas.js` degrada solo a la nota fija; con v1.2 (`main.js#renderAgeb`) llegan los datos
+// reales (serie censal/DENUE, `nivel_base` y los 3 horizontes con su `.h`).
 //
 // Autocontenida (plan §9, F50): `montarFicha(contenedor, cvegeo, registro, opciones)` no asume
 // ningún id fijo de `index.html`.
@@ -14,6 +16,10 @@ import { montarGrafica } from "./graficas.js";
 import { resolverHorizonte } from "./titular.js";
 import { despachar as despacharEstado, ACCIONES } from "./estado.js";
 
+// `serie`/`nivel_base` NO viven en el registro por horizonte (`registroOriginal` aquí): en el
+// contrato viven un nivel arriba, junto a `h` (`capas[capa][clave].serie`/`.nivel_base`, spec
+// §17), así que `montarFicha` los recibe aparte en `opciones` (ver docstring más abajo), no desde
+// este registro plano.
 function normalizarRegistro(registroOriginal) {
   const r = registroOriginal ?? {};
   return {
@@ -24,8 +30,6 @@ function normalizarRegistro(registroOriginal) {
     confianza: r.confianza ?? "baja",
     nObs: typeof r.n_obs === "number" ? r.n_obs : 0,
     motivoSinDatos: typeof r.motivo_sin_datos === "string" ? r.motivo_sin_datos : undefined,
-    serie: r.serie ?? null,
-    nivelBase: typeof r.nivel_base === "number" ? r.nivel_base : null,
   };
 }
 
@@ -102,6 +106,16 @@ function crearCifras(registro, config) {
  * @param {string} [opciones.alcaldiaNombre]
  * @param {"urbana"|"rural"} [opciones.tipoAgeb]
  * @param {string} [opciones.cveMun]
+ * @param {{t:number[], valor:number[]}|null} [opciones.serie] - niveles observados (v1.2, spec
+ *   §17); `null`/ausente con v1.1 (degrada la gráfica a la nota fija, `graficas.js`).
+ * @param {number|null} [opciones.nivelBase] - nivel en `fecha_base` (`nivel_base`, v1.2).
+ * @param {Array<{clave:string, anios:number|null, fecha:string|null}>} [opciones.horizontes] -
+ *   `datosAdaptados.horizontes` (3 entradas con v1.2, 1 con v1.1).
+ * @param {Map<string, object>} [opciones.registrosPorHorizonte] - `entradaCapa.h` completo
+ *   (`{h3:{...}, h5:{...}, h7:{...}}`, o `{hU:{...}}` con v1.1), para la banda IC95 por horizonte.
+ * @param {string|null} [opciones.fechaBase] - `datosAdaptados.fecha_base` ("YYYY-MM"), el año
+ *   base de la gráfica ("línea de hoy"); NUNCA el horizonte activo del slider (ese es un punto
+ *   proyectado, no "hoy" — moverlo no debe correr la línea de hoy, plan §7 "bug a corregir").
  */
 export function montarFicha(contenedor, cvegeo, registro, opciones = {}) {
   if (!contenedor) {
@@ -117,6 +131,11 @@ export function montarFicha(contenedor, cvegeo, registro, opciones = {}) {
       : `CVE_MUN ${opciones.cveMun ?? ""}`,
     tipoAgeb: opciones.tipoAgeb === "rural" ? "rural" : "urbana",
     cveMun: opciones.cveMun ?? null,
+    serie: opciones.serie ?? null,
+    nivelBase: typeof opciones.nivelBase === "number" ? opciones.nivelBase : null,
+    horizontes: Array.isArray(opciones.horizontes) ? opciones.horizontes : [],
+    registrosPorHorizonte: opciones.registrosPorHorizonte instanceof Map ? opciones.registrosPorHorizonte : new Map(),
+    fechaBase: typeof opciones.fechaBase === "string" ? opciones.fechaBase : null,
   };
 
   const raiz = crear("article", { clase: "ficha-contenedor", "aria-labelledby": "ficha-clave" });
@@ -140,18 +159,24 @@ export function montarFicha(contenedor, cvegeo, registro, opciones = {}) {
     reemplazarContenido(zonaEncabezado, [crearEncabezado({ ...config, cvegeo: cvegeoActual })]);
     reemplazarContenido(zonaCifras, [crearCifras(registroNorm, config)]);
 
-    const anio = resolverHorizonte(config.horizonte, config.generadoIso).anio;
+    // Año base de la gráfica ("línea de hoy", spec §7.4): SIEMPRE `fecha_base` (constante, no
+    // cambia al mover el slider de horizonte); con v1.1 (`fechaBase` ausente) se conserva el
+    // fallback anterior a partir del horizonte único/`generado`, que en ese camino nunca dibuja
+    // proyección de cualquier forma (`horizontes` llega vacío).
+    const anio = config.fechaBase !== null
+      ? resolverHorizonte({ fecha: config.fechaBase, anios: null }, config.generadoIso).anio
+      : resolverHorizonte(config.horizonte, config.generadoIso).anio;
     reemplazarContenido(zonaGrafica, []);
     // AGEB `sin_datos`: la gráfica solo muestra puntos censales si existen (spec §7.4); con v1.1
     // real `serie` siempre está ausente, así que aquí siempre sale la nota de degradación fija.
     montarGrafica(zonaGrafica, {
       capa: config.capa,
-      serie: registroNorm.serie,
-      nivelBase: registroNorm.nivelBase,
+      serie: config.serie,
+      nivelBase: config.nivelBase,
       anioBase: anio,
-      horizontes: [],
+      horizontes: config.horizontes,
       horizonteActivoClave: config.horizonte?.clave ?? null,
-      registrosPorHorizonte: new Map(),
+      registrosPorHorizonte: config.registrosPorHorizonte,
       veredicto: registroNorm.veredicto,
       soloPuntos: registroNorm.veredicto === "sin_datos",
     });
@@ -167,6 +192,17 @@ export function montarFicha(contenedor, cvegeo, registro, opciones = {}) {
     }
     if (nuevasOpciones.alcaldiaNombre) config.alcaldiaNombre = nuevasOpciones.alcaldiaNombre;
     if (nuevasOpciones.tipoAgeb) config.tipoAgeb = nuevasOpciones.tipoAgeb;
+    if (Object.prototype.hasOwnProperty.call(nuevasOpciones, "serie")) config.serie = nuevasOpciones.serie ?? null;
+    if (Object.prototype.hasOwnProperty.call(nuevasOpciones, "nivelBase")) {
+      config.nivelBase = typeof nuevasOpciones.nivelBase === "number" ? nuevasOpciones.nivelBase : null;
+    }
+    if (Array.isArray(nuevasOpciones.horizontes)) config.horizontes = nuevasOpciones.horizontes;
+    if (nuevasOpciones.registrosPorHorizonte instanceof Map) {
+      config.registrosPorHorizonte = nuevasOpciones.registrosPorHorizonte;
+    }
+    if (Object.prototype.hasOwnProperty.call(nuevasOpciones, "fechaBase")) {
+      config.fechaBase = typeof nuevasOpciones.fechaBase === "string" ? nuevasOpciones.fechaBase : null;
+    }
     render(nuevoCvegeo ?? cvegeo, nuevoRegistro ?? registro);
   }
 
