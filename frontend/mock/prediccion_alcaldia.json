@@ -1,0 +1,280 @@
+{
+  "version": "1.1",
+  "generado": "2026-09-19T05:47:56+00:00",
+  "horizonte": "2027-06",
+  "capas": {
+    "demanda": {
+      "002": {
+        "veredicto": "sube",
+        "delta_pct": 5.2,
+        "tasa_anual_pct": 1.6,
+        "ic95": [
+          -2.7,
+          9.9
+        ],
+        "confianza": "baja",
+        "n_obs": 2
+      },
+      "003": {
+        "veredicto": "se_mantiene",
+        "delta_pct": 0.7,
+        "tasa_anual_pct": 0.4,
+        "ic95": [
+          -3.3,
+          10.3
+        ],
+        "confianza": "media",
+        "n_obs": 5
+      },
+      "004": {
+        "veredicto": "sube",
+        "delta_pct": 10.8,
+        "tasa_anual_pct": 4.4,
+        "ic95": [
+          3.4,
+          22.7
+        ],
+        "confianza": "media",
+        "n_obs": 5
+      },
+      "005": {
+        "veredicto": "baja",
+        "delta_pct": -8.3,
+        "tasa_anual_pct": -3.4,
+        "ic95": [
+          -16.9,
+          -1.6
+        ],
+        "confianza": "baja",
+        "n_obs": 2
+      },
+      "006": {
+        "veredicto": "se_mantiene",
+        "delta_pct": -1.1,
+        "tasa_anual_pct": 0.0,
+        "ic95": [
+          -9.8,
+          2.2
+        ],
+        "confianza": "baja",
+        "n_obs": 2
+      },
+      "007": {
+        "veredicto": "se_mantiene",
+        "delta_pct": -0.9,
+        "tasa_anual_pct": -0.3,
+        "ic95": [
+          -7.0,
+          11.1
+        ],
+        "confianza": "baja",
+        "n_obs": 3
+      },
+      "008": {
+        "veredicto": "baja",
+        "delta_pct": -13.3,
+        "tasa_anual_pct": -4.5,
+        "ic95": [
+          -26.0,
+          -5.5
+        ],
+        "confianza": "media",
+        "n_obs": 7
+      },
+      "009": {
+        "veredicto": "sin_datos",
+        "delta_pct": null,
+        "tasa_anual_pct": null,
+        "ic95": null,
+        "confianza": "baja",
+        "n_obs": 1
+      },
+      "010": {
+        "veredicto": "sube",
+        "delta_pct": 10.3,
+        "tasa_anual_pct": 4.0,
+        "ic95": [
+          1.6,
+          15.3
+        ],
+        "confianza": "alta",
+        "n_obs": 11
+      },
+      "011": {
+        "veredicto": "baja",
+        "delta_pct": -6.3,
+        "tasa_anual_pct": -2.3,
+        "ic95": [
+          -14.5,
+          -1.8
+        ],
+        "confianza": "media",
+        "n_obs": 6
+      },
+      "012": {
+        "veredicto": "se_mantiene",
+        "delta_pct": -1.5,
+        "tasa_anual_pct": -0.0,
+        "ic95": [
+          -6.3,
+          7.9
+        ],
+        "confianza": "alta",
+        "n_obs": 10
+      },
+      "013": {
+        "veredicto": "baja",
+        "delta_pct": -12.6,
+        "tasa_anual_pct": -3.9,
+        "ic95": [
+          -15.2,
+          -7.8
+        ],
+        "confianza": "alta",
+        "n_obs": 8
+      },
+      "014": {
+        "veredicto": "baja",
+        "delta_pct": -7.8,
+        "tasa_anual_pct": -4.4,
+        "ic95": [
+          -15.0,
+          1.5
+        ],
+        "confianza": "baja",
+        "n_obs": 3
+      },
+      "015": {
+        "veredicto": "se_mantiene",
+        "delta_pct": -0.3,
+        "tasa_anual_pct": -0.3,
+        "ic95": [
+          -8.3,
+          11.6
+        ],
+        "confianza": "media",
+        "n_obs": 4
+      },
+      "016": {
+        "veredicto": "se_mantiene",
+        "delta_pct": -0.5,
+        "tasa_anual_pct": -0.1,
+        "ic95": [
+          -9.2,
+          6.1
+        ],
+        "confianza": "alta",
+        "n_obs": 10
+      },
+      "017": {
+        "veredicto": "baja",
+        "delta_pct": -6.9,
+        "tasa_anual_pct": -2.8,
+        "ic95": [
+          -19.1,
+          1.8
+        ],
+        "confianza": "media",
+        "n_obs": 6
+      }
+    },
+    "oferta": {
+      "002": {
+        "veredicto": "se_mantiene",
+        "delta_pct": 0.2,
+        "confianza": "baja",
+        "n_obs": 3
+      },
+      "003": {
+        "veredicto": "sin_datos",
+        "delta_pct": null,
+        "confianza": "baja",
+        "n_obs": 0
+      },
+      "004": {
+        "veredicto": "sube",
+        "delta_pct": 1.3,
+        "confianza": "baja",
+        "n_obs": 2
+      },
+      "005": {
+        "veredicto": "baja",
+        "delta_pct": -8.2,
+        "confianza": "media",
+        "n_obs": 7
+      },
+      "006": {
+        "veredicto": "sin_datos",
+        "delta_pct": null,
+        "confianza": "baja",
+        "n_obs": 0
+      },
+      "007": {
+        "veredicto": "sin_datos",
+        "delta_pct": null,
+        "confianza": "baja",
+        "n_obs": 1
+      },
+      "008": {
+        "veredicto": "sin_datos",
+        "delta_pct": null,
+        "confianza": "baja",
+        "n_obs": 1
+      },
+      "009": {
+        "veredicto": "sin_datos",
+        "delta_pct": null,
+        "confianza": "baja",
+        "n_obs": 0
+      },
+      "010": {
+        "veredicto": "sin_datos",
+        "delta_pct": null,
+        "confianza": "baja",
+        "n_obs": 1
+      },
+      "011": {
+        "veredicto": "sube",
+        "delta_pct": 5.4,
+        "confianza": "media",
+        "n_obs": 6
+      },
+      "012": {
+        "veredicto": "sin_datos",
+        "delta_pct": null,
+        "confianza": "baja",
+        "n_obs": 0
+      },
+      "013": {
+        "veredicto": "sube",
+        "delta_pct": 7.5,
+        "confianza": "media",
+        "n_obs": 5
+      },
+      "014": {
+        "veredicto": "se_mantiene",
+        "delta_pct": 1.8,
+        "confianza": "baja",
+        "n_obs": 1
+      },
+      "015": {
+        "veredicto": "se_mantiene",
+        "delta_pct": 1.1,
+        "confianza": "media",
+        "n_obs": 7
+      },
+      "016": {
+        "veredicto": "sube",
+        "delta_pct": 7.4,
+        "confianza": "baja",
+        "n_obs": 2
+      },
+      "017": {
+        "veredicto": "baja",
+        "delta_pct": -4.0,
+        "confianza": "media",
+        "n_obs": 4
+      }
+    }
+  }
+}
