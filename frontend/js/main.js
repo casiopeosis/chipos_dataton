@@ -11,7 +11,7 @@ import { NIVEL } from "./config.js";
 import { cargarPrediccion, ErrorDatos } from "./api.js";
 import { crear, limpiar, reemplazarContenido } from "./dom.js";
 import { textos, texto as t } from "./textos.js";
-import { obtenerEstado, suscribir, VISTA } from "./estado.js";
+import { obtenerEstado, suscribir, despachar, ACCIONES, VISTA } from "./estado.js";
 import { iniciarCabecera, establecerNombreAlcaldia } from "./cabecera.js";
 import { montarFranja } from "./franja.js";
 import { montarTitular, calcularTitular } from "./titular.js";
@@ -156,6 +156,16 @@ async function iniciar() {
 
 function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAgeb, nombresAlcaldia }) {
   const horizonteInicial = datosAlcaldia.horizontes[0] ?? { clave: "hU", anios: null, fecha: null };
+
+  // El horizonte por defecto de estado.js (`CLAVE_HORIZONTE_UNICO`, "hU") es un valor de
+  // arranque para cuando aún no se sabe qué archivo se va a cargar. En cuanto los datos llegan,
+  // si esa clave no existe entre los horizontes reales del archivo (p. ej. contrato v1.2 con
+  // h3/h5/h7), se reconcilia el estado con el primer horizonte real ANTES de montar mapa.js/
+  // leyenda.js/horizonte.js, que leen `obtenerEstado().horizonte` directamente (a diferencia de
+  // `horizonteActivo()` más abajo, que ya degrada con gracia solo para tabla/alcaldía/ficha).
+  if (!datosAlcaldia.horizontes.some((h) => h.clave === obtenerEstado().horizonte)) {
+    despachar({ tipo: ACCIONES.CAMBIAR_HORIZONTE, horizonte: horizonteInicial.clave });
+  }
 
   if (mapaHost) {
     montarMapa(mapaHost, alcaldiasGeoJSON, datosAlcaldia.indices.porCveMun, {

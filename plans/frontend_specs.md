@@ -1180,14 +1180,13 @@ Reglas para el cliente:
 
 ## 18. Decisiones abiertas
 
-1. **[DECISIÓN DEL EQUIPO] Fecha base y referencia del cambio.**
-   - La propuesta es mediados de 2026, con horizontes en 2029, 2031 y 2033, y `delta_pct` medido
-     desde esa base.
-   - Choca con `docs/metodologia.md` actual: horizonte 2027-06 y delta desde el censo 2020.
-   - Si la base es otra, cambian las etiquetas del slider y las frases "frente a mediados de {año}".
-2. **[DECISIÓN DEL EQUIPO] Horizonte de la oferta.** La recomendación es solo 3 años, con el slider
-   deshabilitado para oferta y brecha. La alternativa es dar los tres horizontes con confianza tope
-   "baja" a 5 y 7 años.
+1. **[RESUELTO] Fecha base y referencia del cambio.** `fecha_base = 2026-06` (2026.5), horizontes
+   en `2029-06`/`2031-06`/`2033-06` (3/5/7 años), `delta_pct`/`ic95` medidos desde `fecha_base`
+   (no desde el censo 2020). `docs/metodologia.md` y `CLAUDE.md` ya reflejan esto; contrato
+   `version 1.2` implementado en `backend/src/chipos/exportar.py`.
+2. **[RESUELTO] Horizonte de la oferta.** Solo 3 años (`h3`, `horizontes_disponibles: ["h3"]`),
+   confianza tope `media` como antes. El slider queda deshabilitado cuando la capa activa es
+   oferta (o brecha, que no tiene horizonte).
 3. **[DECISIÓN DEL EQUIPO] Capa brecha.** ¿Se publica como tercera capa, secuencial y sin veredicto,
    con la unidad "establecimientos por 1,000 niñas y niños"? ¿O queda solo en la metodología?
 4. **[DECISIÓN DEL EQUIPO] Umbrales del veredicto general** (§6.2: 60 % / 15 % / 25 % / 50 %,

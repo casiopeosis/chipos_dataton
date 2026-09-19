@@ -57,13 +57,38 @@ chipos_dataton/
 - AGEB **rurales** → `sin_datos`. Filtrar puntos fuera de CDMX (p. ej. 85 de salud) por clave/bbox, aunque vengan marcados como válidos. No usar `CLEE` para rastrear establecimientos antes de 2020 (vacía).
 
 ## Contrato de salida (versionado; cambiarlo exige actualizar el frontend)
-`data/outputs/prediccion_ageb.json` (`version` 1.1):
+`data/outputs/prediccion_ageb.json` (`version` 1.2, generado por `backend/src/chipos/exportar.py`;
+shape completo y decisiones de diseño en `plans/frontend_specs.md` §17-18): `fecha_base` = fecha de
+referencia del cambio (mediados de 2026); `horizontes` = 3 puntos de reporte (3/5/7 años desde
+`fecha_base`); cada registro de AGEB/alcaldía trae `serie` (niveles observados), `nivel_base`
+(proyectado a `fecha_base`) y un objeto `h` con un resultado por horizonte disponible. La capa
+`oferta` solo reporta `h3` (`horizontes_disponibles: ["h3"]`), sin calibración más allá de 3 años
+(ver `docs/metodologia.md` §6). `delta_pct`/`ic95` se miden desde `fecha_base`, no desde el censo
+2020; el veredicto y la confianza no varían entre horizontes (dependen de la tasa anual, no del
+horizonte de reporte) — solo `delta_pct`/`ic95` cambian.
 ```json
-{"version":"1.1","generado":"ISO-8601","horizonte":"2027-06",
- "capas":{"demanda":{"<CVEGEO>":{"cve_mun":"002","veredicto":"sube","delta_pct":12.4,"tasa_anual_pct":1.8,"ic95":[3.1,21.7],"confianza":"alta","n_obs":2}},
-          "oferta":{"<CVEGEO>":{"veredicto":"baja","delta_pct":-4.0,"confianza":"baja","n_obs":3}}}}
+{"version":"1.2","generado":"ISO-8601","fecha_base":"2026-06",
+ "horizontes":[{"clave":"h3","anios":3,"fecha":"2029-06"},
+               {"clave":"h5","anios":5,"fecha":"2031-06"},
+               {"clave":"h7","anios":7,"fecha":"2033-06"}],
+ "capas":{
+  "demanda":{"<CVEGEO>":{"cve_mun":"002","n_obs":2,"motivo_sin_datos":null,
+     "serie":{"t":[2010.44,2020.20],"valor":[512.0,388.0]},"nivel_base":306.2,
+     "h":{"h3":{"veredicto":"baja","delta_pct":-10.7,"tasa_anual_pct":-3.8,"ic95":[-15.3,-7.3],"confianza":"alta"},
+          "h5":{"veredicto":"baja","delta_pct":-17.1,"tasa_anual_pct":-3.8,"ic95":[-24.2,-11.8],"confianza":"alta"},
+          "h7":{"veredicto":"baja","delta_pct":-23.1,"tasa_anual_pct":-3.8,"ic95":[-32.2,-16.1],"confianza":"alta"}}}},
+  "oferta":{"<CVEGEO>":{"cve_mun":"002","n_obs":3,"motivo_sin_datos":null,
+     "serie":{"t":[2016.79,2019.87,2024.87],"valor":[7,5,5]},"nivel_base":4.8,
+     "horizontes_disponibles":["h3"],
+     "h":{"h3":{"veredicto":"baja","delta_pct":-6.3,"tasa_anual_pct":-2.2,"ic95":[-6.3,-6.3],"confianza":"media"}}}},
+  "brecha":{"<CVEGEO>":{"cve_mun":"002","valor":6.1,"unidad":"establecimientos por 1,000 de 0 a 14 años",
+     "t_oferta":2024.87,"t_demanda":2020.20}}}}
 ```
-`prediccion_alcaldia.json`: mismo esquema por `CVE_MUN`. Veredictos: `sube | se_mantiene | baja | sin_datos`. Confianza: `alta | media | baja`. Nunca un veredicto sin `confianza` ni `n_obs`.
+`prediccion_alcaldia.json`: mismo esquema por `CVE_MUN`, más `distribucion_ageb` (conteo de
+veredictos por horizonte) en cada alcaldía y `agregado_cdmx` (mismo registro a nivel ciudad) en la
+raíz. Veredictos: `sube | se_mantiene | baja | sin_datos`. Confianza: `alta | media | baja`. Nunca
+un veredicto sin `confianza` ni `n_obs`. El frontend conserva un adaptador para leer contrato v1.1
+(un solo horizonte) como camino de degradación (`frontend/js/api.js`).
 
 ## Frontend
 Calidad de producción; detalle vinculante en `plans/frontend_specs.md`. Mínimos:
