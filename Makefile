@@ -2,7 +2,7 @@
 PY ?= .venv/bin/python
 PUERTO ?= 8000
 
-.PHONY: perfil pipeline test serve censo datos descargas vendor-d3
+.PHONY: perfil pipeline test validar serve censo datos descargas vendor-d3
 
 # Descarga fuentes oficiales y extrae la CDMX a data/processed/ (no sobrescribe)
 descargas:
@@ -30,6 +30,20 @@ pipeline: datos
 test:
 	@test -d backend/tests || { echo "backend/tests no existe todavía"; exit 1; }
 	PYTHONPATH=backend/src $(PY) -m pytest -q backend/tests
+
+# Revalida data/outputs/*.json ya existentes contra el contrato v1.2, sin regenerarlos
+# (make pipeline ya valida al escribir; este target es para revisar salidas existentes).
+validar:
+	PYTHONPATH=backend/src $(PY) -c "\
+import json; \
+from chipos.config import RUTA_PREDICCION_AGEB, RUTA_PREDICCION_ALCALDIA; \
+from chipos.exportar import validar_contrato, verificar_suma_ageb_alcaldia; \
+ageb = json.loads(RUTA_PREDICCION_AGEB.read_text(encoding='utf-8')); \
+alcaldia = json.loads(RUTA_PREDICCION_ALCALDIA.read_text(encoding='utf-8')); \
+validar_contrato(ageb, 'ageb'); \
+validar_contrato(alcaldia, 'alcaldia'); \
+verificar_suma_ageb_alcaldia(ageb, alcaldia); \
+print('data/outputs/*.json válidos contra el contrato v1.2')"
 
 # Servidor estático del frontend (sin build)
 serve:
