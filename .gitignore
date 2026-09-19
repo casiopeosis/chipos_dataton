@@ -100,6 +100,7 @@ jspm_packages/
 bower_components/
 vendor/
 !src/app/vendor/
+!frontend/vendor/
 .pnp/
 .pnp.js
 .yarn/cache
@@ -183,3 +184,8 @@ ENV/
 .vercel
 .next/
 .nuxt/
+
+##############################
+# Proyecto
+##############################
+data/interim/

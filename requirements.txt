@@ -1,0 +1,25 @@
+# Dependencias directas del proyecto (Python 3.11+; probado en 3.14 dentro de .venv).
+# Regla: toda dependencia nueva se justifica aquí y en plans/backend_plan.md.
+# Herramienta externa: mapshaper (npx -y mapshaper@0.6) para simplificar el GeoJSON AGEB;
+# respaldo sin red: shapely.coverage_simplify.
+
+# Datos
+duckdb==1.5.5          # consultas agregadas sobre CSV/GeoJSON sin cargarlos completos
+pandas==3.0.5          # tablas en memoria para modelado
+numpy==2.5.3
+pyarrow==25.0.1        # lectura/escritura parquet en data/interim/
+openpyxl==3.1.5        # lectura de data/processed/censo/AGEB_2010_2020.xlsx
+
+# Geografía (joins AGEB en WGS84, simplificación del GeoJSON para el frontend)
+geopandas==1.1.4
+shapely==2.1.2
+pyogrio==0.13.0
+pyproj==3.8.0
+
+# Modelado y validación
+scipy==1.18.1
+statsmodels==0.15.0    # GLM Poisson
+scikit-learn==1.9.1    # métricas de clasificación del backtest
+
+# Pruebas
+pytest==9.1.1

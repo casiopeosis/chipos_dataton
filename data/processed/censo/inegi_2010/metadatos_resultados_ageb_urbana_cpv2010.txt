@@ -1,0 +1,29 @@
+﻿identifier: MEX-INEGI.40.201.01-CPV-2010
+
+title: Principales resultados por AGEB y manzana urbana del Censo de Población y Vivienda 2010
+
+description: 
+INEGI. Censo de Población y Vivienda 2010. SNIEG. Información de Interés Nacional.
+Conjunto de indicadores sobre la población y las viviendas de las AGEB y manzanas que integran las localidades urbanas del país, así como los totales por entidad, municipio y localidad urbana, provenientes del Censo de Población y Vivienda 2010.
+
+modified: 2013-06-26
+
+publisher: Instituto Nacional de Estadística y Geografía, INEGI
+
+mbox: atencion.usuarios@inegi.org.mx
+
+license: Términos de Libre Uso de la Información del INEGI http://www.beta.inegi.org.mx/inegi/terminos.html
+
+dataDictionary: http://www.beta.inegi.org.mx/contenidos/proyectos/ccpv/2010/doc/fd_agebmza_urbana.pdf
+
+keyword: viviendas particulares, características de las viviendas, personas, características de las personas, censo 2010, ageb, manzana, urbano, población, hogares, indicadores, fecundidad, migración, población indígena, discapacidad, características educativas, características economicas, salud, situación conyugal, religión
+
+contactPoint: Lic. José de Jesús Esquivel de la Rosa, 01800 111 4634
+
+temporal: 2010-06-12-2010-06-12
+
+spatial: Distrito Federal
+
+accrualPeriodicity: Decenal
+
+distribution: http://www.beta.inegi.org.mx/proyectos/ccpv/2010/default.html

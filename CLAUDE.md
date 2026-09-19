@@ -1,92 +1,95 @@
 # CLAUDE.md — chipos_dataton
 
-## 1. Qué es este proyecto
+Proyecto: **predicción de demanda de servicios para infancias en la Ciudad de México, por AGEB y por alcaldía**.
+Salida: un veredicto conclusivo por unidad territorial (**sube / se_mantiene / baja**) con magnitud, intervalo y confianza, visualizado en un frontend web profesional.
 
-Analizamos en qué **alcaldías** de la Ciudad de México se va a experimentar demanda de ciertos servicios. El resultado final es un **semáforo** en una página web: el usuario elige un grupo demográfico, y el mapa colorea las 16 alcaldías según el nivel de demanda estimado para ese grupo.
+## Reglas duras
+1. **Prohibido Streamlit, Dash, Gradio, Panel, Shiny** o cualquier framework que genere la UI desde Python.
+2. **Frontend = HTML + CSS + JS vanilla (ES modules)**. Sin React/Vue/Angular, sin paso de build obligatorio. Librerías de mapas/gráficas (Leaflet o MapLibre, D3) permitidas solo **vendorizadas en `frontend/vendor/`**, sin CDN en tiempo de ejecución.
+3. El **contenido** de `data/processed/` y `data/reference/` es inmutable (nunca editar ni sobrescribir archivos). Se **autoriza reorganizar** (mover/renombrar con `git mv` en subcarpetas coherentes), registrando cada movimiento en `docs/data_manifest.md` (ruta anterior → nueva, motivo) y actualizando las rutas en `tools/` y `backend/`. Derivados van a `data/interim/` o `data/outputs/`. Se autoriza crear `requirements.txt`, `Makefile` y `.venv` (ignorado por git); toda dependencia instalada se registra en `requirements.txt`.
+4. **Nunca leer archivos de datos completos** (ver "Economía de tokens").
+5. Todo es **reproducible**: semillas fijas, pipeline determinista, `make pipeline` regenera `data/outputs/`.
+6. No inventar datos, columnas, claves ni rutas: verificarlas en `docs/perfil_datos.md`. No imputar sin documentarlo.
 
-Las estimaciones deben ser **insesgadas** y venir acompañadas de **intervalos de confianza**, construidos a partir de datos demográficos y de oferta/demanda de servicios ya recopilados en `data/`.
+## Idioma y estilo
+- Código, comentarios, commits y docs en **español**. Identificadores en `snake_case` sin acentos.
+- "alcaldía" en código y UI (sinónimo histórico: delegación). "AGEB" en mayúsculas.
+- Python 3.11+ (`duckdb`, `pandas`, `geopandas`, `statsmodels`, `scikit-learn`, `pytest`). Dependencia nueva = justificación en el plan y en `requirements.txt`.
 
-**Decisión de equipo: no se implementa nivel AGEB.** El proyecto original contemplaba drill-down a AGEB; el equipo decidió no hacerlo (no hay población por AGEB disponible en ningún dataset del repo, ver §1.1). Esto ya no es una fase condicional futura — es alcance cerrado. No construir infraestructura, columnas, ni estados de UI pensando en un AGEB que no se va a implementar.
-
-## 1.1 Hallazgos críticos del inventario (`docs/current-state.md`) — leer antes de tocar código
-
-- ⚠️ **BUG DE METADATOS EN GEN A — regla dura, no opcional.** Las carpetas `OCTUBRE 2016 CDMX`, `NOVIEMBRE 2017/2018/2020 CDMX` tienen `fuente.anio_datos`, `fuente.mes_corte`, `fuente.edicion` y `fuente.nota_temporal` **idénticos e incorrectos** en su JSON de calidad (los 4 dicen `2020-11`, es una plantilla no actualizada). **Nunca uses esos campos para fechar estas carpetas.** El dato correcto está en `fuente.archivo` (nombre del zip, ej. `denue_09_1016.zip`) y `fuente.sha256_archivo_entrada`. Cualquier subagente de ETL debe leer esta regla antes de tocar la familia Gen A (ver §6 de la reorganización propuesta).
-- ⚠️ **BLOQUEADOR: no existe población por AGEB en ningún dataset de `data/`.** `ESTUDIO EDADES CENSO 2020` solo llega a nivel alcaldía (576 registros) y alcaldía+localidad (3,276). El denominador poblacional para el drill-down a AGEB no existe todavía — hay que conseguir la tabla censal de INEGI a nivel AGEB ("Principales resultados por AGEB", Censo 2020) o definir explícitamente un método de reparto proporcional desde alcaldía como fallback documentado. Esto bloquea la Fase 4 (metodología) a nivel AGEB, no solo el frontend.
-- `data/semaforo_v0.json` y `semaforo_v1.json` eran pruebas de un frontend Streamlit descartado. El JSON y el código que los consumía se eliminan, **pero `v1` ya trae un aparato estadístico (error estándar de residuales, t-crítico, grados de libertad, LOO-CV) directamente relevante para el diseño de intervalos de confianza** — se archivan en `docs/legacy/` como referencia de metodología, no se borran sin revisar.
-- Los cuatro cortes `COMERCIOS_*` / `MAYO|NOVIEMBRE|OCTUBRE * CDMX` / `INFANCIAS_*` / `SALUD_CDMX_*` para un mismo periodo **no son duplicados** — son cuatro filtros temáticos sobre la misma descarga DENUE (confirmado por hash del zip de origen). No hay que deduplicar esa parte.
-
-## 2. Dominios de demanda (los tres focos del proyecto)
-
-| Dominio | Carpetas de datos relevantes |
-|---|---|
-| Adultos mayores | `NOVIEMBRE * CDMX/denue_servicios_adultos_mayores_*`, `denue_enfoque_gimnasios_adultos_mayores_*`, `PILARES CDMX/` |
-| Infancia (guarderías, etc.) | `INFANCIAS_*` (una carpeta por corte de tiempo, 2016–2026) |
-| Cultura | `AREAS_CULTURALES_CDMX/` |
-
-Datos transversales que probablemente alimentan el modelo (población base, contexto, no un dominio en sí):
-- `ESTUDIO EDADES CENSO 2020/` — estructura de edades por zona, insumo clave para el denominador poblacional del estimador
-- `enut/` — uso del tiempo, puede informar demanda de cuidado
-- `ESPACIO PUBLICO CDMX/`, `AREAS VERDES CDMX/` — contexto de oferta urbana
-- `COMERCIOS_*` / `MAYO * CDMX` / `NOVIEMBRE * CDMX` / `OCTUBRE 2016 CDMX` — snapshots DENUE genéricos; son la fuente de la que salen `INFANCIAS_*`, `SALUD_CDMX_*` y los de adultos mayores. **Ojo**: hay carpetas que parecen representar el mismo tipo de corte con nombres distintos (`COMERCIOS_2025_05` vs `MAYO 2025 CDMX`, `NOVIEMBRE 2022 CDMX`, `OCTUBRE 2016 CDMX`). Antes de modelar, hay que confirmar si son duplicados, cortes distintos, o el mismo insumo procesado dos veces.
-- `semaforo_v0.json`, `semaforo_v1.json` — probablemente iteraciones previas del output final; revisar antes de asumir que hay que construirlo desde cero.
-
-## 3. Jerarquía territorial — definitivo: solo alcaldía
-
-```
-Alcaldía   (único nivel — AGEB descartado por decisión de equipo)
-```
-
-- CDMX tiene 16 alcaldías. Es el único nivel territorial del proyecto.
-- No hay shapefile de límites de AGEB ni población por AGEB en `data/`. Esto fue el motivo original de la duda, pero ya no es un bloqueador a resolver — es la razón por la que el equipo cerró el alcance en alcaldía.
-- No diseñar, documentar ni dejar "ganchos" de código para un futuro AGEB. Si el equipo cambia de opinión más adelante, es un proyecto nuevo sobre esta base, no una fase pendiente de esta.
-
-## 4. Metodología de estimación — principios, no receta cerrada
-
-- El objetivo es un estimador **insesgado** de demanda por alcaldía y dominio, con **intervalo de confianza**, no solo un score puntual.
-- Los snapshots DENUE multi-año (2016→2026) son la serie histórica disponible — probablemente el enfoque combine tendencia temporal de oferta existente + población en riesgo (censo/edades) como denominador.
-- **Esta metodología debe diseñarse explícitamente antes de que cualquier agente empiece a escribir código de modelado.** No dejar que un subagente de implementación decida el estimador; eso se discute y se documenta aquí o en `docs/methodology.md` primero.
-
-## 5. Frontend — decisión tomada: nivel "profesional", no prototipo
-
-**Frontend definitivo: HTML/CSS/JS vanilla, sin Streamlit ni frameworks de dashboard (Dash, Gradio, etc.). Estándar de calidad: producto terminado, no prototipo de hackathon.**
-
-- `src/app.py` y `.streamlit/config.toml` quedan **deprecados** — no se les agregan features nuevas. Se pueden dejar como referencia de lógica (si `app.py` ya calcula algo del semáforo) pero el output final no corre sobre Streamlit.
-- `dashboard.html` se descarta como base — no se parte de él ni se itera encima; es un prototipo, no el punto de partida del frontend profesional.
-- **"Profesional" significa, en concreto:**
-  - Sistema visual propio: paleta y tipografía elegidas deliberadamente, no los defaults de un framework CSS ni "look de plantilla de Bootstrap".
-  - Responsive de verdad (usable en laptop y en celular, no solo "no se rompe").
-  - Jerarquía visual clara entre el selector de dominio, el mapa y cualquier panel de detalle — no todo con el mismo peso.
-  - Estados de interacción cuidados: hover, selección activa, transición al cambiar de dominio — nada instantáneo/brusco, pero tampoco animación por animación.
-  - Accesibilidad básica: contraste suficiente en los colores del semáforo (esto importa doble aquí, porque rojo/amarillo/verde es exactamente el caso donde el contraste y no depender solo del color importan para daltonismo), tamaños de texto legibles.
-  - Carga rápida: el frontend consume JSON estático precalculado, no debe sentirse pesado.
-- **Excepción explícita**: para el mapa coroplético con drill-down alcaldía→AGEB se permite usar una librería de mapas ligera (**Leaflet** o **MapLibre GL**) — no cuenta como "framework de dashboard", es la pieza de renderizado geoespacial que no tiene sentido reescribir a mano. Todo lo demás (layout, selector de dominio, tarjetas, estado de la UI) va en JS vanilla.
-- El frontend consume **datos estáticos precalculados** (JSON generado por el pipeline de estimación), no hace llamadas en vivo a Python/un backend. Esto simplifica el hosting y evita depender de un servidor corriendo el modelo en tiempo real.
-
-## 6. Reglas para Claude Code al trabajar en este repo
-
-1. **Nunca cargar un `.csv`, `.geojson` o `.xlsx` completo en contexto.** Cada carpeta de dato ya trae:
-   - `README.md` — descripción del dataset
-   - `resumen_calidad.json` / `reporte_calidad_*.json` — resumen de calidad ya calculado
-   - `diccionario_campos*.csv` — el schema
-   Leer esos tres primero. Solo si es estrictamente necesario, usar `head -20` o `pandas.read_csv(..., nrows=20)` / `.info()` sobre el archivo real — nunca abrirlo entero.
-2. Para shapefiles, usar `ogrinfo -so` (o el equivalente en `geopandas`, `gdf.head()` / `gdf.crs`) para ver estructura, no cargar todos los registros.
-3. Antes de tocar código de modelado o del frontend, generar primero `docs/current-state.md` (inventario) y tenerlo revisado por el usuario.
-4. No renombrar/mover carpetas de `data/` sin un plan explícito aprobado — varias tienen nombres inconsistentes que hay que unificar con cuidado (mismatch entre "MAYO 2025 CDMX" y "COMERCIOS_2025_05" podría ser el mismo corte).
-
-## 7. Estructura objetivo propuesta (a validar, no aplicar aún)
-
+## Estructura del repo
 ```
 chipos_dataton/
+├── CLAUDE.md · Makefile · requirements.txt
+├── plans/      backend_plan.md · frontend_plan.md · frontend_specs.md (lo entrega el equipo)
+├── docs/       perfil_datos.md · problemas_datos.md · metodologia.md
+├── tools/      profile_data.py
 ├── data/
-│   ├── raw/            # snapshots originales, un subdirectorio por fuente+fecha, nombre normalizado
-│   ├── processed/       # depurados actuales, mismo esquema de nombres
-│   └── reference/       # AGEB shapefile, diccionarios de campos compartidos
-├── src/
-│   ├── etl/             # consolidación de snapshots
-│   ├── modeling/         # estimador + intervalos de confianza
-│   └── app/              # frontend: HTML/CSS/JS vanilla + Leaflet/MapLibre para el mapa
-├── docs/
-│   ├── current-state.md
-│   └── methodology.md
-└── CLAUDE.md
+│   ├── processed/   SOLO LECTURA: areas_verdes, comercios, espacios_publicos, infancias, salud, enut_2024_cdmx_uso_tiempo.csv
+│   ├── reference/   SOLO LECTURA: alcaldias.{csv,geojson}, dominios_scian.csv, ageb_cdmx.geojson, ageb_cdmx_simplificado.geojson
+│   ├── interim/     panel AGEB-año, features (git-ignorado si pesa)
+│   └── outputs/     prediccion_ageb.json · prediccion_alcaldia.json (regenerables, no editar a mano)
+├── backend/
+│   ├── src/chipos/  io.py · panel.py · features.py · modelos.py · backtest.py · exportar.py
+│   └── tests/
+└── frontend/        index.html · css/ · js/ (main, mapa, estado, api, graficas) · vendor/ · data/ (copia/enlace a outputs)
 ```
+
+## Datos (resumen)
+- DENUE `infancias/`, `salud/` (CSV) y `comercios/` (GeoJSON): 11 cortes, 2016-10 a 2026-05, **intervalos irregulares**. Son fotografías, no flujos: un cambio puede ser cobertura del levantamiento o reclasificación SCIAN (`dominios_scian.csv`), no cambio real. Verificar antes de comparar años.
+- `areas_verdes/`, `espacios_publicos/`: cortes únicos (features estáticas). ENUT 2024: encuesta, probable resolución superior a AGEB.
+- **Brecha conocida:** no hay geometría AGEB. Fuente: INEGI Marco Geoestadístico, entidad `09`, reproyectar a EPSG:4326 y guardar en `data/reference/ageb_cdmx.geojson`. Clave `CVEGEO` = `CVE_ENT`(2)+`CVE_MUN`(3)+`CVE_LOC`(4)+`CVE_AGEB`(4); alcaldía = `CVE_MUN` `002`–`017`. La versión del marco debe coincidir con la clave AGEB de los DENUE; registrarla en el perfil.
+- AGEB rurales (Milpa Alta, Tlalpan, Xochimilco): incluir o excluir con decisión documentada.
+- Joins geográficos siempre en WGS84.
+
+## Enfoque de modelado
+- Unidad base **AGEB**; alcaldía = agregación por `CVE_MUN`.
+- Distinguir **oferta** (establecimientos DENUE) de **demanda** (población objetivo × necesidad). Nunca presentar una como la otra sin etiquetarlo. La variable objetivo exacta se fija en `plans/backend_plan.md`.
+- Pocas observaciones por AGEB (≤ 11): modelos parsimoniosos, contracción hacia la alcaldía (jerárquico / empirical Bayes) para conteos bajos; modelar sobre tiempo real (años decimales), no sobre índice.
+- Veredicto por **regla explícita con banda muerta** (umbral de `se_mantiene`) definida y documentada en un solo lugar (`modelos.py` + `docs/metodologia.md`).
+- Validar con **backtest temporal de origen móvil** (sin k-fold aleatorio, sin fuga del futuro) y comparar contra baseline ingenuo ("igual que el último corte"). Si no lo supera, no se adopta.
+- Datos insuficientes → `sin_datos`, nunca un veredicto inventado.
+
+## Decisiones vigentes (confirmadas por el equipo)
+- **Demanda** = población infantil por AGEB, del Censo 2010 y 2020 (INEGI RESAGEBURB oficial en `data/processed/censo/inegi_{2010,2020}/`; el xlsx del equipo queda superseded, ver `docs/data_manifest.md`), proyectada con tendencia y contracción hacia la alcaldía, ajustada a proyecciones CONAPO por municipio. **Oferta** = establecimientos DENUE con `Alcance = Principal`. Capas separadas; el veredicto principal es de **demanda**; la oferta y la brecha (demanda/oferta) son capas complementarias.
+- Rango de edad: **0–14 años** (confirmado: todos los establecimientos `Principal` atienden esas edades). **Suma simple, sin ponderaciones** (ENUT no se usa para ponderar: solo tiene resolución CDMX; queda como contexto narrativo).
+- DENUE: las 11 ediciones **no son independientes** (levantamientos nuevos en 2019-11 y 2024-11). Usar **un corte por periodo**; nunca tratar los 11 como observaciones. Agrupar siempre por `CVE_MUN` (nombres de alcaldía mal codificados en 2016–2018). La caída de 2024-11 (−11.2 %; privado −22.8 %, preescolar privado −38.7 %; público +1.2 %; solo reaparece el 3 % de las bajas) se trata como **cierres reales acumulados entre 2020 y 2023 y registrados de golpe al volver a campo en 2024**: usar las fechas de levantamiento como eje temporal, no atribuirla a un solo año, y aplicar **tope de confianza `media`** a la capa de oferta.
+- Banda de `se_mantiene`: umbral base ±1 %/año sobre la tasa proyectada; `sube`/`baja` solo si la probabilidad de estar fuera de la banda en ese sentido es **≥ 0.80**; se reporta sensibilidad a ±0.5 y ±2 %/año. Horizonte: mediados de 2027.
+- AGEB **rurales** → `sin_datos`. Filtrar puntos fuera de CDMX (p. ej. 85 de salud) por clave/bbox, aunque vengan marcados como válidos. No usar `CLEE` para rastrear establecimientos antes de 2020 (vacía).
+
+## Contrato de salida (versionado; cambiarlo exige actualizar el frontend)
+`data/outputs/prediccion_ageb.json` (`version` 1.1):
+```json
+{"version":"1.1","generado":"ISO-8601","horizonte":"2027-06",
+ "capas":{"demanda":{"<CVEGEO>":{"cve_mun":"002","veredicto":"sube","delta_pct":12.4,"tasa_anual_pct":1.8,"ic95":[3.1,21.7],"confianza":"alta","n_obs":2}},
+          "oferta":{"<CVEGEO>":{"veredicto":"baja","delta_pct":-4.0,"confianza":"baja","n_obs":3}}}}
+```
+`prediccion_alcaldia.json`: mismo esquema por `CVE_MUN`. Veredictos: `sube | se_mantiene | baja | sin_datos`. Confianza: `alta | media | baja`. Nunca un veredicto sin `confianza` ni `n_obs`.
+
+## Frontend
+Calidad de producción; detalle vinculante en `plans/frontend_specs.md`. Mínimos:
+- Mapa de alcaldías → clic → animación "pop" + `flyToBounds` → solo los AGEB de esa alcaldía, coloreados por veredicto; tooltip + panel lateral; `Esc`/botón para volver.
+- **Un solo GeoJSON de AGEB** (simplificado; TopoJSON si pesa) unido por `CVEGEO` en cliente, filtrado por `CVE_MUN`. No crear archivos por alcaldía salvo que el único supere ~5 MB tras simplificar.
+- Paleta con significado fijo y apta para daltonismo (`sube`/`baja` divergente, `se_mantiene` neutro, `sin_datos` gris con patrón/etiqueta); leyenda siempre visible; no depender solo del color.
+- HTML semántico, teclado, `aria-*`, contraste WCAG AA, respetar `prefers-reduced-motion`. Responsive. CSS con variables y sin `!important`. JS modular sin globales; sin `innerHTML` con datos sin sanear.
+- Estados de carga, error y vacío diseñados. UI en español (México).
+
+## Economía de tokens al leer datos
+- Empezar por `docs/perfil_datos.md`; no releer lo ya resumido.
+- Usar `tools/profile_data.py` (salida acotada por archivo: filas, columnas, dtypes, % nulos, cardinalidad, min/max, 2 filas de ejemplo).
+- CSV: `head -n 3`, `wc -l`, `duckdb -c "DESCRIBE SELECT * FROM 'f.csv'"`. GeoJSON: `jq -c '.features[0].properties'`, `jq '.features|length'`; jamás imprimir geometrías.
+- Las 11 tablas de cada familia comparten esquema: perfilar una a fondo y las demás solo por diferencias.
+- Imprimir agregados, no filas; máximo ~40 líneas por salida. Los hallazgos van a archivos `.md`, no a la conversación.
+- Agentes: respuesta final ≤ 15 líneas, sin pegar código ni datos ya escritos en disco.
+
+## Flujo de trabajo
+1. `/plan` → `plans/backend_plan.md` y `plans/frontend_plan.md` (sin código de producción).
+2. Aprobación del equipo. 3. Implementación por sub-agentes con archivos disjuntos y contratos fijos.
+4. Verificación: `make test`, `make pipeline`, revisión visual.
+- Commits pequeños y atómicos (`feat:`, `fix:`, `data:`, `docs:`), una fase = un commit. No commitear `data/interim/` ni archivos > 50 MB.
+- Tests junto al código: sumas por alcaldía = suma de AGEB, sin `CVEGEO` duplicados, veredictos en el conjunto válido.
+- Problemas de datos = hallazgos concretos (archivo, columna, magnitud), no advertencias genéricas.
+
+## Definición de terminado
+- Backend: tests verdes; backtest reportado (métrica del modelo vs baseline, 5 líneas); salidas validadas contra el contrato; `docs/metodologia.md` al día.
+- Frontend: cumple `frontend_specs.md`; sin CDN ni errores en consola; Lighthouse accesibilidad ≥ 90.
+- Ningún archivo de `data/processed/` ni `data/reference/` modificado.
