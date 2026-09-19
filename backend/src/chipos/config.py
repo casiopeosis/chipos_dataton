@@ -58,10 +58,22 @@ SEMILLA: int = 20260918
 # Constantes del algoritmo de estimación (plan §5)
 # ---------------------------------------------------------------------------
 
-# Tiempo en años decimales de los censos y del horizonte de proyección.
+# Tiempo en años decimales de los censos y de los horizontes de proyección.
 T_2010: float = 2010.44
 T_2020: float = 2020.20
-T_HOR: float = 2027.5
+
+# Fecha base de reporte (mediados de 2026) y horizontes de 3, 5 y 7 años
+# (contrato v1.2, `plans/frontend_specs.md` §17-18): `delta_pct`/`ic95` se
+# miden desde `T_BASE`, no desde el censo 2020 (ver `resumir()` en
+# `modelos.py` y `docs/metodologia.md` §2/§7).
+T_BASE: float = 2026.5
+HORIZONTES: dict[str, float] = {"h3": T_BASE + 3, "h5": T_BASE + 5, "h7": T_BASE + 7}
+T_HOR: float = HORIZONTES["h7"]  # ancla del control CONAPO (horizonte más lejano)
+
+# La capa de oferta solo reporta el horizonte más cercano (metodología §6:
+# la caída 2024-11 y el tope de confianza `media` no justifican calibrar
+# más allá de 3 años).
+HORIZONTES_OFERTA: tuple[str, ...] = ("h3",)
 
 # Banda muerta de "se_mantiene": ±1 %/año sobre la tasa proyectada.
 DELTA: float = 0.01
