@@ -157,14 +157,31 @@ async function iniciar() {
 function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAgeb, nombresAlcaldia }) {
   const horizonteInicial = datosAlcaldia.horizontes[0] ?? { clave: "hU", anios: null, fecha: null };
 
+  // Horizontes que de verdad tiene una capa (spec §18-2: oferta solo trae h3, sin calibración a
+  // 5/7 años). Se lee `horizontes_disponibles` de cualquier registro real de esa capa que lo
+  // traiga (v1.2); si ninguno lo trae (v1.1, o una capa sin ese campo como demanda) se asume que
+  // trae todos los horizontes del archivo.
+  function horizontesParaCapa(capa) {
+    const registros = Object.values(datosAlcaldia.capas?.[capa] ?? {});
+    const conLista = registros.find((r) => Array.isArray(r?.horizontes_disponibles));
+    if (!conLista) return datosAlcaldia.horizontes;
+    const disponibles = new Set(conLista.horizontes_disponibles);
+    return datosAlcaldia.horizontes.filter((h) => disponibles.has(h.clave));
+  }
+
   // El horizonte por defecto de estado.js (`CLAVE_HORIZONTE_UNICO`, "hU") es un valor de
   // arranque para cuando aún no se sabe qué archivo se va a cargar. En cuanto los datos llegan,
-  // si esa clave no existe entre los horizontes reales del archivo (p. ej. contrato v1.2 con
-  // h3/h5/h7), se reconcilia el estado con el primer horizonte real ANTES de montar mapa.js/
-  // leyenda.js/horizonte.js, que leen `obtenerEstado().horizonte` directamente (a diferencia de
-  // `horizonteActivo()` más abajo, que ya degrada con gracia solo para tabla/alcaldía/ficha).
-  if (!datosAlcaldia.horizontes.some((h) => h.clave === obtenerEstado().horizonte)) {
-    despachar({ tipo: ACCIONES.CAMBIAR_HORIZONTE, horizonte: horizonteInicial.clave });
+  // si esa clave no existe entre los horizontes reales de la capa activa (p. ej. contrato v1.2
+  // con h3/h5/h7, o la capa oferta que solo trae h3), se reconcilia el estado ANTES de montar
+  // mapa.js/leyenda.js/horizonte.js, que leen `obtenerEstado().horizonte` directamente (a
+  // diferencia de `horizonteActivo()` más abajo, que ya degrada con gracia solo para
+  // tabla/alcaldía/ficha).
+  const horizontesCapaInicial = horizontesParaCapa(obtenerEstado().capa);
+  if (!horizontesCapaInicial.some((h) => h.clave === obtenerEstado().horizonte)) {
+    despachar({
+      tipo: ACCIONES.CAMBIAR_HORIZONTE,
+      horizonte: horizontesCapaInicial[0]?.clave ?? horizonteInicial.clave,
+    });
   }
 
   if (mapaHost) {
@@ -178,10 +195,28 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
     montarLeyenda(leyendaHost, { datosAlcaldia, datosAgeb, nombresAlcaldia });
   }
 
-  if (horizonteHost) {
-    montarControlHorizonte(horizonteHost, datosAlcaldia.horizontes, {
-      claveActiva: obtenerEstado().horizonte,
-    });
+  const controlHorizonte = horizonteHost
+    ? montarControlHorizonte(horizonteHost, horizontesCapaInicial, {
+        claveActiva: obtenerEstado().horizonte,
+      })
+    : null;
+
+  // Al cambiar de capa (no de horizonte: eso no debe recrear el control ni robarle el foco a
+  // media interacción), se recalculan los horizontes disponibles de la nueva capa. Si la clave
+  // activa ya no existe en esa capa (p. ej. se estaba en h7 y se cambia a oferta), se reconcilia
+  // el estado con el primer horizonte que sí tenga esa capa.
+  let capaControlHorizonteAnterior = obtenerEstado().capa;
+  function sincronizarControlHorizonte(estado) {
+    if (!controlHorizonte || estado.capa === capaControlHorizonteAnterior) return;
+    capaControlHorizonteAnterior = estado.capa;
+    const disponibles = horizontesParaCapa(estado.capa);
+    const claveActiva = disponibles.some((h) => h.clave === estado.horizonte)
+      ? estado.horizonte
+      : disponibles[0]?.clave ?? horizonteInicial.clave;
+    controlHorizonte.actualizar(disponibles, { claveActiva });
+    if (claveActiva !== estado.horizonte) {
+      despachar({ tipo: ACCIONES.CAMBIAR_HORIZONTE, horizonte: claveActiva });
+    }
   }
 
   const controlCapasHost = document.getElementById("control-capas");
@@ -344,6 +379,7 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
   }
 
   function render(estado) {
+    sincronizarControlHorizonte(estado);
     if (estado.vista === VISTA.ALCALDIA) renderAlcaldia(estado);
     else if (estado.vista === VISTA.AGEB) renderAgeb(estado);
     else renderCiudad(estado);
