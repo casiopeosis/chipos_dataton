@@ -1,0 +1,82 @@
+/*
+ * capas.css — control segmentado de capas (plans/frontend_specs.md §9, F60).
+ * Solo variables de tokens.css; sin colores/tamaños/duraciones literales ni `!important`
+ * (CLAUDE.md → "Frontend", spec §4).
+ */
+
+.capas {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--linea-fuerte);
+  /* §4: "Sin border-radius, salvo 2px en el control segmentado y el pulgar del slider." */
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+/*
+ * El <input type="radio"> real se mantiene en el DOM (accesible, enfocable, con navegación por
+ * flechas nativa entre radios del mismo `name`) pero se oculta visualmente con la técnica
+ * "visualmente-oculto": nunca `display: none` ni `visibility: hidden`, que lo sacarían del árbol
+ * de accesibilidad o del orden de tabulación.
+ */
+.capas__entrada {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.capas__opcion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: var(--e-1) var(--e-4);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-etiqueta-tam) * var(--escala));
+  line-height: var(--t-etiqueta-alto);
+  font-weight: var(--t-etiqueta-peso);
+  letter-spacing: var(--t-etiqueta-tracking);
+  text-transform: uppercase;
+  color: var(--tinta-2);
+  background: var(--papel);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--d-m) var(--ease-salida),
+    color var(--d-m) var(--ease-salida);
+}
+
+.capas__opcion:not(:first-of-type) {
+  border-left: 1px solid var(--linea-fuerte);
+}
+
+/* Opción activa: spec wireframe 1, "[ DEMANDA | Oferta ]" — la activa resalta en mayor peso. */
+.capas__entrada:checked + .capas__opcion {
+  background: var(--tinta);
+  color: var(--papel);
+  font-weight: 700;
+}
+
+.capas__entrada:focus-visible + .capas__opcion {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.capas__opcion:hover {
+  color: var(--tinta);
+}
+
+.capas__entrada:checked + .capas__opcion:hover {
+  color: var(--papel);
+}
+
+.capas__entrada:disabled + .capas__opcion {
+  color: var(--tinta-3);
+  cursor: not-allowed;
+}

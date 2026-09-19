@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Infancias CDMX — Pruebas (F75: leyenda)</title>
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 72ch;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #111;
+        background: #fafaf8;
+      }
+      h1 {
+        font-size: 1.25rem;
+      }
+      .resumen {
+        font-weight: 600;
+      }
+      .lista-pruebas {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .lista-pruebas li {
+        padding: 0.35rem 0.5rem;
+        border-bottom: 1px solid #d9d9d5;
+        font-size: 0.9rem;
+      }
+      .prueba-ok {
+        color: #245a88;
+      }
+      .prueba-fallo {
+        color: #8f4712;
+        font-weight: 600;
+      }
+      .prueba-fallo pre {
+        white-space: pre-wrap;
+        font-size: 0.8rem;
+        margin: 0.25rem 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Pruebas de F75: leyenda.js</h1>
+    <p>
+      Pruebas en navegador, sin framework, mismo patrón que <code>tests/index.html</code>:
+      conteos por vista (ciudad/alcaldía), filas <code>&lt;button aria-pressed&gt;</code>, el
+      mensaje "Mostrando N de M", y la rampa de brecha de 5 cortes (fixture ficticio, §4.4/§10.4).
+    </p>
+    <div id="resultados" aria-live="polite">Ejecutando pruebas…</div>
+    <script type="module" src="./ejecutar_pruebas_leyenda.js"></script>
+  </body>
+</html>

@@ -47,6 +47,7 @@
   --foco: #111111; /* anillo de foco de 2px con 2px de separación — 18.1:1 */
   --superficie: #ffffff; /* drawer, tooltip, hoja móvil — — */
   --esqueleto: #ecece8; /* bloques de carga — — */
+  --superficie-realzada: #f0f0ec; /* fila activa/expandida de tabla (spec §7.1) — — */
 
   /* --------------------------------------------------------------------
    * §4.2 Veredictos. Escala divergente azul ↔ ocre, sin rojo/verde.
@@ -210,3 +211,15 @@ html.modo-presentacion {
     "cv11" 1;
   font-variant-numeric: tabular-nums;
 }
+
+/* --------------------------------------------------------------------
+ * Utilidad de color de veredicto como texto (§4.2 "-texto"). La CSP del
+ * proyecto es `style-src 'self'` (sin `unsafe-inline`), así que ningún
+ * módulo puede poner `style="color: ..."` con el color que corresponda a
+ * un registro: en vez de eso, cada uno agrega una de estas clases según
+ * `registro.veredicto`. Única fuente de estos 4 colores como texto.
+ * -------------------------------------------------------------------- */
+.color-veredicto--sube { color: var(--sube-texto); }
+.color-veredicto--baja { color: var(--baja-texto); }
+.color-veredicto--se_mantiene { color: var(--mantiene-texto); }
+.color-veredicto--sin_datos { color: var(--tinta-3); }

@@ -1,0 +1,251 @@
+/*
+ * leyenda.css — leyenda + filtro/realce (plans/frontend_specs.md §10.4; plan §5, F75).
+ * Solo variables de tokens.css: ningún color, tamaño o duración literal (CLAUDE.md, spec §4).
+ *
+ * Posición: "abajo a la izquierda del área del mapa" (spec §10.4). `#contenedor-mapa` (index.html)
+ * ya es `position: relative` (layout.css), así que esta leyenda se ancla dentro de ese contenedor
+ * con `position: absolute`.
+ */
+
+.leyenda {
+  position: absolute;
+  left: var(--e-4);
+  bottom: var(--e-4);
+  z-index: 1;
+  width: 248px;
+  box-sizing: border-box;
+  padding: var(--e-3);
+  background: color-mix(in srgb, var(--papel) 92%, transparent);
+  border: 1px solid var(--linea);
+  font-family: var(--f-familia);
+}
+
+.leyenda__encabezado {
+  margin: 0 0 var(--e-2);
+  font-size: calc(var(--t-etiqueta-tam) * var(--escala));
+  line-height: var(--t-etiqueta-alto);
+  font-weight: var(--t-etiqueta-peso);
+  letter-spacing: var(--t-etiqueta-tracking);
+  text-transform: uppercase;
+  color: var(--tinta-2);
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Filas de veredicto: cada una es un <button aria-pressed> (spec §10.4 "Filtro y realce")        */
+/* -------------------------------------------------------------------------------------------- */
+
+.leyenda__filas {
+  list-style: none;
+  margin: 0 0 var(--e-3);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+}
+
+.leyenda__fila {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  width: 100%;
+  padding: var(--e-1) var(--e-2);
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.leyenda__fila:hover {
+  border-color: var(--linea);
+}
+
+.leyenda__fila:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.leyenda__fila[aria-pressed="true"] {
+  border-color: var(--tinta);
+}
+
+.leyenda__palabra {
+  flex: 1 1 auto;
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  line-height: var(--t-cuerpo-alto);
+  color: var(--tinta);
+}
+
+.leyenda__simbolo {
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-2);
+}
+
+.leyenda__conteo {
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  color: var(--tinta-2);
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Muestras de 14×10 px (spec §10.4). El color/patrón nunca es la única señal: cada fila también  */
+/* trae el símbolo y la palabra (§4.2 "nunca se muestra solo el color").                          */
+/* -------------------------------------------------------------------------------------------- */
+
+.leyenda__muestra {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  flex: 0 0 auto;
+  border: 1px solid var(--linea-fuerte);
+}
+
+.leyenda__muestra--sube { background: var(--sube-2); }
+.leyenda__muestra--baja { background: var(--baja-2); }
+.leyenda__muestra--mantiene { background: var(--mantiene); }
+
+.leyenda__muestra--sube-1 { background: var(--sube-1); }
+.leyenda__muestra--sube-2 { background: var(--sube-2); }
+.leyenda__muestra--sube-3 { background: var(--sube-3); }
+.leyenda__muestra--baja-1 { background: var(--baja-1); }
+.leyenda__muestra--baja-2 { background: var(--baja-2); }
+.leyenda__muestra--baja-3 { background: var(--baja-3); }
+
+/* Hachurado de sin_datos (spec §4.2: "líneas a 45°, 1px, cada 6px"), aproximado en CSS puro
+   (la versión exacta con <pattern> SVG vive en mapa.css/mapa.js, para el mapa). */
+.leyenda__muestra--sin-datos {
+  background-color: var(--sin-datos);
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--sin-datos-hachura) 0,
+    var(--sin-datos-hachura) 1px,
+    transparent 1px,
+    transparent 6px
+  );
+}
+
+/* Rampa de brecha, 5 cuantiles (spec §4.4). */
+.leyenda__muestra--brecha-1 { background: var(--brecha-1); }
+.leyenda__muestra--brecha-2 { background: var(--brecha-2); }
+.leyenda__muestra--brecha-3 { background: var(--brecha-3); }
+.leyenda__muestra--brecha-4 { background: var(--brecha-4); }
+.leyenda__muestra--brecha-5 { background: var(--brecha-5); }
+
+/* Punteado de confianza baja (spec §4.2: "puntos de 1.2px en rgba(17,17,17,.45) cada 5px, en
+   retícula ortogonal"; aquí sobre --papel, como muestra genérica de la leyenda). */
+.leyenda__muestra--confianza-baja {
+  background-color: var(--papel);
+  background-image: radial-gradient(circle, var(--confianza-baja-punto) 0.6px, transparent 0.6px);
+  background-size: 5px 5px;
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Fila de intensidad ("Más intensidad = cambio anual mayor")                                    */
+/* -------------------------------------------------------------------------------------------- */
+
+.leyenda__intensidad,
+.leyenda__confianza-baja {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  margin: 0 0 var(--e-2);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  line-height: var(--t-nota-alto);
+  color: var(--tinta-3);
+}
+
+.leyenda__muestras-intensidad {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.leyenda__muestras-intensidad .leyenda__muestra {
+  width: 8px;
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Capa brecha: rampa de 5 cortes con límites numéricos (spec §10.4). No aparece con v1.1: solo   */
+/* se agrega si `capaActiva === "brecha"` y el adaptador trae datos de brecha (leyenda.js).       */
+/* -------------------------------------------------------------------------------------------- */
+
+.leyenda__brecha {
+  margin: 0 0 var(--e-2);
+}
+
+.leyenda__brecha-titulo {
+  margin: 0 0 var(--e-1);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  line-height: var(--t-nota-alto);
+  color: var(--tinta-3);
+}
+
+.leyenda__brecha-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: var(--e-1);
+}
+
+.leyenda__brecha-corte {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.leyenda__brecha-rango {
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Filtro activo: "Mostrando N de M · Quitar filtro" (spec §10.4)                                 */
+/* -------------------------------------------------------------------------------------------- */
+
+.leyenda__filtro-activo {
+  margin: var(--e-2) 0 0;
+}
+
+.leyenda__quitar-filtro {
+  width: 100%;
+  padding: var(--e-1) var(--e-2);
+  border: 1px solid var(--linea-fuerte);
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta);
+  text-align: left;
+}
+
+.leyenda__quitar-filtro:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Realce cruzado con el mapa (spec §10.4: "las unidades de otras categorías pasan a              */
+/* --recesivo-relleno"). Ver el comentario de cabecera de leyenda.js: se acopla por CSS puro,     */
+/* sin tocar mapa.js, usando el atributo `data-filtro-veredicto` que leyenda.js pone en            */
+/* #contenedor-mapa y las clases de veredicto que mapa.js ya pinta en cada <path>.                */
+/* Especificidad: el selector de ID ya gana sobre las reglas de una sola clase de mapa.css, sin    */
+/* necesitar !important (prohibido, CLAUDE.md).                                                   */
+/* -------------------------------------------------------------------------------------------- */
+
+#contenedor-mapa[data-filtro-veredicto="sube"] .mapa__alcaldia:not([class*="mapa__alcaldia--sube"]),
+#contenedor-mapa[data-filtro-veredicto="sube"] .mapa__ageb:not([class*="mapa__ageb--sube"]),
+#contenedor-mapa[data-filtro-veredicto="baja"] .mapa__alcaldia:not([class*="mapa__alcaldia--baja"]),
+#contenedor-mapa[data-filtro-veredicto="baja"] .mapa__ageb:not([class*="mapa__ageb--baja"]),
+#contenedor-mapa[data-filtro-veredicto="se_mantiene"] .mapa__alcaldia:not(.mapa__alcaldia--mantiene),
+#contenedor-mapa[data-filtro-veredicto="se_mantiene"] .mapa__ageb:not(.mapa__ageb--mantiene),
+#contenedor-mapa[data-filtro-veredicto="sin_datos"] .mapa__alcaldia:not(.mapa__alcaldia--sin-datos),
+#contenedor-mapa[data-filtro-veredicto="sin_datos"] .mapa__ageb:not(.mapa__ageb--sin-datos) {
+  fill: var(--recesivo-relleno);
+  stroke: var(--recesivo-contorno);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .leyenda {
+    background: var(--papel);
+  }
+}

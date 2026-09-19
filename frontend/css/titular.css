@@ -1,0 +1,113 @@
+/*
+ * titular.css — titular dinámico (plans/frontend_specs.md §6).
+ * Valores de color, tipografía, espaciado y movimiento siempre vía `tokens.css`; sin literales.
+ */
+
+.titular {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+  /* §6.1: altura reservada ≈ 4 líneas de --t-titular a 480 px, para que los cambios de texto no
+     desplacen la tabla. Se calcula a partir de los tokens tipográficos, sin valores fijos. */
+  min-height: calc(4 * var(--t-titular-tam) * var(--t-titular-alto));
+}
+
+.titular__frase,
+.titular__sub,
+.titular__nota {
+  /* Las dos capas de crossfade se superponen en el mismo hueco: el contenedor no cambia de
+     alto cuando cambia el texto (§6.1: "No se anima el alto"). */
+  position: relative;
+  display: block;
+  min-height: 1em;
+}
+
+.titular__frase {
+  margin: 0;
+  color: var(--tinta);
+  font-size: var(--t-titular-tam);
+  line-height: var(--t-titular-alto);
+  font-weight: var(--t-titular-peso);
+  letter-spacing: var(--t-titular-tracking);
+  font-variant-numeric: tabular-nums;
+  max-width: 62ch;
+}
+
+.titular__sub {
+  margin: 0;
+  color: var(--tinta-2);
+  font-size: var(--t-etiqueta-tam);
+  line-height: var(--t-etiqueta-alto);
+  font-weight: var(--t-etiqueta-peso);
+  letter-spacing: var(--t-etiqueta-tracking);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+.titular__nota {
+  margin: 0;
+  color: var(--tinta-3);
+  font-size: var(--t-nota-tam);
+  line-height: var(--t-nota-alto);
+  font-weight: var(--t-nota-peso);
+}
+
+.titular__nota[hidden] {
+  display: none;
+}
+
+.titular__metodologia {
+  align-self: flex-start;
+  color: var(--tinta-2);
+  font-size: var(--t-nota-tam);
+  text-decoration: underline;
+}
+
+.titular__metodologia:hover,
+.titular__metodologia:focus-visible {
+  color: var(--tinta);
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Crossfade de 200 ms (§6.1): dos capas superpuestas, la saliente a opacidad 0 en la primera   */
+/* mitad y la entrante de 0 a 1 en la segunda mitad, ambas lineales (--ease-lineal).            */
+/* ------------------------------------------------------------------------------------------ */
+
+.titular__capa {
+  display: block;
+  grid-row: 1;
+  grid-column: 1;
+}
+
+.titular__frase,
+.titular__sub,
+.titular__nota {
+  display: grid;
+}
+
+.titular__capa--saliente {
+  opacity: 1;
+  transition: opacity calc(var(--d-crossfade) / 2) var(--ease-lineal);
+}
+
+.titular__capa--saliente.titular__capa--activa {
+  opacity: 0;
+}
+
+.titular__capa--entrante {
+  opacity: 0;
+  transition: opacity calc(var(--d-crossfade) / 2) var(--ease-lineal);
+  transition-delay: calc(var(--d-crossfade) / 2);
+}
+
+.titular__capa--entrante.titular__capa--activa {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* tokens.css ya deja --d-crossfade en 120ms bajo reduced-motion; aquí solo se quita el
+     desfase para que el cambio sea un corte más directo, sin duraciones propias. */
+  .titular__capa--entrante {
+    transition-delay: 0ms;
+  }
+}

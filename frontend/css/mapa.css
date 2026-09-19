@@ -1,0 +1,211 @@
+/*
+ * mapa.css — mapa D3 (plans/frontend_specs.md §3, §10.1–§10.3, §10.7; plan §5, F65/F70).
+ * Solo variables de tokens.css: ningún color, tamaño o duración literal aquí (CLAUDE.md, spec §4).
+ * F65 cubre la vista general (16 alcaldías); F70 añade las reglas de AGEB/zoom/vecinas recesivas
+ * en este mismo archivo, en serie, reutilizando las clases ya presentes (`.agebs`,
+ * `.confianza-baja`, `.alcaldias-fondo`) que `mapa.js` ya crea vacías.
+ */
+
+.mapa {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.mapa__lienzo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--papel);
+}
+
+/* --------------------------------------------------------------------
+ * Capas SVG (spec §3, de abajo arriba). `g.alcaldias-fondo` (F70: silueta
+ * recesiva) y `g.confianza-baja` (F70: punteado) son decorativas, sin
+ * clic; `g.agebs` (F70) sí necesita recibir clics/hover de sus `<path>`.
+ * -------------------------------------------------------------------- */
+.mapa__lienzo .alcaldias-fondo,
+.mapa__lienzo .confianza-baja {
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------
+ * Alcaldías (vista general). Contorno de 1px --papel entre vecinas
+ * (spec §10.1); el color con significado viene solo de las clases de
+ * veredicto de abajo (§4.2), nunca de un valor puesto por JS.
+ * -------------------------------------------------------------------- */
+.mapa__alcaldia {
+  stroke: var(--papel);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+  /* Cambio de capa (§9): recolor por transición de fill, sin recrear el <path>. */
+  transition: fill var(--d-m) var(--ease-salida), transform var(--d-xs) var(--ease-salida);
+}
+
+.mapa__alcaldia--elevada {
+  /* "la forma se traslada −1 px en Y" al hacer hover (spec §10.1). */
+  transform: translateY(-1px);
+}
+
+.mapa__alcaldia--sube-1 { fill: var(--sube-1); }
+.mapa__alcaldia--sube-2 { fill: var(--sube-2); }
+.mapa__alcaldia--sube-3 { fill: var(--sube-3); }
+.mapa__alcaldia--baja-1 { fill: var(--baja-1); }
+.mapa__alcaldia--baja-2 { fill: var(--baja-2); }
+.mapa__alcaldia--baja-3 { fill: var(--baja-3); }
+.mapa__alcaldia--mantiene { fill: var(--mantiene); }
+.mapa__alcaldia--sin-datos { fill: url(#mapa-patron-sin-datos); }
+
+.mapa__hachura-fondo { fill: var(--sin-datos); }
+.mapa__hachura-linea { stroke: var(--sin-datos-hachura); stroke-width: 1; }
+
+/* Contorno exterior de la CDMX (spec §10.1: "1px --linea-fuerte"). */
+.mapa__contorno-exterior {
+  fill: none;
+  stroke: var(--linea-fuerte);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------
+ * Realce de hover/foco (spec §10.1): contorno de 2px --tinta + copia
+ * "elevada" (--tinta al 15%, sin desenfoque). Duración y easing SIEMPRE
+ * por token (--d-xs = 120ms, --ease-salida): nunca un valor propio.
+ * -------------------------------------------------------------------- */
+.mapa__realce-contorno {
+  fill: none;
+  stroke: var(--tinta);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+  opacity: 0;
+  animation: mapa-realce-entrada var(--d-xs) var(--ease-salida) forwards;
+}
+
+.mapa__realce-elevacion {
+  fill: var(--tinta);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(2px);
+  animation: mapa-realce-elevacion-entrada var(--d-xs) var(--ease-salida) forwards;
+}
+
+@keyframes mapa-realce-entrada {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes mapa-realce-elevacion-entrada {
+  from { opacity: 0; }
+  to { opacity: 0.15; }
+}
+
+/* --------------------------------------------------------------------
+ * Tooltip (spec §10.1): mínimo, a 12px del puntero (posicionado en JS),
+ * fade de --d-intencion (100ms, el más cercano al "100ms" del spec).
+ * Único elemento del sitio con contorno de 1px --tinta y sin sombra
+ * (spec §4.6: "única excepción: el tooltip").
+ * -------------------------------------------------------------------- */
+.mapa__tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  max-width: 220px;
+  padding: var(--e-2) var(--e-3);
+  background: var(--superficie);
+  border: 1px solid var(--tinta);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--d-intencion) var(--ease-salida);
+}
+
+.mapa__tooltip--visible {
+  opacity: 1;
+}
+
+.mapa__tooltip-nombre {
+  margin: 0;
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  line-height: var(--t-cuerpo-alto);
+  font-weight: 500;
+  color: var(--tinta);
+}
+
+.mapa__tooltip-veredicto {
+  margin: 0;
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  line-height: var(--t-nota-alto);
+  color: var(--tinta-2);
+}
+
+/* --------------------------------------------------------------------
+ * F70: foco en alcaldía — vecinas "recesivas" (§4.2: `--recesivo-*`),
+ * AGEB coloreados por veredicto (reutiliza las clases de relleno de
+ * arriba: `claseVeredicto()` en mapa.js nombra la clase una sola vez
+ * para alcaldías y AGEB), punteado de confianza baja y zoom acotado.
+ * -------------------------------------------------------------------- */
+/* Declarada después de las reglas de veredicto (línea ~53) para ganar por orden de cascada sin
+   `!important` (CLAUDE.md): mismo peso de especificidad, una sola clase cada una. */
+.mapa__alcaldia--recesivo {
+  fill: var(--recesivo-relleno);
+  stroke: var(--recesivo-contorno);
+  filter: var(--recesivo-filtro);
+}
+
+.mapa__ageb {
+  stroke: var(--papel);
+  stroke-width: 0.75;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+  transition: fill var(--d-m) var(--ease-salida);
+}
+
+.mapa__ageb-confianza-baja {
+  fill: none;
+  stroke: var(--confianza-baja-punto);
+  stroke-width: 1.2;
+  stroke-dasharray: 1.2 5;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.alcaldias-fondo,
+.agebs,
+.confianza-baja,
+.alcaldias {
+  transition: transform var(--d-xs) var(--ease-salida);
+}
+
+/* --------------------------------------------------------------------
+ * Botón "Reencuadrar" (spec §10.3): aparece solo tras paneo/zoom manual.
+ * -------------------------------------------------------------------- */
+.mapa__reencuadrar {
+  position: absolute;
+  right: var(--e-3);
+  bottom: var(--e-3);
+  z-index: 1;
+  padding: var(--e-2) var(--e-3);
+  background: var(--superficie);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--tinta);
+  font-family: var(--f-familia);
+  font-size: var(--t-nota-tam);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--d-intencion) var(--ease-salida);
+}
+
+.mapa__reencuadrar--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* prefers-reduced-motion: tokens.css ya lleva --d-xs/--d-intencion a 0ms (salvo el crossfade
+   dedicado), así que estas animaciones/transiciones quedan instantáneas sin reglas propias aquí. */

@@ -1,0 +1,162 @@
+/*
+ * horizonte.css — control de horizonte temporal (plans/frontend_specs.md §8, plan F55).
+ * Ancla la base del área del mapa, visible en las tres vistas (§8.1). Solo variables de
+ * tokens.css: ningún color/tamaño/duración literal.
+ */
+
+.control-horizonte {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--e-2);
+  width: 280px;
+  margin-inline: auto;
+  padding-block: var(--e-2);
+}
+
+.control-horizonte__etiqueta {
+  font-size: var(--t-etiqueta-tam);
+  line-height: var(--t-etiqueta-alto);
+  font-weight: var(--t-etiqueta-peso);
+  letter-spacing: var(--t-etiqueta-tracking);
+  text-transform: uppercase;
+  color: var(--tinta-2);
+}
+
+.control-horizonte--deshabilitado .control-horizonte__etiqueta {
+  color: var(--tinta-3);
+}
+
+.control-horizonte__pista {
+  position: relative;
+  width: 100%;
+}
+
+/* Pista de 280px, 2px --tinta (§8.1); el pulgar es el thumb nativo, 16px, con área táctil
+   de 44x44px lograda con el alto del input, no con el thumb visual. */
+.control-horizonte__input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.control-horizonte__input::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--tinta);
+  border-radius: 1px;
+}
+
+.control-horizonte__input::-moz-range-track {
+  height: 2px;
+  background: var(--tinta);
+  border-radius: 1px;
+}
+
+.control-horizonte__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: var(--tinta);
+  border: none;
+  transition: transform var(--d-xs) var(--ease-salida);
+}
+
+.control-horizonte__input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--tinta);
+  border: none;
+  transition: transform var(--d-xs) var(--ease-salida);
+}
+
+.control-horizonte__input:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.control-horizonte__input:disabled {
+  cursor: not-allowed;
+}
+
+.control-horizonte__input:disabled::-webkit-slider-runnable-track,
+.control-horizonte__input:disabled::-webkit-slider-thumb {
+  background: var(--tinta-3);
+}
+
+.control-horizonte__input:disabled::-moz-range-track,
+.control-horizonte__input:disabled::-moz-range-thumb {
+  background: var(--tinta-3);
+}
+
+/* Etiquetas de horizonte (§8.1): siempre visibles, dos líneas ("3 años" / "2029"), la marca
+   activa en peso 600. Son <button> para poder tocarlas/pulsarlas directamente. */
+.control-horizonte__marcas {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.control-horizonte__marca {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--tinta);
+  font-family: var(--f-familia);
+}
+
+.control-horizonte__marca:disabled {
+  cursor: not-allowed;
+  color: var(--tinta-3);
+}
+
+.control-horizonte__marca:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.control-horizonte__marca-anios {
+  font-size: var(--t-nota-tam);
+  line-height: var(--t-nota-alto);
+  font-weight: 400;
+}
+
+.control-horizonte__marca--activa .control-horizonte__marca-anios {
+  font-weight: 600;
+}
+
+.control-horizonte__marca-anio {
+  font-size: var(--t-nota-tam);
+  line-height: var(--t-nota-alto);
+  color: var(--tinta-3);
+}
+
+.control-horizonte--deshabilitado .control-horizonte__marca-anios,
+.control-horizonte--deshabilitado .control-horizonte__marca-anio {
+  color: var(--tinta-3);
+}
+
+/* Nota bajo el slider (§8.1): altura reservada de 1 línea, crossfade de 120ms. */
+.control-horizonte__nota {
+  margin: 0;
+  min-height: var(--t-nota-alto);
+  font-size: var(--t-nota-tam);
+  line-height: var(--t-nota-alto);
+  color: var(--tinta-2);
+  text-align: center;
+  transition: opacity var(--d-crossfade) var(--ease-lineal);
+}

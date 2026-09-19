@@ -189,3 +189,4 @@ ENV/
 # Proyecto
 ##############################
 data/interim/
+frontend/data/

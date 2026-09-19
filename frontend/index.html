@@ -16,10 +16,55 @@
       crossorigin="anonymous"
     />
     <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/estados.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/cabecera.css" />
+    <link rel="stylesheet" href="css/titular.css" />
+    <link rel="stylesheet" href="css/tabla.css" />
+    <link rel="stylesheet" href="css/alcaldia.css" />
+    <link rel="stylesheet" href="css/ficha.css" />
+    <link rel="stylesheet" href="css/capas.css" />
+    <link rel="stylesheet" href="css/horizonte.css" />
+    <link rel="stylesheet" href="css/mapa.css" />
+    <link rel="stylesheet" href="css/leyenda.css" />
+    <link rel="stylesheet" href="css/franja.css" />
+    <link rel="stylesheet" href="css/presentacion.css" />
   </head>
   <body>
+    <!-- El contenido de la cabecera (h1 oculto, nombre, migas, capa, botones) lo pinta
+         js/cabecera.js (F25): reacciona a js/estado.js, así que no se hardcodea aquí. -->
     <header></header>
-    <main></main>
-    <footer></footer>
+
+    <main class="app-layout">
+      <!-- Columna izquierda: titular (F35), tabla (F40), vista de alcaldía (F45) o ficha de
+           AGEB (F50) se montan dentro de #vista-principal, según la vista activa en estado.js. -->
+      <section id="panel-datos" class="panel-datos" aria-label="Datos de la vista">
+        <div id="vista-principal"></div>
+      </section>
+
+      <!-- Mapa D3 (F65/F70). La leyenda (F75) y el control de horizonte (F55) se posicionan
+           sobre el mapa; sus propios módulos deciden su contenido y estilo fino. -->
+      <section id="contenedor-mapa" class="contenedor-mapa" role="region" aria-label="Mapa de la CDMX">
+        <div id="mapa-svg-host"></div>
+        <aside id="leyenda" aria-label="Leyenda"></aside>
+        <div id="control-horizonte"></div>
+      </section>
+
+      <!-- Franja lateral y drawer de metodología (F80). -->
+      <div id="franja-metodologia" class="franja"></div>
+    </main>
+
+    <!-- Pie de página (fuentes, fecha de generación): lo completa js/main.js (F100) con el
+         `generado` del contrato una vez cargados los datos. -->
+    <footer id="pie"></footer>
+
+    <!-- Drawer modal de metodología (F80, js/franja.js). Vacío hasta que franja.js lo llena
+         con las 8 secciones de §14.6; se abre con `.showModal()`, nunca con el atributo
+         `open` a mano, para conservar el foco atrapado y el `::backdrop` nativos. -->
+    <dialog id="drawer-metodologia"></dialog>
+
+    <!-- Punto de entrada único (F100): carga los datos, monta cabecera/franja y el resto de
+         módulos de la UI, y reacciona a js/estado.js. -->
+    <script type="module" src="js/main.js"></script>
   </body>
 </html>

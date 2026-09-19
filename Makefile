@@ -40,3 +40,14 @@ serve:
 # Ver frontend/vendor/d3/README.md para el detalle del comando.
 vendor-d3:
 	cd frontend/vendor/d3 && npm install && node build.mjs && rm -rf node_modules package-lock.json
+
+# Copia (nunca symlink) los datos que el frontend sirve como estáticos: salidas del pipeline
+# (si ya existen) y geometría de referencia, planas bajo frontend/data/ (config.js#rutaDatos y
+# main.js las esperan ahí). Nunca escribe en data/ (solo lectura, CLAUDE.md); frontend/data/ está
+# en .gitignore, se regenera con este target.
+frontend-datos:
+	@mkdir -p frontend/data
+	@cp data/outputs/prediccion_ageb.json frontend/data/ 2>/dev/null || true
+	@cp data/outputs/prediccion_alcaldia.json frontend/data/ 2>/dev/null || true
+	cp data/reference/alcaldias.geojson frontend/data/
+	cp data/reference/ageb_cdmx_simplificado.geojson frontend/data/

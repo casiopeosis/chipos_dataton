@@ -1,0 +1,410 @@
+/*
+ * tabla.css — tabla de predicciones, vista general, y acordeón FLIP (plans/frontend_specs.md
+ * §7.1-§7.2). Tarea F40. Valores de color, tipografía, espaciado y movimiento siempre vía
+ * `tokens.css` (fondo de "fila activa" vía `--superficie-realzada`, spec §7.1).
+ */
+
+.tabla-contenedor {
+  --tabla-fila-activa: var(--superficie-realzada);
+  --tabla-ancho-alcaldia: minmax(150px, 1fr);
+  --tabla-ancho-veredicto: 112px;
+  --tabla-ancho-cambio: 118px;
+  --tabla-ancho-confianza: 44px;
+
+  /* Alto fijo con scroll propio (spec §7.2, punto 3: "el contenedor tiene alto fijo y scroll
+     propio. Nada fuera de la tabla cambia de alto"). */
+  max-height: calc(16 * 36px + 32px + 4 * 136px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.tabla__th--nombre,
+.tabla__celda--alcaldia {
+  width: var(--tabla-ancho-alcaldia);
+}
+
+.tabla__th--veredicto,
+.tabla__celda--veredicto {
+  width: var(--tabla-ancho-veredicto);
+}
+
+.tabla__th--cambio,
+.tabla__celda--cambio {
+  width: var(--tabla-ancho-cambio);
+}
+
+.tabla__th--confianza,
+.tabla__celda--confianza {
+  width: var(--tabla-ancho-confianza);
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Encabezado (§7.1: --t-etiqueta, --tinta-2, 32 px de alto)                                    */
+/* ------------------------------------------------------------------------------------------ */
+
+thead {
+  position: sticky;
+  top: 0;
+  background: var(--papel);
+  z-index: 1;
+}
+
+.tabla__th {
+  height: 32px;
+  box-sizing: border-box;
+  padding: 0 var(--e-3);
+  border-bottom: 1px solid var(--linea);
+  font-size: var(--t-etiqueta-tam);
+  line-height: var(--t-etiqueta-alto);
+  font-weight: var(--t-etiqueta-peso);
+  letter-spacing: var(--t-etiqueta-tracking);
+  text-transform: uppercase;
+  color: var(--tinta-2);
+  text-align: left;
+}
+
+.tabla__th--veredicto {
+  /* Columna sin orden: sin <button>, mismo estilo tipográfico que las demás. */
+  vertical-align: middle;
+}
+
+.tabla__th--cambio,
+.tabla__th--confianza {
+  text-align: right;
+}
+
+.tabla__th--confianza {
+  text-align: center;
+}
+
+.tabla__th-boton {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-1);
+}
+
+.tabla__th-boton:hover {
+  color: var(--tinta);
+}
+
+.tabla__th-boton:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+/* Indicador de orden activo: flecha textual junto al nombre de columna (nunca solo color). */
+.tabla__th[aria-sort="ascending"] .tabla__th-boton::after {
+  content: " \25B2"; /* ▲ */
+  font-size: 0.85em;
+}
+
+.tabla__th[aria-sort="descending"] .tabla__th-boton::after {
+  content: " \25BC"; /* ▼ */
+  font-size: 0.85em;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Filas (§7.1: 36 px, regla inferior de 1px --linea, sin cebreado; fila activa #F0F0EC)        */
+/* ------------------------------------------------------------------------------------------ */
+
+.tabla__fila {
+  height: 36px;
+  border-bottom: 1px solid var(--linea);
+  cursor: pointer;
+}
+
+.tabla__fila:hover,
+.tabla__fila:focus-visible,
+.tabla__fila:focus-within,
+.tabla__fila--expandida {
+  background: var(--tabla-fila-activa);
+  box-shadow: inset 0 1px 0 0 var(--tinta);
+}
+
+.tabla__fila:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: -2px;
+}
+
+.tabla__celda {
+  box-sizing: border-box;
+  padding: 0 var(--e-3);
+  font-size: var(--t-cuerpo-tam);
+  line-height: var(--t-cuerpo-alto);
+  color: var(--tinta);
+  vertical-align: middle;
+}
+
+.tabla__nombre {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--tinta);
+  text-align: left;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tabla__nombre:hover {
+  text-decoration: underline;
+}
+
+.tabla__nombre:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.tabla__celda--veredicto {
+  font-weight: 500;
+}
+
+.tabla__celda--cambio {
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--e-2);
+  height: 36px;
+}
+
+.tabla__cambio-cifra {
+  font-variant-numeric: tabular-nums;
+  min-width: 6ch;
+  text-align: right;
+}
+
+.tabla__celda--confianza {
+  text-align: center;
+  font-size: var(--t-cuerpo-tam);
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Mini-barra divergente de cambio (§7.1: 28 px, escala ±25 %, marca de tope)                   */
+/* ------------------------------------------------------------------------------------------ */
+
+.tabla__barra {
+  position: relative;
+  display: inline-block;
+  width: 28px;
+  height: 10px;
+  flex: 0 0 auto;
+}
+
+.tabla__barra::before {
+  /* línea cero, al centro de la escala divergente */
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--linea);
+}
+
+.tabla__barra-relleno {
+  /* Ancho real fijado en JS con `fijarEstilo()` (Web Animations API): la CSP del proyecto
+     (`style-src 'self'`) no permite un atributo `style`/custom property puesto desde JS. */
+  position: absolute;
+  top: 2px;
+  height: 6px;
+  width: 0;
+}
+
+.tabla__barra-relleno--baja {
+  right: 50%;
+  background: var(--baja-3);
+}
+
+.tabla__barra-relleno--sube {
+  left: 50%;
+  background: var(--sube-3);
+}
+
+.tabla__barra-relleno--neutro {
+  display: none;
+}
+
+.tabla__barra-marca {
+  position: absolute;
+  top: -1px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.tabla__barra-marca--baja {
+  left: -2px;
+  color: var(--baja-texto);
+}
+
+.tabla__barra-marca--sube {
+  right: -2px;
+  color: var(--sube-texto);
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Fila desplegada (§7.2: altura fija 136 px, wireframe 5)                                      */
+/* ------------------------------------------------------------------------------------------ */
+
+.tabla__fila-detalle {
+  background: var(--tabla-fila-activa);
+}
+
+.tabla__fila-detalle[hidden] {
+  display: none;
+}
+
+.tabla__celda-detalle {
+  height: 136px;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+.tabla__detalle {
+  box-sizing: border-box;
+  height: 136px;
+  padding: var(--e-3) var(--e-5) var(--e-3) calc(var(--e-3) * 2 + 20px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--e-1);
+  position: relative;
+}
+
+.tabla__detalle-linea {
+  margin: 0;
+  font-size: var(--t-cuerpo-tam);
+  line-height: var(--t-cuerpo-alto);
+  color: var(--tinta-2);
+}
+
+.tabla__distribucion {
+  margin: var(--e-1) 0 0;
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  font-size: var(--t-nota-tam);
+  color: var(--tinta-2);
+}
+
+.tabla__distribucion-barra {
+  display: flex;
+  flex: 0 0 auto;
+  width: 160px;
+  height: 8px;
+  overflow: hidden;
+  border: 1px solid var(--linea-fuerte);
+}
+
+.tabla__distribucion-segmento {
+  /* `flex-grow` real se fija en JS con `fijarEstilo()` (Web Animations API): la CSP del proyecto
+     (`style-src 'self'`) no permite un atributo `style`/custom property puesto desde JS. */
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: 0;
+  height: 100%;
+}
+
+.tabla__distribucion-segmento--sube {
+  background: var(--sube-2);
+}
+
+.tabla__distribucion-segmento--se_mantiene {
+  background: var(--mantiene);
+}
+
+.tabla__distribucion-segmento--baja {
+  background: var(--baja-2);
+}
+
+.tabla__distribucion-segmento--sin_datos {
+  background: var(--sin-datos);
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--sin-datos-hachura) 0,
+    var(--sin-datos-hachura) 1px,
+    transparent 1px,
+    transparent 6px
+  );
+}
+
+.tabla__distribucion--esqueleto {
+  color: var(--tinta-3);
+}
+
+.tabla__distribucion--esqueleto::before {
+  content: "";
+  display: inline-block;
+  width: 160px;
+  height: 8px;
+  background: var(--esqueleto);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tabla__distribucion--esqueleto::before {
+    animation: tabla-pulso 1.2s linear infinite;
+  }
+}
+
+@keyframes tabla-pulso {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.tabla__explorar {
+  align-self: flex-end;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: var(--e-1);
+  font-size: var(--t-etiqueta-tam);
+  font-weight: var(--t-etiqueta-peso);
+  letter-spacing: var(--t-etiqueta-tracking);
+  text-transform: uppercase;
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.tabla__explorar:hover {
+  color: var(--tinta);
+  text-decoration: underline;
+}
+
+.tabla__explorar:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Movimiento: FLIP del tbody por fila (--d-s, --ease-salida). `js/tabla.js` consulta           */
+/* `prefers-reduced-motion` antes de aplicar cualquier `transform`/`transition` (nunca se       */
+/* anima con movimiento reducido), así que este archivo no necesita una regla aparte ni         */
+/* `!important` (CLAUDE.md: "sin !important") para anularla.                                    */
+/* ------------------------------------------------------------------------------------------ */

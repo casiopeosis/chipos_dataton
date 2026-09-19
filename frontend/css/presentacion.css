@@ -1,0 +1,17 @@
+/*
+ * presentacion.css — modo presentación (plans/frontend_specs.md §10.9, plan F85). `--escala`
+ * (tokens.css) ya sube la tipografía en cualquier regla que use `calc(var(--t-*-tam) *
+ * var(--escala))`; aquí solo se ocultan los controles que el spec pide retirar (buscador, pie,
+ * franja), manteniendo capa/horizonte/migas visibles.
+ */
+
+html.modo-presentacion #pie,
+html.modo-presentacion #franja-metodologia,
+html.modo-presentacion .alcaldia__buscador-zona {
+  display: none;
+}
+
+#boton-presentacion[aria-pressed="true"] {
+  background: var(--tinta);
+  color: var(--papel);
+}

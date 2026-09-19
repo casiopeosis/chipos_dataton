@@ -195,7 +195,10 @@ const confianza = {
     media: 'el sentido del cambio es probable, pero su tamaño es incierto.',
     baja: 'los datos no permiten afirmar el sentido del cambio con seguridad.',
   },
-  ariaLabel: (nivel) => interpolar('confianza {nivel}', { nivel }),
+  // Recibe {nivel}, como el resto de plantillas que se llaman vía texto()/t() con un objeto de
+  // variables (alcaldia.js, tabla.js): antes tomaba `nivel` como valor posicional, así que t()
+  // le pasaba el objeto entero y el resultado era literalmente "confianza [object Object]".
+  ariaLabel: (v) => interpolar('confianza {nivel}', v),
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -204,6 +207,8 @@ const confianza = {
 
 const capa = {
   nombre: { demanda: 'Demanda', oferta: 'Oferta', brecha: 'Brecha' },
+  // §9: aria-label del control segmentado de la cabecera (role="radiogroup").
+  controlEtiqueta: 'Elegir capa',
   unidadBrecha: 'establecimientos por cada 1,000 niñas y niños de 0 a 14 años',
   confianzaMaximaOferta: 'Confianza máxima de esta capa: media.',
 };
@@ -398,6 +403,10 @@ const titular = {
       'DEMANDA · MEDIADOS DE {anio} · {alcaldia} {cambio} (ENTRE {lo} Y {hi} %)',
       v,
     ),
+    // Degradación no contemplada literalmente en el wireframe: si la alcaldía no trae su propio
+    // registro agregado (p. ej. contrato incompleto), se omite el bloque "{ALC} {cambio} (...)"
+    // en vez de mostrar cifras inventadas (CLAUDE.md: nunca un veredicto/cifra inventada).
+    alcaldiaSinAgregado: (v) => interpolar('DEMANDA · MEDIADOS DE {anio} · {alcaldia}', v),
   },
   notaOferta: 'Confianza máxima: media. El levantamiento de 2024 registró de una vez cierres '
     + 'ocurridos entre 2020 y 2023.',
@@ -441,7 +450,15 @@ const tabla = {
       '{nBaja} bajan · {nMant} se mantienen · {nSube} suben · {nSin} sin datos',
       v,
     ),
+    distribucionCargando: 'Cargando distribución de AGEB…',
+    distribucionSinAgeb: 'No se encontraron AGEB para esta alcaldía.',
     explorar: navegacion.explorar,
+  },
+  // §7.1: nombre accesible de los encabezados ordenables (botón dentro del `<th>`).
+  ordenarPor: {
+    alcaldia: 'Ordenar por alcaldía',
+    cambio: 'Ordenar por cambio',
+    confianza: 'Ordenar por confianza',
   },
 };
 
@@ -454,7 +471,15 @@ const alcaldia = {
     etiqueta: 'Buscar AGEB por clave',
     sinResultados: (v) => interpolar('Ninguna clave coincide con «{texto}».', v),
   },
-  verTodos: (n) => interpolar('Ver los {n} AGEB ↓', { n }),
+  // Recibe {n} (se llama vía t() con un objeto, como alcaldia.js): antes tomaba `n` posicional.
+  verTodos: (v) => interpolar('Ver los {n} AGEB ↓', v),
+  caption: (v) => interpolar('AGEB de {alcaldia}, capa {capa}, a mediados de {anio}', v),
+  ordenarPor: {
+    clave: 'Ordenar por clave',
+    cambio: 'Ordenar por cambio',
+    confianza: 'Ordenar por confianza',
+  },
+  sinAgeb: 'No se encontraron AGEB para esta alcaldía.',
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -531,7 +556,8 @@ const mapa = {
 const tooltip = {
   capaVeredicto: (v) => interpolar('{capa}: {simbolo} {veredicto}', v),
   vecina: (nombre) => interpolar('Ir a {nombre}', { nombre }),
-  ageb: (cvegeo) => interpolar('AGEB {cvegeo}', { cvegeo }),
+  // Recibe {cvegeo} (se llama vía t() con un objeto, como tabla.js): antes tomaba `cvegeo` posicional.
+  ageb: (v) => interpolar('AGEB {cvegeo}', v),
   agebSinDatos: (motivo) => interpolar('Sin datos: {motivo}', { motivo }),
 };
 
