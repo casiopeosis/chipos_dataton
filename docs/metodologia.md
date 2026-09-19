@@ -1,9 +1,11 @@
 # Metodología
 
-Veredicto `sube | se_mantiene | baja | sin_datos` por AGEB y alcaldía, horizonte **2027-06**
-(2027.5), contrato `version 1.1` con capas `demanda` (principal) y `oferta`. Decisiones vigentes
-en CLAUDE.md; hechos en `docs/perfil_datos.md` y `docs/problemas_datos.md`. Revisión 2026-09-18
-(censo oficial completo, CONAPO municipal y marcos 2010/2020 ya disponibles).
+Veredicto `sube | se_mantiene | baja | sin_datos` por AGEB y alcaldía, fecha base **2026-06**
+(2026.5); horizontes de reporte **2029-06** (3 años), **2031-06** (5 años) y **2033-06** (7 años),
+contrato `version 1.2` con capas `demanda` (principal) y `oferta`. Decisiones vigentes en
+CLAUDE.md; hechos en `docs/perfil_datos.md` y `docs/problemas_datos.md`. Revisión 2026-09-19
+(censo oficial completo, CONAPO municipal y marcos 2010/2020 ya disponibles; horizontes 3/5/7 años
+y contrato v1.2 adoptados por el equipo, ver `plans/frontend_specs.md` §17-18).
 
 ## 1. Variables y fuentes
 
@@ -27,19 +29,31 @@ primero tras cada levantamiento: 2016-10, 2019-11, 2024-11 (§6). `n_obs = 3`.
 2. **Contracción (Fay-Herriot)** hacia la alcaldía: `r_i ~ N(ρ_m, τ²)`; `ρ_m` = tasa censal de la
    alcaldía (Σ AGEB), `τ²` por momentos; `r̃_i = B_i ρ_m + (1 − B_i) r̂_i`, `B_i = ψ_i/(ψ_i + τ²)`.
 3. **Tasa futura**: la alcaldía toma la tasa CONAPO y la AGEB conserva parte de su desviación:
-   `r_i,fut = ρ_m,CONAPO + λ (r̃_i − ρ_m)`, con `ρ_m,CONAPO = ln(C_m,2027.5 / C_m,2020.5)/7`
-   (CONAPO publica población a mitad de año: `C_m,2027.5` = cifra del año 2027).
+   `r_i,fut = ρ_m,CONAPO + λ (r̃_i − ρ_m)`, con `ρ_m,CONAPO = ln(C_m,2033.5 / C_m,2020.5)/13.0`
+   (CONAPO publica población a mitad de año; el control se ancla al horizonte de reporte **más
+   lejano**, `2033.5` = mediados de 2033 = fecha base + 7 años, ver §7).
 4. **Proyección** `D̂_i(t) = D_i,2020 · exp(r_i,fut (t − 2020.20))`.
 5. **Control por tasa, no por nivel:** reescalar por alcaldía para que
-   `Σ_i D̂_i,2027.5 / Σ_i D_i,2020 = C_m,2027.5 / C_m,2020.20`. Se usa la **razón** de CONAPO, no
+   `Σ_i D̂_i,2033.5 / Σ_i D_i,2020 = C_m,2033.5 / C_m,2020.20`. Se usa la **razón** de CONAPO, no
    su nivel, porque CONAPO incluye población rural y está conciliada (+5.9 % en 0–14 frente al
-   censo urbano en 2020; problemas N1). `C_m,2020.20` se interpola log-linealmente entre las cifras 2019 (2019.5) y 2020 (2020.5).
+   censo urbano en 2020; problemas N1). `C_m,2020.20` se interpola log-linealmente entre las cifras
+   2019 (2019.5) y 2020 (2020.5). El control se aplica **una sola vez**, contra el horizonte más
+   lejano (`h7`, 2033.5): los horizontes `h3`/`h5` (2029-06, 2031-06) se leen sobre la **misma**
+   trayectoria de tasa `r_i,fut` ya controlada, sin volver a controlar contra CONAPO en cada
+   horizonte por separado. No es una pérdida de precisión: con dos censos no se identifica
+   curvatura de la tendencia (§3), así que no hay información para justificar tres controles
+   independientes; controlar una sola vez, al horizonte más lejano, es la opción más conservadora.
 6. **Simulación** (semilla fija, 4,000 réplicas): `r_i ~ N(r̃_i, (1 − B_i)ψ_i)`, `λ ~ U(0.25, 1)`,
    choque de alcaldía compartido `N(0, σ_C²)` con `σ_C` = discrepancia censo-CONAPO 2010–20 de esa
    alcaldía (§4.3) → `IC95`, `P(sube)`, `P(baja)` e IC de alcaldía.
 
-Salidas: `tasa_anual_pct` = tasa proyectada 2026.5–2027.5 × 100; `delta_pct` = cambio acumulado
-2020.20 → 2027.5. **El veredicto usa la tasa.** Baseline ingenuo: `r = 0` (igual que el censo 2020).
+Salidas, una vez fijada `r_i,fut` (§2.3-2.5): `tasa_anual_pct` = `r_i,fut` proyectada × 100 — **es
+la misma en los tres horizontes de reporte** (`h3`, `h5`, `h7`): depende solo de la tasa, no del
+horizonte al que se mira. `delta_pct` = cambio acumulado desde la **fecha base** (2026.5, no desde
+el censo 2020) hasta cada horizonte de reporte (2029-06, 2031-06 o 2033-06); por eso `delta_pct`
+crece en magnitud de `h3` a `h7` aunque la tasa no cambie (`modelos.resumir()`). **El veredicto usa
+la tasa `r_i,fut`**, así que tampoco cambia entre horizontes (§7). Baseline ingenuo: `r = 0` (igual
+que el censo 2020).
 
 ## 3. (a) Qué se identifica con dos censos
 
@@ -91,6 +105,12 @@ registrados de golpe**: al usar fechas de levantamiento se reparte en 5 años. T
 **media** en toda la capa. Backtest de origen móvil: origen 2019-11 (ajuste 2016-10/2019-11) →
 predecir 2024-11; baseline `S` constante. `sin_datos` si `S = 0` en los tres cortes.
 
+**Horizonte de reporte de la oferta: solo 3 años (`h3`, 2029-06).** A diferencia de la demanda, la
+oferta no se controla contra ninguna serie externa y su único ancla temporal es el propio
+levantamiento DENUE (§1); no hay calibración ni justificación para reportar `delta_pct`/`ic95` más
+allá de 3 años desde la fecha base — `h5`/`h7` simplemente no se calculan ni se publican para esta
+capa (`config.HORIZONTES_OFERTA = ("h3",)`, contrato v1.2 §17: `horizontes_disponibles: ["h3"]`).
+
 ## 7. (d) Regla de decisión y sensibilidad de la banda
 
 Regla única (`modelos.py`) sobre la distribución simulada de la tasa proyectada:
@@ -98,6 +118,16 @@ Regla única (`modelos.py`) sobre la distribución simulada de la tasa proyectad
   `P(|tasa| ≤ δ) ≥ 0.50`; si no, `se_mantiene` con confianza **baja**.
 - Confianza: **alta** si la probabilidad decisiva ≥ 0.95 y el veredicto no cambia con `λ`;
   **media** si ≥ 0.80; **baja** en el resto, y siempre con `n_obs = 1` o `D_2020 < 100` (141 AGEB).
+
+**`tasa_anual_pct` y `delta_pct` (contrato v1.2, `modelos.resumir()`).** `tasa_anual_pct` es la
+tasa `r_i,fut` proyectada × 100: depende solo de la simulación de la tasa, no del horizonte de
+reporte, así que **es idéntica en `h3`, `h5` y `h7`** — al igual que el veredicto y la confianza,
+que se calculan sobre esa misma tasa (`P(tasa > +δ)`, etc., §7). Lo único que varía entre
+horizontes es `delta_pct`/`ic95`: se miden desde la **fecha base** (`T_BASE = 2026.5`, no desde el
+censo 2020) hasta cada horizonte (`100·(e^(r·(t_horizonte − 2026.5)) − 1)`), por lo que su
+magnitud crece de `h3` a `h7` aunque la tasa no cambie. Esto es deliberado: separa "¿hacia dónde
+va la tendencia?" (una sola respuesta, la tasa) de "¿cuánto se acumula a 3, 5 o 7 años?" (tres
+respuestas, el `delta_pct`).
 
 Sensibilidad con tasas **históricas** directas 2010–2020 (2,268 AGEB), % por clase:
 
