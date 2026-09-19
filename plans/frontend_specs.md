@@ -701,7 +701,7 @@ Es un solo gesto de 820 ms. Wireframe 2 (fotograma a ~400 ms):
   **transforma**, no se atenúa.
 - **Contrastes que se conservan:**
   - contorno de las vecinas contra el papel: 3.5:1;
-  - etiquetas de las vecinas: 5.0:1;
+  - etiquetas de las vecinas: 4.9:1;
   - contorno de la alcaldía en foco: 18:1.
 - **Interactividad de las vecinas.**
   - Con ratón y toque se pueden pulsar: el tooltip dice "Ir a Tlalpan" y el clic ejecuta la
