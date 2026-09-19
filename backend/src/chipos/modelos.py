@@ -30,6 +30,7 @@ import pandas as pd
 from chipos.config import (
     D_MIN_CONF,
     DELTA,
+    HORIZONTES,
     LAMBDA_PREVIA,
     LAMBDAS_SENS,
     N_SIM,
@@ -38,6 +39,7 @@ from chipos.config import (
     P_MANTIENE,
     T_2010,
     T_2020,
+    T_BASE,
     T_HOR,
 )
 from chipos.io import CORTES_OFERTA
@@ -150,7 +152,11 @@ class Simulacion:
     - `r_fut_lambdas`: `{lambda_fijo: (n, n_sim)}`, mismas réplicas de ruido
       pero con λ fijo (plan §5.3, sensibilidad); vacío en la capa de oferta
       (no aplica: `estable_lambda = True` siempre).
-    - `horizonte`: `T_HOR − t0` (años) usado para pasar de tasa a `delta_pct`.
+    - `horizonte_control`: horizonte (años, desde `t0`) usado internamente
+      para pasar de tasa a nivel proyectado en `_control_por_razon`
+      (demanda) y en `agregar_alcaldia` (ambas capas). NO es el horizonte
+      que se reporta al cliente: el reporte usa varios horizontes a la vez
+      (`config.HORIZONTES`), parametrizados en `resumir()`.
     """
 
     clave: np.ndarray
@@ -161,7 +167,7 @@ class Simulacion:
     tope: np.ndarray
     r_fut: np.ndarray
     r_fut_lambdas: dict[float, np.ndarray]
-    horizonte: float
+    horizonte_control: float
 
 
 # Alias documentales (misma estructura, plan §5 firmas `SimDemanda`/`SimOferta`).
@@ -354,7 +360,7 @@ def simular_demanda(
     razon_control_por_mun = _interp_conapo_valor(conapo, T_HOR) / _interp_conapo_valor(
         conapo, T_2020
     )
-    horizonte = T_HOR - T_2020
+    horizonte_control = T_HOR - T_2020
     d_2020 = df["d_2020"].to_numpy(dtype=float)
     cve_mun_arr = df["cve_mun"].to_numpy()
 
@@ -363,7 +369,7 @@ def simular_demanda(
             r_post - rho_m_por_unidad[:, None]
         )
         r_controlado = _control_por_razon(
-            r_pre, d_2020, cve_mun_arr, razon_control_por_mun, horizonte
+            r_pre, d_2020, cve_mun_arr, razon_control_por_mun, horizonte_control
         )
         return r_controlado + eps_por_unidad
 
@@ -392,7 +398,7 @@ def simular_demanda(
         tope=tope,
         r_fut=r_fut_principal,
         r_fut_lambdas=r_fut_lambdas,
-        horizonte=horizonte,
+        horizonte_control=horizonte_control,
     )
 
 
@@ -529,7 +535,9 @@ def simular_oferta(
     b_post = b_tilde[:, None] + rng.standard_normal((n, n_sim)) * np.sqrt(var_post)[:, None]
 
     ultimo_corte = max(CORTES_OFERTA.values())
-    horizonte = T_HOR - ultimo_corte
+    # Oferta nunca reporta más allá de h3 (config.HORIZONTES_OFERTA): no tiene
+    # sentido controlar/proyectar el nivel base más lejos que eso.
+    horizonte_control = HORIZONTES["h3"] - ultimo_corte
     base = df[columnas_s[-1]].to_numpy(dtype=float)  # S del corte más reciente (2024-11)
 
     return Simulacion(
@@ -541,7 +549,7 @@ def simular_oferta(
         tope=np.full(n, "media", dtype=object),
         r_fut=b_post,
         r_fut_lambdas={},
-        horizonte=horizonte,
+        horizonte_control=horizonte_control,
     )
 
 
@@ -550,8 +558,10 @@ def simular_oferta(
 # ---------------------------------------------------------------------------
 
 
-def resumir(sim: Simulacion, delta: float = DELTA) -> pd.DataFrame:
-    """Una fila por unidad de `sim`: tasa, delta, IC95, probabilidades, veredicto.
+def resumir(
+    sim: Simulacion, horizontes: dict[str, float], delta: float = DELTA
+) -> dict[str, pd.DataFrame]:
+    """Una tabla por horizonte de reporte: tasa, delta, IC95, veredicto.
 
     Válido tanto para demanda como para oferta y tanto a nivel AGEB como
     alcaldía (plan §5.1 paso 9 / §5.4): la regla es la misma una vez que se
@@ -559,15 +569,27 @@ def resumir(sim: Simulacion, delta: float = DELTA) -> pd.DataFrame:
     `estable_lambda` (plan §5.3) compara el veredicto bajo los 3 valores
     fijos de `sim.r_fut_lambdas`; si está vacío (capa de oferta, que no
     tiene λ), se considera estable por definición.
+
+    `horizontes`: `{clave: t_horizonte}` en años decimales absolutos (p. ej.
+    `config.HORIZONTES` para demanda, `{"h3": config.HORIZONTES["h3"]}` para
+    oferta). Para cada horizonte se calcula `horizonte_reporte = t_horizonte
+    - config.T_BASE` y `delta_draws_pct = 100*(exp(r*horizonte_reporte) - 1)`
+    (`delta_pct`/`ic95`/`tasa_anual_pct` se miden desde `T_BASE`, NO desde
+    `T_2020` ni desde `sim.horizonte_control`).
+
+    Importante: el veredicto y la confianza NO dependen del horizonte de
+    reporte (solo de la tasa `r` simulada, que es una sola por unidad y
+    réplica); por diseño salen IGUALES en las 3 tablas devueltas (`h3`,
+    `h5`, `h7`). Lo único que cambia entre horizontes es `delta_pct`/`ic95`
+    /`tasa_anual_pct` (crecen en magnitud con el horizonte, vía `exp`).
+
+    Devuelve `dict[str, pd.DataFrame]`, una entrada por clave de
+    `horizontes`, con las mismas columnas de antes: `clave, cve_mun, n_obs,
+    tasa_anual_pct, delta_pct, ic95, p_sube, p_baja, p_mantiene, p_dec,
+    veredicto, confianza`.
     """
     r = sim.r_fut
     n = r.shape[0]
-    horizonte = sim.horizonte
-
-    tasa_anual_pct = 100.0 * np.median(r, axis=1)
-    delta_draws_pct = 100.0 * (np.exp(r * horizonte) - 1.0)
-    delta_pct = np.median(delta_draws_pct, axis=1)
-    ic95 = np.percentile(delta_draws_pct, [2.5, 97.5], axis=1).T  # (n, 2)
 
     p_sube = (r > delta).mean(axis=1)
     p_baja = (r < -delta).mean(axis=1)
@@ -607,22 +629,31 @@ def resumir(sim: Simulacion, delta: float = DELTA) -> pd.DataFrame:
         for i in range(n)
     ]
 
-    return pd.DataFrame(
-        {
-            "clave": sim.clave,
-            "cve_mun": sim.cve_mun,
-            "n_obs": sim.n_obs.astype(int),
-            "tasa_anual_pct": tasa_anual_pct,
-            "delta_pct": delta_pct,
-            "ic95": list(ic95),
-            "p_sube": p_sube,
-            "p_baja": p_baja,
-            "p_mantiene": p_mantiene,
-            "p_dec": p_decs,
-            "veredicto": veredictos,
-            "confianza": niveles,
-        }
-    )
+    resultado: dict[str, pd.DataFrame] = {}
+    for clave_horizonte, t_horizonte in horizontes.items():
+        horizonte_reporte = t_horizonte - T_BASE
+        tasa_anual_pct = 100.0 * np.median(r, axis=1)
+        delta_draws_pct = 100.0 * (np.exp(r * horizonte_reporte) - 1.0)
+        delta_pct = np.median(delta_draws_pct, axis=1)
+        ic95 = np.percentile(delta_draws_pct, [2.5, 97.5], axis=1).T  # (n, 2)
+
+        resultado[clave_horizonte] = pd.DataFrame(
+            {
+                "clave": sim.clave,
+                "cve_mun": sim.cve_mun,
+                "n_obs": sim.n_obs.astype(int),
+                "tasa_anual_pct": tasa_anual_pct,
+                "delta_pct": delta_pct,
+                "ic95": list(ic95),
+                "p_sube": p_sube,
+                "p_baja": p_baja,
+                "p_mantiene": p_mantiene,
+                "p_dec": p_decs,
+                "veredicto": veredictos,
+                "confianza": niveles,
+            }
+        )
+    return resultado
 
 
 def agregar_alcaldia(sim: Simulacion) -> Simulacion:
@@ -642,9 +673,10 @@ def agregar_alcaldia(sim: Simulacion) -> Simulacion:
     n_sim = sim.r_fut.shape[1]
     es_demanda = sim.d2020_conf is not None
 
-    proyectado = sim.base[:, None] * np.exp(sim.r_fut * sim.horizonte)
+    proyectado = sim.base[:, None] * np.exp(sim.r_fut * sim.horizonte_control)
     proyectado_lambdas = {
-        lam: sim.base[:, None] * np.exp(r * sim.horizonte) for lam, r in sim.r_fut_lambdas.items()
+        lam: sim.base[:, None] * np.exp(r * sim.horizonte_control)
+        for lam, r in sim.r_fut_lambdas.items()
     }
 
     base_mun = np.empty(n_mun)
@@ -660,7 +692,9 @@ def agregar_alcaldia(sim: Simulacion) -> Simulacion:
         idx = np.where(np.asarray(sim.cve_mun) == m)[0]
         base_m = sim.base[idx].sum()
         base_mun[j] = base_m
-        r_fut_mun[j, :] = np.log(proyectado[idx, :].sum(axis=0) / base_m) / sim.horizonte
+        r_fut_mun[j, :] = (
+            np.log(proyectado[idx, :].sum(axis=0) / base_m) / sim.horizonte_control
+        )
         n_obs_mun[j] = int(sim.n_obs[idx].max())
         if es_demanda:
             d2020_conf_mun[j] = sim.d2020_conf[idx].sum()
@@ -669,7 +703,7 @@ def agregar_alcaldia(sim: Simulacion) -> Simulacion:
             tope_mun[j] = "media"
         for lam, proy_lam in proyectado_lambdas.items():
             r_fut_lambdas_mun[lam][j, :] = (
-                np.log(proy_lam[idx, :].sum(axis=0) / base_m) / sim.horizonte
+                np.log(proy_lam[idx, :].sum(axis=0) / base_m) / sim.horizonte_control
             )
 
     return Simulacion(
@@ -681,5 +715,5 @@ def agregar_alcaldia(sim: Simulacion) -> Simulacion:
         tope=tope_mun,
         r_fut=r_fut_mun,
         r_fut_lambdas=r_fut_lambdas_mun,
-        horizonte=sim.horizonte,
+        horizonte_control=sim.horizonte_control,
     )

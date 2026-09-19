@@ -13,7 +13,7 @@ import pandas as pd
 import pytest
 import statsmodels.api as sm
 
-from chipos.config import SEMILLA, T_2010, T_2020, T_HOR
+from chipos.config import HORIZONTES, SEMILLA, T_2010, T_2020, T_HOR
 from chipos.io import CORTES_OFERTA
 from chipos.modelos import (
     Simulacion,
@@ -381,7 +381,7 @@ class TestSimularDemanda:
     ) -> None:
         rng = np.random.default_rng(SEMILLA)
         sim = simular_demanda(panel_demanda_sintetico, conapo_anual_dos_mun, rng, n_sim=300)
-        res = resumir(sim)
+        res = resumir(sim, HORIZONTES)["h3"]
 
         assert set(res["veredicto"]) <= {"sube", "se_mantiene", "baja"}
         assert set(res["confianza"]) <= {"alta", "media", "baja"}
@@ -552,7 +552,7 @@ class TestSimularOferta:
         ajuste = ajustar_oferta(panel_oferta_para_ajuste)
         rng = np.random.default_rng(SEMILLA)
         sim = simular_oferta(ajuste, rng, n_sim=500)
-        res = resumir(sim)
+        res = resumir(sim, {"h3": HORIZONTES["h3"]})["h3"]
         assert "alta" not in set(res["confianza"])
         assert np.all(sim.tope == "media")
 
@@ -573,9 +573,11 @@ class TestAgregarAlcaldia:
         for j, m in enumerate(sim_mun.cve_mun):
             idx = np.where(sim.cve_mun == m)[0]
             proyectado_ageb = (
-                sim.base[idx, None] * np.exp(sim.r_fut[idx, :] * sim.horizonte)
+                sim.base[idx, None] * np.exp(sim.r_fut[idx, :] * sim.horizonte_control)
             ).sum(axis=0)
-            proyectado_mun = sim_mun.base[j] * np.exp(sim_mun.r_fut[j, :] * sim_mun.horizonte)
+            proyectado_mun = (
+                sim_mun.base[j] * np.exp(sim_mun.r_fut[j, :] * sim_mun.horizonte_control)
+            )
             np.testing.assert_allclose(proyectado_ageb, proyectado_mun, rtol=1e-9)
             assert sim_mun.base[j] == pytest.approx(sim.base[idx].sum())
 
@@ -599,5 +601,51 @@ class TestAgregarAlcaldia:
         sim_mun = agregar_alcaldia(sim)
         assert np.all(sim_mun.tope == "media")
         assert np.all(sim_mun.n_obs == 3)
-        res_mun = resumir(sim_mun)
+        res_mun = resumir(sim_mun, {"h3": HORIZONTES["h3"]})["h3"]
         assert "alta" not in set(res_mun["confianza"])
+
+
+# ---------------------------------------------------------------------------
+# resumir: horizontes de reporte 3/5/7 años (contrato v1.2)
+# ---------------------------------------------------------------------------
+
+
+class TestResumirHorizontes:
+    def test_mismo_veredicto_y_confianza_en_los_tres_horizontes(
+        self, panel_demanda_sintetico: pd.DataFrame, conapo_anual_dos_mun: pd.DataFrame
+    ) -> None:
+        rng = np.random.default_rng(SEMILLA)
+        sim = simular_demanda(panel_demanda_sintetico, conapo_anual_dos_mun, rng, n_sim=300)
+        res = resumir(sim, HORIZONTES)
+
+        assert set(res.keys()) == {"h3", "h5", "h7"}
+        pd.testing.assert_series_equal(
+            res["h3"]["veredicto"], res["h5"]["veredicto"], check_names=False
+        )
+        pd.testing.assert_series_equal(
+            res["h3"]["veredicto"], res["h7"]["veredicto"], check_names=False
+        )
+        pd.testing.assert_series_equal(
+            res["h3"]["confianza"], res["h5"]["confianza"], check_names=False
+        )
+        pd.testing.assert_series_equal(
+            res["h3"]["confianza"], res["h7"]["confianza"], check_names=False
+        )
+        pd.testing.assert_series_equal(
+            res["h3"]["tasa_anual_pct"], res["h5"]["tasa_anual_pct"], check_names=False
+        )
+
+        # `delta_pct` crece en magnitud (valor absoluto) de h3 -> h5 -> h7
+        # (monotonía de `exp`, mismo signo de la tasa en cada unidad).
+        mag_h3 = res["h3"]["delta_pct"].abs().to_numpy()
+        mag_h5 = res["h5"]["delta_pct"].abs().to_numpy()
+        mag_h7 = res["h7"]["delta_pct"].abs().to_numpy()
+        assert np.all(mag_h5 >= mag_h3)
+        assert np.all(mag_h7 >= mag_h5)
+
+    def test_oferta_solo_admite_h3(self, panel_oferta_para_ajuste: pd.DataFrame) -> None:
+        ajuste = ajustar_oferta(panel_oferta_para_ajuste)
+        rng = np.random.default_rng(SEMILLA)
+        sim = simular_oferta(ajuste, rng, n_sim=200)
+        res = resumir(sim, {"h3": HORIZONTES["h3"]})
+        assert set(res.keys()) == {"h3"}
