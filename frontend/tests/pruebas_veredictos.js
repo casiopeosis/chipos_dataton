@@ -175,7 +175,10 @@ function registrosAlcaldiaMock(json, capa) {
 }
 
 prueba("calcularTitular: vista general con el mock de alcaldías produce 'mixto' (fixture real de F10)", async () => {
-  const json = await cargarMock("../mock/prediccion_alcaldia.json");
+  // El mock "base" (prediccion_alcaldia.json) pasó a v1.2 (Fase 8, plan horizontes 3/5/7 años):
+  // sus registros ya no traen `veredicto` aplanado en la raíz, sino bajo `.h.<horizonte>`. Este
+  // fixture usa el mock v1.1 real (`?mock=v11`), que sigue con el shape plano de F10.
+  const json = await cargarMock("../mock/prediccion_alcaldia_v11.json");
   const regs = registrosAlcaldiaMock(json, "demanda");
   const resultado = calcularTitular({
     capa: "demanda",

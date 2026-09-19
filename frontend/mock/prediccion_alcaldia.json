@@ -1,279 +1,1746 @@
 {
-  "version": "1.1",
-  "generado": "2026-09-19T05:47:56+00:00",
-  "horizonte": "2027-06",
+  "version": "1.2",
+  "generado": "2026-09-19T19:34:08+00:00",
+  "fecha_base": "2026-06",
+  "horizontes": [
+    {
+      "clave": "h3",
+      "anios": 3,
+      "fecha": "2029-06"
+    },
+    {
+      "clave": "h5",
+      "anios": 5,
+      "fecha": "2031-06"
+    },
+    {
+      "clave": "h7",
+      "anios": 7,
+      "fecha": "2033-06"
+    }
+  ],
   "capas": {
     "demanda": {
       "002": {
-        "veredicto": "sube",
-        "delta_pct": 5.2,
-        "tasa_anual_pct": 1.6,
-        "ic95": [
-          -2.7,
-          9.9
-        ],
-        "confianza": "baja",
-        "n_obs": 2
+        "n_obs": 10,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            492,
+            570
+          ]
+        },
+        "nivel_base": 620,
+        "h": {
+          "h3": {
+            "veredicto": "sube",
+            "delta_pct": 4.8,
+            "tasa_anual_pct": 1.4,
+            "ic95": [
+              -3.8,
+              16.7
+            ],
+            "confianza": "alta"
+          },
+          "h5": {
+            "veredicto": "sube",
+            "delta_pct": 8.0,
+            "tasa_anual_pct": 1.4,
+            "ic95": [
+              -6.3,
+              27.8
+            ],
+            "confianza": "alta"
+          },
+          "h7": {
+            "veredicto": "sube",
+            "delta_pct": 11.2,
+            "tasa_anual_pct": 1.4,
+            "ic95": [
+              -8.9,
+              39.0
+            ],
+            "confianza": "alta"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 26,
+            "se_mantiene": 28,
+            "baja": 44,
+            "sin_datos": 5
+          },
+          "h5": {
+            "sube": 26,
+            "se_mantiene": 28,
+            "baja": 44,
+            "sin_datos": 5
+          },
+          "h7": {
+            "sube": 26,
+            "se_mantiene": 28,
+            "baja": 44,
+            "sin_datos": 5
+          }
+        }
       },
       "003": {
-        "veredicto": "se_mantiene",
-        "delta_pct": 0.7,
-        "tasa_anual_pct": 0.4,
-        "ic95": [
-          -3.3,
-          10.3
-        ],
-        "confianza": "media",
-        "n_obs": 5
+        "n_obs": 8,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            1026,
+            960
+          ]
+        },
+        "nivel_base": 918,
+        "h": {
+          "h3": {
+            "veredicto": "se_mantiene",
+            "delta_pct": -2.8,
+            "tasa_anual_pct": -0.7,
+            "ic95": [
+              -5.8,
+              3.7
+            ],
+            "confianza": "alta"
+          },
+          "h5": {
+            "veredicto": "se_mantiene",
+            "delta_pct": -4.7,
+            "tasa_anual_pct": -0.7,
+            "ic95": [
+              -9.7,
+              6.1
+            ],
+            "confianza": "alta"
+          },
+          "h7": {
+            "veredicto": "se_mantiene",
+            "delta_pct": -6.5,
+            "tasa_anual_pct": -0.7,
+            "ic95": [
+              -13.5,
+              8.7
+            ],
+            "confianza": "alta"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 50,
+            "se_mantiene": 42,
+            "baja": 58,
+            "sin_datos": 6
+          },
+          "h5": {
+            "sube": 50,
+            "se_mantiene": 42,
+            "baja": 58,
+            "sin_datos": 6
+          },
+          "h7": {
+            "sube": 50,
+            "se_mantiene": 42,
+            "baja": 58,
+            "sin_datos": 6
+          }
+        }
       },
       "004": {
-        "veredicto": "sube",
-        "delta_pct": 10.8,
-        "tasa_anual_pct": 4.4,
-        "ic95": [
-          3.4,
-          22.7
-        ],
-        "confianza": "media",
-        "n_obs": 5
+        "n_obs": 11,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            3242,
+            2781
+          ]
+        },
+        "nivel_base": 2483,
+        "h": {
+          "h3": {
+            "veredicto": "baja",
+            "delta_pct": -4.1,
+            "tasa_anual_pct": -1.7,
+            "ic95": [
+              -12.7,
+              -0.7
+            ],
+            "confianza": "alta"
+          },
+          "h5": {
+            "veredicto": "baja",
+            "delta_pct": -6.8,
+            "tasa_anual_pct": -1.7,
+            "ic95": [
+              -21.1,
+              -1.2
+            ],
+            "confianza": "alta"
+          },
+          "h7": {
+            "veredicto": "baja",
+            "delta_pct": -9.6,
+            "tasa_anual_pct": -1.7,
+            "ic95": [
+              -29.6,
+              -1.7
+            ],
+            "confianza": "alta"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 9,
+            "se_mantiene": 5,
+            "baja": 16,
+            "sin_datos": 3
+          },
+          "h5": {
+            "sube": 9,
+            "se_mantiene": 5,
+            "baja": 16,
+            "sin_datos": 3
+          },
+          "h7": {
+            "sube": 9,
+            "se_mantiene": 5,
+            "baja": 16,
+            "sin_datos": 3
+          }
+        }
       },
       "005": {
-        "veredicto": "baja",
-        "delta_pct": -8.3,
-        "tasa_anual_pct": -3.4,
-        "ic95": [
-          -16.9,
-          -1.6
-        ],
-        "confianza": "baja",
-        "n_obs": 2
+        "n_obs": 7,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            1868,
+            1392
+          ]
+        },
+        "nivel_base": 1085,
+        "h": {
+          "h3": {
+            "veredicto": "baja",
+            "delta_pct": -10.7,
+            "tasa_anual_pct": -3.5,
+            "ic95": [
+              -18.8,
+              2.2
+            ],
+            "confianza": "media"
+          },
+          "h5": {
+            "veredicto": "baja",
+            "delta_pct": -17.8,
+            "tasa_anual_pct": -3.5,
+            "ic95": [
+              -31.3,
+              3.6
+            ],
+            "confianza": "media"
+          },
+          "h7": {
+            "veredicto": "baja",
+            "delta_pct": -25.0,
+            "tasa_anual_pct": -3.5,
+            "ic95": [
+              -44.0,
+              5.0
+            ],
+            "confianza": "media"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 92,
+            "se_mantiene": 77,
+            "baja": 124,
+            "sin_datos": 12
+          },
+          "h5": {
+            "sube": 92,
+            "se_mantiene": 77,
+            "baja": 124,
+            "sin_datos": 12
+          },
+          "h7": {
+            "sube": 92,
+            "se_mantiene": 77,
+            "baja": 124,
+            "sin_datos": 12
+          }
+        }
       },
       "006": {
-        "veredicto": "se_mantiene",
-        "delta_pct": -1.1,
-        "tasa_anual_pct": 0.0,
-        "ic95": [
-          -9.8,
-          2.2
-        ],
-        "confianza": "baja",
-        "n_obs": 2
+        "n_obs": 11,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            1221,
+            1727
+          ]
+        },
+        "nivel_base": 2053,
+        "h": {
+          "h3": {
+            "veredicto": "sube",
+            "delta_pct": 9.2,
+            "tasa_anual_pct": 3.0,
+            "ic95": [
+              2.1,
+              21.1
+            ],
+            "confianza": "alta"
+          },
+          "h5": {
+            "veredicto": "sube",
+            "delta_pct": 15.3,
+            "tasa_anual_pct": 3.0,
+            "ic95": [
+              3.5,
+              35.2
+            ],
+            "confianza": "alta"
+          },
+          "h7": {
+            "veredicto": "sube",
+            "delta_pct": 21.5,
+            "tasa_anual_pct": 3.0,
+            "ic95": [
+              5.0,
+              49.4
+            ],
+            "confianza": "alta"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 31,
+            "se_mantiene": 21,
+            "baja": 53,
+            "sin_datos": 5
+          },
+          "h5": {
+            "sube": 31,
+            "se_mantiene": 21,
+            "baja": 53,
+            "sin_datos": 5
+          },
+          "h7": {
+            "sube": 31,
+            "se_mantiene": 21,
+            "baja": 53,
+            "sin_datos": 5
+          }
+        }
       },
       "007": {
-        "veredicto": "se_mantiene",
-        "delta_pct": -0.9,
-        "tasa_anual_pct": -0.3,
-        "ic95": [
-          -7.0,
-          11.1
-        ],
-        "confianza": "baja",
-        "n_obs": 3
+        "n_obs": 2,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            155,
+            133
+          ]
+        },
+        "nivel_base": 119,
+        "h": {
+          "h3": {
+            "veredicto": "baja",
+            "delta_pct": -5.3,
+            "tasa_anual_pct": -1.7,
+            "ic95": [
+              -13.8,
+              -0.6
+            ],
+            "confianza": "baja"
+          },
+          "h5": {
+            "veredicto": "baja",
+            "delta_pct": -8.8,
+            "tasa_anual_pct": -1.7,
+            "ic95": [
+              -22.9,
+              -1.0
+            ],
+            "confianza": "baja"
+          },
+          "h7": {
+            "veredicto": "baja",
+            "delta_pct": -12.4,
+            "tasa_anual_pct": -1.7,
+            "ic95": [
+              -32.1,
+              -1.5
+            ],
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 113,
+            "se_mantiene": 108,
+            "baja": 219,
+            "sin_datos": 18
+          },
+          "h5": {
+            "sube": 113,
+            "se_mantiene": 108,
+            "baja": 219,
+            "sin_datos": 18
+          },
+          "h7": {
+            "sube": 113,
+            "se_mantiene": 108,
+            "baja": 219,
+            "sin_datos": 18
+          }
+        }
       },
       "008": {
-        "veredicto": "baja",
-        "delta_pct": -13.3,
-        "tasa_anual_pct": -4.5,
-        "ic95": [
-          -26.0,
-          -5.5
-        ],
-        "confianza": "media",
-        "n_obs": 7
+        "n_obs": 2,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            1809,
+            2424
+          ]
+        },
+        "nivel_base": 2821,
+        "h": {
+          "h3": {
+            "veredicto": "sube",
+            "delta_pct": 6.9,
+            "tasa_anual_pct": 2.6,
+            "ic95": [
+              -4.4,
+              13.6
+            ],
+            "confianza": "baja"
+          },
+          "h5": {
+            "veredicto": "sube",
+            "delta_pct": 11.5,
+            "tasa_anual_pct": 2.6,
+            "ic95": [
+              -7.3,
+              22.6
+            ],
+            "confianza": "baja"
+          },
+          "h7": {
+            "veredicto": "sube",
+            "delta_pct": 16.1,
+            "tasa_anual_pct": 2.6,
+            "ic95": [
+              -10.2,
+              31.7
+            ],
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 14,
+            "se_mantiene": 14,
+            "baja": 22,
+            "sin_datos": 3
+          },
+          "h5": {
+            "sube": 14,
+            "se_mantiene": 14,
+            "baja": 22,
+            "sin_datos": 3
+          },
+          "h7": {
+            "sube": 14,
+            "se_mantiene": 14,
+            "baja": 22,
+            "sin_datos": 3
+          }
+        }
       },
       "009": {
-        "veredicto": "sin_datos",
-        "delta_pct": null,
-        "tasa_anual_pct": null,
-        "ic95": null,
-        "confianza": "baja",
-        "n_obs": 1
+        "n_obs": 1,
+        "motivo_sin_datos": "n_insuficiente",
+        "serie": null,
+        "nivel_base": null,
+        "h": {
+          "h3": {
+            "veredicto": "sin_datos",
+            "delta_pct": null,
+            "tasa_anual_pct": null,
+            "ic95": null,
+            "confianza": "baja"
+          },
+          "h5": {
+            "veredicto": "sin_datos",
+            "delta_pct": null,
+            "tasa_anual_pct": null,
+            "ic95": null,
+            "confianza": "baja"
+          },
+          "h7": {
+            "veredicto": "sin_datos",
+            "delta_pct": null,
+            "tasa_anual_pct": null,
+            "ic95": null,
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 1,
+            "se_mantiene": 0,
+            "baja": 1,
+            "sin_datos": 44
+          },
+          "h5": {
+            "sube": 1,
+            "se_mantiene": 0,
+            "baja": 1,
+            "sin_datos": 44
+          },
+          "h7": {
+            "sube": 1,
+            "se_mantiene": 0,
+            "baja": 1,
+            "sin_datos": 44
+          }
+        }
       },
       "010": {
-        "veredicto": "sube",
-        "delta_pct": 10.3,
-        "tasa_anual_pct": 4.0,
-        "ic95": [
-          1.6,
-          15.3
-        ],
-        "confianza": "alta",
-        "n_obs": 11
+        "n_obs": 4,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            737,
+            553
+          ]
+        },
+        "nivel_base": 435,
+        "h": {
+          "h3": {
+            "veredicto": "baja",
+            "delta_pct": -10.5,
+            "tasa_anual_pct": -3.4,
+            "ic95": [
+              -17.8,
+              -8.0
+            ],
+            "confianza": "media"
+          },
+          "h5": {
+            "veredicto": "baja",
+            "delta_pct": -17.5,
+            "tasa_anual_pct": -3.4,
+            "ic95": [
+              -29.6,
+              -13.4
+            ],
+            "confianza": "media"
+          },
+          "h7": {
+            "veredicto": "baja",
+            "delta_pct": -24.5,
+            "tasa_anual_pct": -3.4,
+            "ic95": [
+              -41.5,
+              -18.7
+            ],
+            "confianza": "media"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 60,
+            "se_mantiene": 48,
+            "baja": 83,
+            "sin_datos": 9
+          },
+          "h5": {
+            "sube": 60,
+            "se_mantiene": 48,
+            "baja": 83,
+            "sin_datos": 9
+          },
+          "h7": {
+            "sube": 60,
+            "se_mantiene": 48,
+            "baja": 83,
+            "sin_datos": 9
+          }
+        }
       },
       "011": {
-        "veredicto": "baja",
-        "delta_pct": -6.3,
-        "tasa_anual_pct": -2.3,
-        "ic95": [
-          -14.5,
-          -1.8
-        ],
-        "confianza": "media",
-        "n_obs": 6
+        "n_obs": 3,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            2282,
+            2942
+          ]
+        },
+        "nivel_base": 3368,
+        "h": {
+          "h3": {
+            "veredicto": "sube",
+            "delta_pct": 6.2,
+            "tasa_anual_pct": 2.3,
+            "ic95": [
+              0.3,
+              10.4
+            ],
+            "confianza": "baja"
+          },
+          "h5": {
+            "veredicto": "sube",
+            "delta_pct": 10.3,
+            "tasa_anual_pct": 2.3,
+            "ic95": [
+              0.5,
+              17.3
+            ],
+            "confianza": "baja"
+          },
+          "h7": {
+            "veredicto": "sube",
+            "delta_pct": 14.5,
+            "tasa_anual_pct": 2.3,
+            "ic95": [
+              0.7,
+              24.3
+            ],
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 28,
+            "se_mantiene": 27,
+            "baja": 51,
+            "sin_datos": 9
+          },
+          "h5": {
+            "sube": 28,
+            "se_mantiene": 27,
+            "baja": 51,
+            "sin_datos": 9
+          },
+          "h7": {
+            "sube": 28,
+            "se_mantiene": 27,
+            "baja": 51,
+            "sin_datos": 9
+          }
+        }
       },
       "012": {
-        "veredicto": "se_mantiene",
-        "delta_pct": -1.5,
-        "tasa_anual_pct": -0.0,
-        "ic95": [
-          -6.3,
-          7.9
-        ],
-        "confianza": "alta",
-        "n_obs": 10
+        "n_obs": 6,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            926,
+            891
+          ]
+        },
+        "nivel_base": 869,
+        "h": {
+          "h3": {
+            "veredicto": "se_mantiene",
+            "delta_pct": -1.0,
+            "tasa_anual_pct": -0.4,
+            "ic95": [
+              -9.1,
+              3.9
+            ],
+            "confianza": "media"
+          },
+          "h5": {
+            "veredicto": "se_mantiene",
+            "delta_pct": -1.7,
+            "tasa_anual_pct": -0.4,
+            "ic95": [
+              -15.1,
+              6.4
+            ],
+            "confianza": "media"
+          },
+          "h7": {
+            "veredicto": "se_mantiene",
+            "delta_pct": -2.3,
+            "tasa_anual_pct": -0.4,
+            "ic95": [
+              -21.1,
+              9.0
+            ],
+            "confianza": "media"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 54,
+            "se_mantiene": 49,
+            "baja": 96,
+            "sin_datos": 13
+          },
+          "h5": {
+            "sube": 54,
+            "se_mantiene": 49,
+            "baja": 96,
+            "sin_datos": 13
+          },
+          "h7": {
+            "sube": 54,
+            "se_mantiene": 49,
+            "baja": 96,
+            "sin_datos": 13
+          }
+        }
       },
       "013": {
-        "veredicto": "baja",
-        "delta_pct": -12.6,
-        "tasa_anual_pct": -3.9,
-        "ic95": [
-          -15.2,
-          -7.8
-        ],
-        "confianza": "alta",
-        "n_obs": 8
+        "n_obs": 3,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            834,
+            1368
+          ]
+        },
+        "nivel_base": 1713,
+        "h": {
+          "h3": {
+            "veredicto": "sube",
+            "delta_pct": 12.8,
+            "tasa_anual_pct": 4.0,
+            "ic95": [
+              6.4,
+              21.9
+            ],
+            "confianza": "baja"
+          },
+          "h5": {
+            "veredicto": "sube",
+            "delta_pct": 21.3,
+            "tasa_anual_pct": 4.0,
+            "ic95": [
+              10.6,
+              36.5
+            ],
+            "confianza": "baja"
+          },
+          "h7": {
+            "veredicto": "sube",
+            "delta_pct": 29.9,
+            "tasa_anual_pct": 4.0,
+            "ic95": [
+              15.0,
+              51.2
+            ],
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 41,
+            "se_mantiene": 32,
+            "baja": 44,
+            "sin_datos": 9
+          },
+          "h5": {
+            "sube": 41,
+            "se_mantiene": 32,
+            "baja": 44,
+            "sin_datos": 9
+          },
+          "h7": {
+            "sube": 41,
+            "se_mantiene": 32,
+            "baja": 44,
+            "sin_datos": 9
+          }
+        }
       },
       "014": {
-        "veredicto": "baja",
-        "delta_pct": -7.8,
-        "tasa_anual_pct": -4.4,
-        "ic95": [
-          -15.0,
-          1.5
-        ],
-        "confianza": "baja",
-        "n_obs": 3
+        "n_obs": 2,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            2291,
+            2051
+          ]
+        },
+        "nivel_base": 1896,
+        "h": {
+          "h3": {
+            "veredicto": "baja",
+            "delta_pct": -3.4,
+            "tasa_anual_pct": -1.2,
+            "ic95": [
+              -10.1,
+              8.9
+            ],
+            "confianza": "baja"
+          },
+          "h5": {
+            "veredicto": "baja",
+            "delta_pct": -5.7,
+            "tasa_anual_pct": -1.2,
+            "ic95": [
+              -16.9,
+              14.8
+            ],
+            "confianza": "baja"
+          },
+          "h7": {
+            "veredicto": "baja",
+            "delta_pct": -7.9,
+            "tasa_anual_pct": -1.2,
+            "ic95": [
+              -23.5,
+              20.8
+            ],
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 33,
+            "se_mantiene": 27,
+            "baja": 38,
+            "sin_datos": 4
+          },
+          "h5": {
+            "sube": 33,
+            "se_mantiene": 27,
+            "baja": 38,
+            "sin_datos": 4
+          },
+          "h7": {
+            "sube": 33,
+            "se_mantiene": 27,
+            "baja": 38,
+            "sin_datos": 4
+          }
+        }
       },
       "015": {
-        "veredicto": "se_mantiene",
-        "delta_pct": -0.3,
-        "tasa_anual_pct": -0.3,
-        "ic95": [
-          -8.3,
-          11.6
-        ],
-        "confianza": "media",
-        "n_obs": 4
+        "n_obs": 7,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            1420,
+            2406
+          ]
+        },
+        "nivel_base": 3043,
+        "h": {
+          "h3": {
+            "veredicto": "sube",
+            "delta_pct": 13.6,
+            "tasa_anual_pct": 4.2,
+            "ic95": [
+              5.1,
+              16.4
+            ],
+            "confianza": "media"
+          },
+          "h5": {
+            "veredicto": "sube",
+            "delta_pct": 22.7,
+            "tasa_anual_pct": 4.2,
+            "ic95": [
+              8.5,
+              27.4
+            ],
+            "confianza": "media"
+          },
+          "h7": {
+            "veredicto": "sube",
+            "delta_pct": 31.7,
+            "tasa_anual_pct": 4.2,
+            "ic95": [
+              11.8,
+              38.3
+            ],
+            "confianza": "media"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 29,
+            "se_mantiene": 53,
+            "baja": 65,
+            "sin_datos": 6
+          },
+          "h5": {
+            "sube": 29,
+            "se_mantiene": 53,
+            "baja": 65,
+            "sin_datos": 6
+          },
+          "h7": {
+            "sube": 29,
+            "se_mantiene": 53,
+            "baja": 65,
+            "sin_datos": 6
+          }
+        }
       },
       "016": {
-        "veredicto": "se_mantiene",
-        "delta_pct": -0.5,
-        "tasa_anual_pct": -0.1,
-        "ic95": [
-          -9.2,
-          6.1
-        ],
-        "confianza": "alta",
-        "n_obs": 10
+        "n_obs": 6,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            1948,
+            1401
+          ]
+        },
+        "nivel_base": 1048,
+        "h": {
+          "h3": {
+            "veredicto": "baja",
+            "delta_pct": -12.1,
+            "tasa_anual_pct": -4.0,
+            "ic95": [
+              -18.0,
+              -1.6
+            ],
+            "confianza": "media"
+          },
+          "h5": {
+            "veredicto": "baja",
+            "delta_pct": -20.2,
+            "tasa_anual_pct": -4.0,
+            "ic95": [
+              -30.0,
+              -2.8
+            ],
+            "confianza": "media"
+          },
+          "h7": {
+            "veredicto": "baja",
+            "delta_pct": -28.2,
+            "tasa_anual_pct": -4.0,
+            "ic95": [
+              -41.9,
+              -3.8
+            ],
+            "confianza": "media"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 35,
+            "se_mantiene": 29,
+            "baja": 60,
+            "sin_datos": 6
+          },
+          "h5": {
+            "sube": 35,
+            "se_mantiene": 29,
+            "baja": 60,
+            "sin_datos": 6
+          },
+          "h7": {
+            "sube": 35,
+            "se_mantiene": 29,
+            "baja": 60,
+            "sin_datos": 6
+          }
+        }
       },
       "017": {
-        "veredicto": "baja",
-        "delta_pct": -6.9,
-        "tasa_anual_pct": -2.8,
-        "ic95": [
-          -19.1,
-          1.8
-        ],
-        "confianza": "media",
-        "n_obs": 6
+        "n_obs": 3,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2010.44,
+            2020.2
+          ],
+          "valor": [
+            2294,
+            2488
+          ]
+        },
+        "nivel_base": 2613,
+        "h": {
+          "h3": {
+            "veredicto": "se_mantiene",
+            "delta_pct": 1.4,
+            "tasa_anual_pct": 0.8,
+            "ic95": [
+              -2.1,
+              7.7
+            ],
+            "confianza": "baja"
+          },
+          "h5": {
+            "veredicto": "se_mantiene",
+            "delta_pct": 2.3,
+            "tasa_anual_pct": 0.8,
+            "ic95": [
+              -3.5,
+              12.8
+            ],
+            "confianza": "baja"
+          },
+          "h7": {
+            "veredicto": "se_mantiene",
+            "delta_pct": 3.3,
+            "tasa_anual_pct": 0.8,
+            "ic95": [
+              -4.8,
+              18.0
+            ],
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 57,
+            "se_mantiene": 35,
+            "baja": 53,
+            "sin_datos": 6
+          },
+          "h5": {
+            "sube": 57,
+            "se_mantiene": 35,
+            "baja": 53,
+            "sin_datos": 6
+          },
+          "h7": {
+            "sube": 57,
+            "se_mantiene": 35,
+            "baja": 53,
+            "sin_datos": 6
+          }
+        }
       }
     },
     "oferta": {
       "002": {
-        "veredicto": "se_mantiene",
-        "delta_pct": 0.2,
-        "confianza": "baja",
-        "n_obs": 3
+        "n_obs": 1,
+        "motivo_sin_datos": "cobertura_denue",
+        "serie": null,
+        "nivel_base": null,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "sin_datos",
+            "delta_pct": null,
+            "tasa_anual_pct": null,
+            "ic95": null,
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 21,
+            "se_mantiene": 32,
+            "baja": 27,
+            "sin_datos": 23
+          }
+        }
       },
       "003": {
-        "veredicto": "sin_datos",
-        "delta_pct": null,
-        "confianza": "baja",
-        "n_obs": 0
+        "n_obs": 0,
+        "motivo_sin_datos": "cobertura_denue",
+        "serie": null,
+        "nivel_base": null,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "sin_datos",
+            "delta_pct": null,
+            "tasa_anual_pct": null,
+            "ic95": null,
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 29,
+            "se_mantiene": 43,
+            "baja": 52,
+            "sin_datos": 32
+          }
+        }
       },
       "004": {
-        "veredicto": "sube",
-        "delta_pct": 1.3,
-        "confianza": "baja",
-        "n_obs": 2
+        "n_obs": 4,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2016.79,
+            2019.87,
+            2024.87
+          ],
+          "valor": [
+            13,
+            12,
+            14
+          ]
+        },
+        "nivel_base": 14,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "se_mantiene",
+            "delta_pct": -0.4,
+            "tasa_anual_pct": -0.1,
+            "ic95": [
+              -9.2,
+              6.0
+            ],
+            "confianza": "media"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 7,
+            "se_mantiene": 12,
+            "baja": 9,
+            "sin_datos": 5
+          }
+        }
       },
       "005": {
-        "veredicto": "baja",
-        "delta_pct": -8.2,
-        "confianza": "media",
-        "n_obs": 7
+        "n_obs": 0,
+        "motivo_sin_datos": "cobertura_denue",
+        "serie": null,
+        "nivel_base": null,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "sin_datos",
+            "delta_pct": null,
+            "tasa_anual_pct": null,
+            "ic95": null,
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 84,
+            "se_mantiene": 62,
+            "baja": 107,
+            "sin_datos": 52
+          }
+        }
       },
       "006": {
-        "veredicto": "sin_datos",
-        "delta_pct": null,
-        "confianza": "baja",
-        "n_obs": 0
+        "n_obs": 6,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2016.79,
+            2019.87,
+            2024.87
+          ],
+          "valor": [
+            13,
+            15,
+            15
+          ]
+        },
+        "nivel_base": 15,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "baja",
+            "delta_pct": -4.0,
+            "tasa_anual_pct": -1.3,
+            "ic95": [
+              -15.3,
+              3.7
+            ],
+            "confianza": "media"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 24,
+            "se_mantiene": 27,
+            "baja": 37,
+            "sin_datos": 22
+          }
+        }
       },
       "007": {
-        "veredicto": "sin_datos",
-        "delta_pct": null,
-        "confianza": "baja",
-        "n_obs": 1
+        "n_obs": 6,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2016.79,
+            2019.87,
+            2024.87
+          ],
+          "valor": [
+            22,
+            21,
+            22
+          ]
+        },
+        "nivel_base": 22,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "baja",
+            "delta_pct": -3.3,
+            "tasa_anual_pct": -1.1,
+            "ic95": [
+              -9.7,
+              2.5
+            ],
+            "confianza": "media"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 105,
+            "se_mantiene": 120,
+            "baja": 147,
+            "sin_datos": 86
+          }
+        }
       },
       "008": {
-        "veredicto": "sin_datos",
-        "delta_pct": null,
-        "confianza": "baja",
-        "n_obs": 1
+        "n_obs": 5,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2016.79,
+            2019.87,
+            2024.87
+          ],
+          "valor": [
+            34,
+            32,
+            30
+          ]
+        },
+        "nivel_base": 30,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "se_mantiene",
+            "delta_pct": 0.0,
+            "tasa_anual_pct": 0.0,
+            "ic95": [
+              -6.4,
+              7.7
+            ],
+            "confianza": "media"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 10,
+            "se_mantiene": 14,
+            "baja": 19,
+            "sin_datos": 10
+          }
+        }
       },
       "009": {
-        "veredicto": "sin_datos",
-        "delta_pct": null,
-        "confianza": "baja",
-        "n_obs": 0
+        "n_obs": 2,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2016.79,
+            2019.87,
+            2024.87
+          ],
+          "valor": [
+            24,
+            25,
+            27
+          ]
+        },
+        "nivel_base": 27,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "sube",
+            "delta_pct": 5.9,
+            "tasa_anual_pct": 2.0,
+            "ic95": [
+              -3.4,
+              13.8
+            ],
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 10,
+            "se_mantiene": 13,
+            "baja": 13,
+            "sin_datos": 10
+          }
+        }
       },
       "010": {
-        "veredicto": "sin_datos",
-        "delta_pct": null,
-        "confianza": "baja",
-        "n_obs": 1
+        "n_obs": 3,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2016.79,
+            2019.87,
+            2024.87
+          ],
+          "valor": [
+            16,
+            15,
+            16
+          ]
+        },
+        "nivel_base": 16,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "se_mantiene",
+            "delta_pct": 1.0,
+            "tasa_anual_pct": 0.3,
+            "ic95": [
+              -8.4,
+              15.6
+            ],
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 49,
+            "se_mantiene": 52,
+            "baja": 61,
+            "sin_datos": 38
+          }
+        }
       },
       "011": {
-        "veredicto": "sube",
-        "delta_pct": 5.4,
-        "confianza": "media",
-        "n_obs": 6
+        "n_obs": 3,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2016.79,
+            2019.87,
+            2024.87
+          ],
+          "valor": [
+            20,
+            19,
+            17
+          ]
+        },
+        "nivel_base": 17,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "baja",
+            "delta_pct": -14.0,
+            "tasa_anual_pct": -4.7,
+            "ic95": [
+              -21.3,
+              -6.3
+            ],
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 25,
+            "se_mantiene": 32,
+            "baja": 37,
+            "sin_datos": 21
+          }
+        }
       },
       "012": {
-        "veredicto": "sin_datos",
-        "delta_pct": null,
-        "confianza": "baja",
-        "n_obs": 0
+        "n_obs": 2,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2016.79,
+            2019.87,
+            2024.87
+          ],
+          "valor": [
+            0,
+            0,
+            1
+          ]
+        },
+        "nivel_base": 1,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "baja",
+            "delta_pct": -13.6,
+            "tasa_anual_pct": -4.5,
+            "ic95": [
+              -19.9,
+              -0.1
+            ],
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 50,
+            "se_mantiene": 54,
+            "baja": 61,
+            "sin_datos": 47
+          }
+        }
       },
       "013": {
-        "veredicto": "sube",
-        "delta_pct": 7.5,
-        "confianza": "media",
-        "n_obs": 5
+        "n_obs": 6,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2016.79,
+            2019.87,
+            2024.87
+          ],
+          "valor": [
+            11,
+            13,
+            12
+          ]
+        },
+        "nivel_base": 12,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "sube",
+            "delta_pct": 6.4,
+            "tasa_anual_pct": 2.1,
+            "ic95": [
+              -7.2,
+              17.0
+            ],
+            "confianza": "media"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 34,
+            "se_mantiene": 26,
+            "baja": 48,
+            "sin_datos": 18
+          }
+        }
       },
       "014": {
-        "veredicto": "se_mantiene",
-        "delta_pct": 1.8,
-        "confianza": "baja",
-        "n_obs": 1
+        "n_obs": 4,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2016.79,
+            2019.87,
+            2024.87
+          ],
+          "valor": [
+            22,
+            23,
+            25
+          ]
+        },
+        "nivel_base": 25,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "sube",
+            "delta_pct": 5.4,
+            "tasa_anual_pct": 1.8,
+            "ic95": [
+              -3.4,
+              15.4
+            ],
+            "confianza": "media"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 23,
+            "se_mantiene": 27,
+            "baja": 29,
+            "sin_datos": 23
+          }
+        }
       },
       "015": {
-        "veredicto": "se_mantiene",
-        "delta_pct": 1.1,
-        "confianza": "media",
-        "n_obs": 7
+        "n_obs": 1,
+        "motivo_sin_datos": "cobertura_denue",
+        "serie": null,
+        "nivel_base": null,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "sin_datos",
+            "delta_pct": null,
+            "tasa_anual_pct": null,
+            "ic95": null,
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 40,
+            "se_mantiene": 42,
+            "baja": 48,
+            "sin_datos": 23
+          }
+        }
       },
       "016": {
-        "veredicto": "sube",
-        "delta_pct": 7.4,
-        "confianza": "baja",
-        "n_obs": 2
+        "n_obs": 3,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2016.79,
+            2019.87,
+            2024.87
+          ],
+          "valor": [
+            3,
+            3,
+            4
+          ]
+        },
+        "nivel_base": 4,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "baja",
+            "delta_pct": -8.0,
+            "tasa_anual_pct": -2.7,
+            "ic95": [
+              -18.0,
+              2.8
+            ],
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 30,
+            "se_mantiene": 35,
+            "baja": 46,
+            "sin_datos": 19
+          }
+        }
       },
       "017": {
-        "veredicto": "baja",
-        "delta_pct": -4.0,
-        "confianza": "media",
-        "n_obs": 4
+        "n_obs": 3,
+        "motivo_sin_datos": null,
+        "serie": {
+          "t": [
+            2016.79,
+            2019.87,
+            2024.87
+          ],
+          "valor": [
+            2,
+            4,
+            6
+          ]
+        },
+        "nivel_base": 6,
+        "horizontes_disponibles": [
+          "h3"
+        ],
+        "h": {
+          "h3": {
+            "veredicto": "se_mantiene",
+            "delta_pct": 2.0,
+            "tasa_anual_pct": 0.7,
+            "ic95": [
+              -7.9,
+              14.4
+            ],
+            "confianza": "baja"
+          }
+        },
+        "distribucion_ageb": {
+          "h3": {
+            "sube": 36,
+            "se_mantiene": 31,
+            "baja": 56,
+            "sin_datos": 28
+          }
+        }
+      }
+    }
+  },
+  "agregado_cdmx": {
+    "demanda": {
+      "n_obs": 10,
+      "motivo_sin_datos": null,
+      "serie": {
+        "t": [
+          2010.44,
+          2020.2
+        ],
+        "valor": [
+          2147,
+          1523
+        ]
+      },
+      "nivel_base": 1120,
+      "h": {
+        "h3": {
+          "veredicto": "baja",
+          "delta_pct": -12.8,
+          "tasa_anual_pct": -4.2,
+          "ic95": [
+            -18.9,
+            -0.8
+          ],
+          "confianza": "alta"
+        },
+        "h5": {
+          "veredicto": "baja",
+          "delta_pct": -21.3,
+          "tasa_anual_pct": -4.2,
+          "ic95": [
+            -31.5,
+            -1.2
+          ],
+          "confianza": "alta"
+        },
+        "h7": {
+          "veredicto": "baja",
+          "delta_pct": -29.9,
+          "tasa_anual_pct": -4.2,
+          "ic95": [
+            -44.2,
+            -1.8
+          ],
+          "confianza": "alta"
+        }
+      }
+    },
+    "oferta": {
+      "n_obs": 6,
+      "motivo_sin_datos": null,
+      "serie": {
+        "t": [
+          2016.79,
+          2019.87,
+          2024.87
+        ],
+        "valor": [
+          7,
+          8,
+          8
+        ]
+      },
+      "nivel_base": 8,
+      "horizontes_disponibles": [
+        "h3"
+      ],
+      "h": {
+        "h3": {
+          "veredicto": "sube",
+          "delta_pct": 7.1,
+          "tasa_anual_pct": 2.4,
+          "ic95": [
+            0.9,
+            12.9
+          ],
+          "confianza": "media"
+        }
       }
     }
   }
