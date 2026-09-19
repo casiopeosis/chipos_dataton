@@ -2,13 +2,16 @@
 //
 // Control segmentado de capas (plans/frontend_plan.md §5, F60; plans/frontend_specs.md §9).
 //
-// "Control segmentado" en la cabecera: `[ Demanda | Oferta | Brecha ]`, un `role="radiogroup"`
-// con `<input type="radio">` estilizados; las flechas cambian la opción (comportamiento nativo de
-// un grupo de radios con el mismo `name`, sin reimplementar el manejo de teclado). "Brecha" solo
-// aparece si el archivo trae `capas.brecha`; hoy el adaptador v1.1→v1.2 nunca la produce
-// (`js/api.js`, `js/config.js` → `CAPAS = ["demanda", "oferta"]`), pero este módulo no asume eso:
-// lee las capas disponibles del propio resultado adaptado (`capasDesdeAdaptado`) en vez de
-// hardcodear un conjunto fijo, así que el día que el backend mande `capas.brecha` el control la
+// "Control segmentado" en la cabecera: `[ Demanda | Brecha ]`, un `role="radiogroup"` con
+// `<input type="radio">` estilizados; las flechas cambian la opción (comportamiento nativo de un
+// grupo de radios con el mismo `name`, sin reimplementar el manejo de teclado). "Oferta" sigue
+// siendo una capa válida por hash (`&capa=oferta`, `config.js` → `CAPAS`/`estado.js` →
+// `esCapaValida`, ninguno de los dos se toca aquí) para quien navegue directo con ese enlace, pero
+// ya NO aparece en este control visual (decisión del equipo, plan "quitar Oferta del segmentado").
+// "Brecha" solo aparece si el archivo trae `capas.brecha`; hoy el adaptador v1.1→v1.2 nunca la
+// produce (`js/api.js`, `js/config.js` → `CAPAS = ["demanda", "oferta"]`), pero este módulo no
+// asume eso: lee las capas disponibles del propio resultado adaptado (`capasDesdeAdaptado`) en vez
+// de hardcodear un conjunto fijo, así que el día que el backend mande `capas.brecha` el control la
 // muestra sin cambios aquí.
 //
 // Demanda es la opción por defecto (spec §9, `estado.js` → `ESTADO_POR_DEFECTO.capa = "demanda"`).
@@ -24,10 +27,12 @@ import { textos } from "./textos.js";
 import { despachar, suscribir, obtenerEstado, ACCIONES } from "./estado.js";
 
 /**
- * Orden fijo del control segmentado (spec §9: "[ Demanda | Oferta | Brecha ]"). No se deriva del
- * orden de claves del JSON (que no está garantizado): se usa para ordenar lo que sí esté presente.
+ * Orden fijo del control segmentado: `[ Demanda | Brecha ]` (spec §9 original: "[ Demanda |
+ * Oferta | Brecha ]"; "oferta" se quitó del control por decisión del equipo, pero sigue siendo
+ * una capa válida por hash — ver comentario de cabecera). No se deriva del orden de claves del
+ * JSON (que no está garantizado): se usa para ordenar lo que sí esté presente.
  */
-const ORDEN_CAPAS = Object.freeze(["demanda", "oferta", "brecha"]);
+const ORDEN_CAPAS = Object.freeze(["demanda", "brecha"]);
 
 let contador = 0;
 
