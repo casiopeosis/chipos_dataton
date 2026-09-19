@@ -14,8 +14,8 @@
 //   hash `#/…&info=1` (que ya deja `drawerAbierto=true` desde el arranque, vía
 //   `estado.js`/`analizarHash`) abre el drawer sin que este módulo tenga que leer el hash.
 // - Foco inicial en el título al abrir; al cerrar, el foco vuelve al elemento que tenía el
-//   foco justo antes de abrir (el botón de la franja o el de la cabecera "Metodología ↗",
-//   que F25 dejó en `#boton-metodologia` sin manejador propio: este módulo lo conecta).
+//   foco justo antes de abrir (normalmente el botón de la franja: es el único disparador del
+//   drawer — el botón "Metodología ↗" de la cabecera se eliminó, ver js/cabecera.js).
 
 import { suscribir, obtenerEstado, despachar, ACCIONES } from "./estado.js";
 import { crear, reemplazarContenido } from "./dom.js";
@@ -143,8 +143,8 @@ function cerrarDialogo(dialogo, disparador) {
 }
 
 /**
- * Monta la franja lateral y el drawer de metodología. También conecta el botón "Metodología ↗"
- * que `cabecera.js` (F25) ya deja en `#boton-metodologia` sin manejador propio.
+ * Monta la franja lateral y el drawer de metodología. Es el único disparador del drawer (el
+ * botón "Metodología ↗" que antes vivía en la cabecera se eliminó, ver `js/cabecera.js`).
  *
  * @param {HTMLElement} elementoFranja - contenedor de la franja (`#franja-metodologia`).
  * @param {HTMLDialogElement} elementoDialogo - `<dialog>` de metodología (`#drawer-metodologia`).
@@ -165,15 +165,6 @@ export function montarFranja(elementoFranja, elementoDialogo, opciones = {}) {
     disparadorActivo = botonFranja;
     despachar({ tipo: ACCIONES.ALTERNAR_DRAWER });
   });
-
-  // Botón "Metodología ↗" de la cabecera (F25, sin manejador propio hasta ahora).
-  const botonCabecera = document.getElementById("boton-metodologia");
-  if (botonCabecera) {
-    botonCabecera.addEventListener("click", () => {
-      disparadorActivo = botonCabecera;
-      despachar({ tipo: ACCIONES.ABRIR_DRAWER });
-    });
-  }
 
   // Clic fuera del contenido (en el propio `<dialog>`, que es donde cae el clic sobre el
   // `::backdrop` en los motores actuales) cierra el drawer.

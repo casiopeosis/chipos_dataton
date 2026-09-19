@@ -8,10 +8,11 @@
 // tareas que sí les corresponden los sustituyan o los monten encima):
 //   - El control segmentado de capas real (F60, js/capas.js): aquí solo se muestra un
 //     indicador de solo lectura con la capa activa, dentro de `#control-capas`.
-//   - El drawer de metodología (F80, js/franja.js + <dialog> en index.html): el botón
-//     "Metodología ↗" existe con `id="boton-metodologia"` pero sin manejador propio.
 //   - El modo presentación (F85, js/presentacion.js): el botón "⤢" existe con
 //     `id="boton-presentacion"` pero sin manejador propio.
+//
+// El botón "Metodología ↗" de la cabecera se eliminó (un solo disparador del drawer de
+// metodología: la franja lateral derecha, `js/franja.js` → `#franja-metodologia`).
 //
 // Nombres de alcaldía: el contrato de predicciones (CLAUDE.md) no trae `nombre`, solo
 // `cve_mun`/`CVEGEO`. Los nombres oficiales salen del GeoJSON de referencia
@@ -132,7 +133,10 @@ function pintarMigas(nav, estado) {
  */
 function pintarControlCapas(contenedor, estado) {
   if (contenedor.dataset.montado === "capas-real") return;
-  const botones = CAPAS.map((clave) =>
+  // "Oferta" nunca debe verse en el control, ni siquiera en este indicador de solo lectura
+  // transitorio (Fase 10: el control real de capas.js tampoco la muestra); sigue siendo una capa
+  // válida por hash (`&capa=oferta`), CAPAS/esCapaValida no cambian.
+  const botones = CAPAS.filter((clave) => clave !== "oferta").map((clave) =>
     crear(
       "span",
       {
@@ -171,12 +175,6 @@ export function iniciarCabecera(elementoHeader) {
     "aria-label": "Capa activa",
   });
 
-  const botonMetodologia = crear(
-    "button",
-    { type: "button", id: "boton-metodologia", clase: "cabecera__boton" },
-    [textos.metodologia.enlaceCabecera],
-  );
-
   const botonPresentacion = crear(
     "button",
     {
@@ -192,7 +190,7 @@ export function iniciarCabecera(elementoHeader) {
     crear("span", { clase: "cabecera__producto" }, [textos.producto.nombre]),
     nav,
     controlCapas,
-    crear("div", { clase: "cabecera__acciones" }, [botonMetodologia, botonPresentacion]),
+    crear("div", { clase: "cabecera__acciones" }, [botonPresentacion]),
   ]);
 
   elementoHeader.appendChild(h1);
