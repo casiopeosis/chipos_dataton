@@ -2,7 +2,7 @@
 PY ?= .venv/bin/python
 PUERTO ?= 8000
 
-.PHONY: perfil pipeline test serve censo datos descargas
+.PHONY: perfil pipeline test serve censo datos descargas vendor-d3
 
 # Descarga fuentes oficiales y extrae la CDMX a data/processed/ (no sobrescribe)
 descargas:
@@ -35,3 +35,8 @@ test:
 serve:
 	@test -d frontend || { echo "frontend/ no existe todavía"; exit 1; }
 	$(PY) -m http.server $(PUERTO) --directory frontend
+
+# Regenera frontend/vendor/d3/d3-chipos.esm.js con esbuild (offline, puntual).
+# Ver frontend/vendor/d3/README.md para el detalle del comando.
+vendor-d3:
+	cd frontend/vendor/d3 && npm install && node build.mjs && rm -rf node_modules package-lock.json
