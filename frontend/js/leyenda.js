@@ -52,14 +52,14 @@ const ID_CONTENEDOR_MAPA = "contenedor-mapa";
 // ---------------------------------------------------------------------------------------------
 
 /**
- * Registro plano `{veredicto, confianza, tasa_anual_pct, ...}` de una capa, o `null` si no hay
- * entrada. `entrada` es `{demanda, oferta}`, como produce `api.js#construirIndices`: cada valor
- * ya viene resuelto al horizonte único `hU` (nunca trae un `.h` anidado que volver a indexar;
- * eso solo existe en `datosAdaptados.capas[capa][clave].h[horizonte]`, el nivel crudo del
- * adaptador, no en `indices.porCveMun`/`indices.porCvegeo`).
+ * Registro plano `{veredicto, confianza, tasa_anual_pct, ...}` de una capa, resuelto al
+ * horizonte activo, o `null` si no hay entrada. `entrada` es `{demanda, oferta}`, como produce
+ * `api.js#construirIndices`: cada valor conserva su `.h` completo (`{h3:{...}, h5:{...}, ...}`,
+ * o `{hU:{...}}` en el camino v1.1) sin aplanar a un horizonte concreto; el aplanado se hace aquí
+ * con la clave de horizonte activa (mismo criterio que `main.js#registroPlano`).
  */
-function registroPlano(entrada, capaActiva) {
-  return entrada?.[capaActiva] ?? null;
+function registroPlano(entrada, capaActiva, horizonteActivo) {
+  return entrada?.[capaActiva]?.h?.[horizonteActivo] ?? null;
 }
 
 /**
@@ -89,14 +89,14 @@ export function seleccionarRegistrosVisibles(opciones) {
   if (!enAlcaldia) {
     const indice = datosAlcaldia?.indices?.porCveMun;
     if (!(indice instanceof Map)) return [];
-    return Array.from(indice.values(), (entrada) => registroPlano(entrada, capaActiva));
+    return Array.from(indice.values(), (entrada) => registroPlano(entrada, capaActiva, horizonteActivo));
   }
 
   const clavesPorAlcaldia = datosAgeb?.indices?.porCveMun;
   const porCvegeo = datosAgeb?.indices?.porCvegeo;
   if (!(clavesPorAlcaldia instanceof Map) || !(porCvegeo instanceof Map) || !cveMun) return [];
   const claves = clavesPorAlcaldia.get(cveMun) ?? [];
-  return claves.map((cvegeo) => registroPlano(porCvegeo.get(cvegeo), capaActiva));
+  return claves.map((cvegeo) => registroPlano(porCvegeo.get(cvegeo), capaActiva, horizonteActivo));
 }
 
 /**

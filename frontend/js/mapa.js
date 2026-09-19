@@ -57,6 +57,16 @@ function nivelIntensidad(tasaAnualPct) {
  * o `null`). Nunca decide colores aquí: solo nombra la clase; `mapa.css` es la única fuente de
  * los valores de color (spec §4: "no se usan colores literales fuera de tokens.css").
  */
+/**
+ * Registro plano `{veredicto, tasa_anual_pct, ...}` de una capa resuelto al horizonte activo, o
+ * `null`. `entradaCapa` es `datosAdaptados.indices...get(clave)[capa]`, que conserva su `.h`
+ * completo (`{h3:{...}, ...}` o `{hU:{...}}` en v1.1) sin aplanar (api.js#construirIndices);
+ * el aplanado se hace aquí, igual que en `main.js#registroPlano`/`leyenda.js#registroPlano`.
+ */
+function registroDeHorizonte(entradaCapa, horizonte) {
+  return entradaCapa?.h?.[horizonte] ?? null;
+}
+
 function claseVeredicto(registro) {
   const veredicto = registro?.veredicto ?? "sin_datos";
   if (veredicto === "sube") return `mapa__alcaldia--sube-${nivelIntensidad(registro.tasa_anual_pct)}`;
@@ -142,9 +152,12 @@ function trazarSegmentosProyectados(segmentos, proyeccion) {
  *   (propiedades `cve_alc`, `nombre`; ver `docs/perfil_datos.md`).
  * @param {Map<string, {demanda: object|null, oferta: object|null}>|Object} registrosPorCveMun -
  *   registros adaptados por alcaldía, indexados por `cve_alc`/`cve_mun` de 3 dígitos. Coincide
- *   exactamente con `datosAdaptados.indices.porCveMun` que produce `api.js#adaptarV11aV12` para
- *   el nivel "alcaldia": cada entrada es `{demanda: registroFlat|null, oferta: registroFlat|null}`
- *   y cada `registroFlat` trae `{veredicto, delta_pct, tasa_anual_pct, ic95, confianza, n_obs}`.
+ *   exactamente con `datosAdaptados.indices.porCveMun` que produce `api.js#construirIndices`
+ *   (vía `adaptarV11aV12` o `adaptarV12`) para el nivel "alcaldia": cada entrada es
+ *   `{demanda: entradaCapa|null, oferta: entradaCapa|null}`, y cada `entradaCapa` conserva su
+ *   `.h` completo (`{h3:{...}, h5:{...}, h7:{...}}`, o `{hU:{...}}` en el camino v1.1) SIN
+ *   aplanar a un horizonte concreto: este módulo lo resuelve internamente con
+ *   `registroDeHorizonte(entradaCapa, horizonteActivo)` según `estado.horizonte`.
  * @param {object} [opciones]
  * @param {GeoJSON.FeatureCollection|null} [opciones.agebGeoJSON] -
  *   `data/reference/ageb_cdmx_simplificado.geojson` (propiedades `cvegeo`, `cve_mun`, `ambito`);
@@ -165,6 +178,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
 
   let registros = registrosPorCveMun;
   let capaActiva = obtenerEstado().capa;
+  let horizonteActivo = obtenerEstado().horizonte;
   let agebGeoJSON = opciones.agebGeoJSON ?? null;
   let registrosAgeb = opciones.registrosAgebPorCvegeo ?? new Map();
   let cveMunEnfocado = null;
@@ -223,8 +237,8 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   }
 
   function claseFeature(feature, capa) {
-    const registro = obtenerRegistroCveMun(registros, feature.properties.cve_alc);
-    return claseVeredicto(registro?.[capa] ?? null);
+    const entrada = obtenerRegistroCveMun(registros, feature.properties.cve_alc);
+    return claseVeredicto(registroDeHorizonte(entrada?.[capa], horizonteActivo));
   }
 
   function actualizarClases(capa) {
@@ -262,8 +276,8 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
 
   function mostrarTooltip(evento, feature) {
     if (!tooltipEl) crearTooltip();
-    const registro = obtenerRegistroCveMun(registros, feature.properties.cve_alc);
-    const veredicto = registro?.[capaActiva]?.veredicto ?? "sin_datos";
+    const entrada = obtenerRegistroCveMun(registros, feature.properties.cve_alc);
+    const veredicto = registroDeHorizonte(entrada?.[capaActiva], horizonteActivo)?.veredicto ?? "sin_datos";
     limpiar(tooltipEl);
     tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-nombre" }, [feature.properties.nombre]));
     tooltipEl.appendChild(
@@ -383,14 +397,14 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   }
 
   function claseFeatureAgeb(feature, capa) {
-    const registro = obtenerRegistroCveMun(registrosAgeb, feature.properties.cvegeo);
-    return claseVeredicto(registro?.[capa] ?? null);
+    const entrada = obtenerRegistroCveMun(registrosAgeb, feature.properties.cvegeo);
+    return claseVeredicto(registroDeHorizonte(entrada?.[capa], horizonteActivo));
   }
 
   function crearTooltipAgeb(evento, feature) {
     if (!tooltipEl) crearTooltip();
-    const registro = obtenerRegistroCveMun(registrosAgeb, feature.properties.cvegeo);
-    const veredicto = registro?.[capaActiva]?.veredicto ?? "sin_datos";
+    const entrada = obtenerRegistroCveMun(registrosAgeb, feature.properties.cvegeo);
+    const veredicto = registroDeHorizonte(entrada?.[capaActiva], horizonteActivo)?.veredicto ?? "sin_datos";
     limpiar(tooltipEl);
     tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-nombre cifras" }, [feature.properties.cvegeo]));
     tooltipEl.appendChild(
@@ -433,7 +447,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
       .data(
         features.filter((f) => {
           const r = obtenerRegistroCveMun(registrosAgeb, f.properties.cvegeo);
-          return (r?.[capaActiva]?.confianza ?? null) === "baja";
+          return (registroDeHorizonte(r?.[capaActiva], horizonteActivo)?.confianza ?? null) === "baja";
         }),
         (feature) => feature.properties.cvegeo,
       )
@@ -573,12 +587,14 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
     window.addEventListener("resize", programarRecalculo);
   }
 
-  // --- Cambio de capa (§9): solo recolorea (transición de `fill` por CSS), nunca recrea la
-  // geometría de los <path>. No hay conmutador de capas todavía (F60), pero el mapa ya queda
-  // listo para reaccionar en cuanto exista. ---
+  // --- Cambio de capa (§9) u horizonte (§8): solo recolorea (transición de `fill` por CSS),
+  // nunca recrea la geometría de los <path>. Con un solo horizonte (contrato v1.1 vía adaptador)
+  // `estado.horizonte` nunca cambia, así que esta rama nunca se ejercita hoy; con el contrato
+  // v1.2 (varios horizontes) mover el slider recolorea el mapa sin pedir datos nuevos (§8.3).
   const cancelarSuscripcion = suscribir((estado) => {
-    if (estado.capa !== capaActiva) {
+    if (estado.capa !== capaActiva || estado.horizonte !== horizonteActivo) {
       capaActiva = estado.capa;
+      horizonteActivo = estado.horizonte;
       actualizarClases(capaActiva);
     }
     sincronizarVista(estado);

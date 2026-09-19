@@ -15,8 +15,8 @@ import {
   SIMBOLO_VEREDICTO,
   SIMBOLO_CONFIANZA,
 } from "../js/formato.js";
-import { adaptarV11aV12, validarContrato, obtenerRegistro, ErrorDatos } from "../js/api.js";
-import { VERSION_CONTRATO_ESPERADA, CLAVE_HORIZONTE_UNICO, NIVEL } from "../js/config.js";
+import { adaptarV11aV12, adaptarV12, validarContrato, obtenerRegistro, ErrorDatos } from "../js/api.js";
+import { VERSIONES_CONTRATO_ACEPTADAS, CLAVE_HORIZONTE_UNICO, NIVEL } from "../js/config.js";
 import {
   VISTA,
   ESTADO_POR_DEFECTO,
@@ -296,7 +296,37 @@ prueba("validarContrato: rechaza versión distinta de 1.1", () => {
 
 prueba("validarContrato: acepta la versión esperada", () => {
   afirmar(validarContrato(fixtureV11()) === true);
-  afirmar(VERSION_CONTRATO_ESPERADA === "1.1");
+  afirmarIgual(VERSIONES_CONTRATO_ACEPTADAS, ["1.1", "1.2"]);
+});
+
+prueba("validarContrato: acepta v1.2 con fecha_base y horizontes[]", () => {
+  const json = {
+    version: "1.2",
+    generado: "2026-09-18T00:00:00+00:00",
+    fecha_base: "2026-06",
+    horizontes: [{ clave: "h3", anios: 3, fecha: "2029-06" }],
+    capas: { demanda: {}, oferta: {} },
+  };
+  afirmar(validarContrato(json) === true);
+});
+
+prueba("validarContrato: v1.2 sin fecha_base o sin horizontes[] es esquema_invalido", () => {
+  const base = {
+    version: "1.2",
+    capas: { demanda: {}, oferta: {} },
+  };
+  for (const invalido of [
+    { ...base, horizontes: [{ clave: "h3", anios: 3, fecha: "2029-06" }] }, // sin fecha_base
+    { ...base, fecha_base: "2026-06", horizontes: [] }, // horizontes vacío
+  ]) {
+    let lanzo = false;
+    try {
+      validarContrato(invalido);
+    } catch (error) {
+      lanzo = error instanceof ErrorDatos && error.codigo === "esquema_invalido";
+    }
+    afirmar(lanzo, `debe rechazar ${JSON.stringify(invalido)}`);
+  }
 });
 
 prueba("adaptarV11aV12: horizontes = [{clave:'hU', anios:null, fecha:horizonte}]", () => {
@@ -380,7 +410,9 @@ prueba("adaptarV11aV12: construye índices Map<cvegeo,...> y Map<cve_mun,...> pa
   const adaptado = adaptarV11aV12(fixtureV11(), NIVEL.AGEB);
   afirmar(adaptado.indices.porCvegeo instanceof Map);
   afirmar(adaptado.indices.porCveMun instanceof Map);
-  afirmar(adaptado.indices.porCvegeo.get("0900200010025").demanda.veredicto === "sube");
+  // Cada valor conserva su `.h` completo (sin aplanar): el aplanado a un horizonte concreto lo
+  // hace quien consume los índices (main.js/leyenda.js/mapa.js), no api.js (plan §6).
+  afirmar(adaptado.indices.porCvegeo.get("0900200010025").demanda.h[CLAVE_HORIZONTE_UNICO].veredicto === "sube");
   afirmar(adaptado.indices.porCveMun.get("002").includes("0900200010025"));
   afirmar(adaptado.indices.porCveMun.get("003").includes("0900200010028"));
 });
@@ -402,15 +434,15 @@ prueba("adaptarV11aV12: nivel alcaldía indexa por cve_mun", () => {
   const adaptado = adaptarV11aV12(fixtureAlcaldia, NIVEL.ALCALDIA);
   afirmar(adaptado.indices.porCveMun instanceof Map);
   afirmar(adaptado.indices.porCvegeo === undefined, "el nivel alcaldía no debe tener índice por cvegeo");
-  afirmarIgual(adaptado.indices.porCveMun.get("002").demanda.veredicto, "sube");
+  afirmarIgual(adaptado.indices.porCveMun.get("002").demanda.h[CLAVE_HORIZONTE_UNICO].veredicto, "sube");
 });
 
 // ------------------------------------------------------------------
 // api.js — integración contra los mocks reales de F10 (regresión)
 // ------------------------------------------------------------------
 
-prueba("integración: prediccion_ageb.json (mock real) valida y adapta sin degradar sus veredictos", async () => {
-  const respuesta = await fetch("../mock/prediccion_ageb.json");
+prueba("integración: prediccion_ageb_v11.json (mock v1.1 real) valida y adapta sin degradar sus veredictos", async () => {
+  const respuesta = await fetch("../mock/prediccion_ageb_v11.json");
   const json = await respuesta.json();
   afirmarIgual(json.version, "1.1");
   const adaptado = adaptarV11aV12(json, NIVEL.AGEB);
@@ -420,10 +452,25 @@ prueba("integración: prediccion_ageb.json (mock real) valida y adapta sin degra
   afirmar(veredictos.has("sube") && veredictos.has("baja") && veredictos.has("se_mantiene") && veredictos.has("sin_datos"));
 });
 
+prueba("integración: prediccion_ageb.json (mock v1.2 base) valida y adapta con 3 horizontes", async () => {
+  const respuesta = await fetch("../mock/prediccion_ageb.json");
+  const json = await respuesta.json();
+  afirmarIgual(json.version, "1.2");
+  afirmar(typeof json.fecha_base === "string" && json.fecha_base !== "");
+  const adaptado = adaptarV12(json, NIVEL.AGEB);
+  afirmarIgual(adaptado.horizontes.map((h) => h.clave), ["h3", "h5", "h7"]);
+  const primeraClave = Object.keys(adaptado.capas.demanda)[0];
+  const registro = adaptado.capas.demanda[primeraClave];
+  afirmar(registro.h.h3 !== undefined && registro.h.h5 !== undefined && registro.h.h7 !== undefined);
+});
+
 prueba("integración: prediccion_ageb_v11_invalido.json falla la validación por versión", async () => {
   const respuesta = await fetch("../mock/prediccion_ageb_v11_invalido.json");
   const json = await respuesta.json();
-  afirmar(json.version !== VERSION_CONTRATO_ESPERADA, "el fixture debe traer una versión distinta de 1.1");
+  afirmar(
+    !VERSIONES_CONTRATO_ACEPTADAS.includes(json.version),
+    "el fixture debe traer una versión no aceptada",
+  );
   let lanzo = false;
   try {
     validarContrato(json);
@@ -680,15 +727,19 @@ prueba("despachar: recargar con el hash del spec restaura el estado completo (v�
 // capas.js — control segmentado de capas (F60, spec §9)
 // ------------------------------------------------------------------
 
-prueba("capasDesdeAdaptado: con el contrato v1.1 real (adaptado) solo hay demanda y oferta", () => {
+prueba("capasDesdeAdaptado: con el contrato v1.1 real (adaptado), 'oferta' queda fuera del orden visual (Fase 10)", () => {
+  // ORDEN_CAPAS de capas.js pasó a ["demanda","brecha"] (Fase 10): "oferta" sigue existiendo en
+  // `adaptado.capas` (el adaptador nunca deja de producirla, CAPAS de config.js no cambia), pero
+  // capasDesdeAdaptado ya no la incluye en el orden que consume el control visual.
   const adaptado = adaptarV11aV12(fixtureV11(), NIVEL.AGEB);
-  afirmarIgual(capasDesdeAdaptado(adaptado), ["demanda", "oferta"]);
+  afirmar(Object.keys(adaptado.capas).includes("oferta"), "el adaptador sigue produciendo 'oferta'");
+  afirmarIgual(capasDesdeAdaptado(adaptado), ["demanda"]);
 });
 
-prueba("capasDesdeAdaptado: si el resultado adaptado trajera capas.brecha, se incluye en el orden fijo", () => {
+prueba("capasDesdeAdaptado: si el resultado adaptado trajera capas.brecha, se incluye en el orden fijo (oferta no)", () => {
   // Fixture del objeto YA ADAPTADO (no pasa por adaptarV11aV12, que nunca produce brecha, plan §2):
-  // demuestra que el control no tiene "demanda"/"oferta" cableados de forma rígida, sino que lee
-  // las claves de `capas` de lo que reciba.
+  // demuestra que el control no tiene "demanda" cableada de forma rígida más allá de ORDEN_CAPAS,
+  // sino que lee las claves de `capas` de lo que reciba y las cruza con ORDEN_CAPAS.
   const fixtureConBrecha = {
     version: "1.2",
     nivel: "ageb",
@@ -699,7 +750,7 @@ prueba("capasDesdeAdaptado: si el resultado adaptado trajera capas.brecha, se in
       brecha: { "0900200010025": { h: { hU: { valor: 3.2 } } } },
     },
   };
-  afirmarIgual(capasDesdeAdaptado(fixtureConBrecha), ["demanda", "oferta", "brecha"]);
+  afirmarIgual(capasDesdeAdaptado(fixtureConBrecha), ["demanda", "brecha"]);
 });
 
 prueba("capasDesdeAdaptado: solo demanda presente (fixture parcial)", () => {
@@ -708,62 +759,72 @@ prueba("capasDesdeAdaptado: solo demanda presente (fixture parcial)", () => {
   afirmarIgual(capasDesdeAdaptado(undefined), []);
 });
 
+// Fase 10 (plan): ORDEN_CAPAS de capas.js pasó de ["demanda","oferta","brecha"] a
+// ["demanda","brecha"] — "oferta" ya no aparece en el control visual (sigue siendo válida por
+// hash, ver estado.js). Estas pruebas usan "brecha" en vez de "oferta" para seguir ejercitando el
+// mecanismo genérico (el control muestra lo que le llega en `capasDisponibles`, filtrado por
+// ORDEN_CAPAS) sin depender de una capa que el propio control oculta a propósito.
+
 prueba("montarControlCapas: role=radiogroup con un role=radio (input radio) por capa disponible", () => {
   const contenedor = crear("div");
-  montarControlCapas(contenedor, ["demanda", "oferta"]);
+  montarControlCapas(contenedor, ["demanda", "brecha"]);
   const grupo = contenedor.querySelector('[role="radiogroup"]');
   afirmar(grupo !== null, "debe crear un contenedor role=radiogroup");
   const opciones = contenedor.querySelectorAll('input[type="radio"]');
   afirmarIgual(opciones.length, 2, "una opción por capa disponible");
-  afirmarIgual(Array.from(opciones).map((o) => o.dataset.capa), ["demanda", "oferta"]);
+  afirmarIgual(Array.from(opciones).map((o) => o.dataset.capa), ["demanda", "brecha"]);
 });
 
-prueba("montarControlCapas: el fixture con brecha presente hace aparecer también la opción Brecha", () => {
+prueba("montarControlCapas: 'oferta' nunca aparece en el control, aunque esté disponible (Fase 10)", () => {
   const contenedor = crear("div");
   montarControlCapas(contenedor, ["demanda", "oferta", "brecha"]);
   const opciones = contenedor.querySelectorAll('input[type="radio"]');
-  afirmarIgual(opciones.length, 3, "brecha debe mostrarse cuando está disponible");
+  afirmarIgual(opciones.length, 2, "brecha se muestra, oferta no");
+  const claves = Array.from(opciones).map((o) => o.dataset.capa);
+  afirmar(!claves.includes("oferta"), "oferta no debe tener radio en el control");
   const etiquetas = Array.from(contenedor.querySelectorAll(".capas__opcion")).map((e) => e.textContent);
   afirmar(etiquetas.includes(textos.capa.nombre.brecha), "el texto de la opción debe salir de textos.js");
 });
 
 prueba("montarControlCapas: todas las opciones comparten el mismo name (navegación nativa por flechas)", () => {
   const contenedor = crear("div");
-  montarControlCapas(contenedor, ["demanda", "oferta"]);
+  montarControlCapas(contenedor, ["demanda", "brecha"]);
   const opciones = Array.from(contenedor.querySelectorAll('input[type="radio"]'));
   const nombres = new Set(opciones.map((o) => o.name));
   afirmarIgual(nombres.size, 1, "un solo 'name' por grupo: así el navegador mueve la selección con las flechas");
 });
 
-prueba("montarControlCapas: activar una opción despacha CAMBIAR_CAPA y cambia &capa= en el hash", () => {
+// "brecha" no es una capa válida para estado.js (CAPAS de config.js = ["demanda","oferta"], sin
+// tocar por la Fase 10): el control ya la muestra (spec §9, "aparece si el archivo la trae"),
+// pero CAMBIAR_CAPA con capa="brecha" no cambia el estado (esCapaValida la rechaza) — brecha es,
+// por ahora, solo lectura hasta que el contrato/estado.js le den un veredicto real. El round-trip
+// completo de dispatch/reflejo solo se puede demostrar hoy con "demanda" (la única capa a la vez
+// válida en CAPAS y visible en ORDEN_CAPAS); el caso "oferta" (válida en CAPAS pero oculta del
+// control desde la Fase 10) se cubre por hash directo en las pruebas de estado.js.
+
+prueba("montarControlCapas: activar la opción 'brecha' despacha CAMBIAR_CAPA, pero estado.js la rechaza (no es una capa válida)", () => {
   const capaOriginal = obtenerEstado().capa;
   try {
+    despachar({ tipo: ACCIONES.CAMBIAR_CAPA, capa: "demanda" });
     const contenedor = crear("div");
-    montarControlCapas(contenedor, ["demanda", "oferta"]);
-    const opcionOferta = contenedor.querySelector('input[data-capa="oferta"]');
-    opcionOferta.checked = true;
-    opcionOferta.dispatchEvent(new Event("change", { bubbles: true }));
-    afirmarIgual(obtenerEstado().capa, "oferta", "debe despachar CAMBIAR_CAPA con la capa activada");
-    afirmar(window.location.hash.includes("capa=oferta"), "el hash debe reflejar &capa=oferta");
+    montarControlCapas(contenedor, ["demanda", "brecha"]);
+    const opcionBrecha = contenedor.querySelector('input[data-capa="brecha"]');
+    opcionBrecha.checked = true;
+    opcionBrecha.dispatchEvent(new Event("change", { bubbles: true }));
+    afirmarIgual(obtenerEstado().capa, "demanda", "esCapaValida debe rechazar 'brecha' y dejar el estado sin cambios");
   } finally {
     despachar({ tipo: ACCIONES.CAMBIAR_CAPA, capa: capaOriginal }); // deja el almacén como lo encontró
   }
 });
 
-prueba("montarControlCapas: la opción activa refleja el estado y se actualiza al despachar CAMBIAR_CAPA", () => {
+prueba("montarControlCapas: la opción 'demanda' refleja el estado activo (única capa seleccionable hoy en el control)", () => {
   const capaOriginal = obtenerEstado().capa;
   try {
     despachar({ tipo: ACCIONES.CAMBIAR_CAPA, capa: "demanda" });
     const contenedor = crear("div");
-    montarControlCapas(contenedor, ["demanda", "oferta"]);
+    montarControlCapas(contenedor, ["demanda", "brecha"]);
     const opcionDemanda = contenedor.querySelector('input[data-capa="demanda"]');
-    const opcionOferta = contenedor.querySelector('input[data-capa="oferta"]');
     afirmarIgual(opcionDemanda.checked, true);
-    afirmarIgual(opcionOferta.checked, false);
-
-    despachar({ tipo: ACCIONES.CAMBIAR_CAPA, capa: "oferta" });
-    afirmarIgual(opcionDemanda.checked, false, "la suscripción a estado.js debe reflejar el cambio externo");
-    afirmarIgual(opcionOferta.checked, true);
   } finally {
     despachar({ tipo: ACCIONES.CAMBIAR_CAPA, capa: capaOriginal });
   }
