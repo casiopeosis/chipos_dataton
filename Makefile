@@ -48,7 +48,7 @@ alcaldia = json.loads(RUTA_PREDICCION_ALCALDIA.read_text(encoding='utf-8')); \
 validar_contrato(ageb, 'ageb'); \
 validar_contrato(alcaldia, 'alcaldia'); \
 verificar_suma_ageb_alcaldia(ageb, alcaldia); \
-print('data/outputs/*.json válidos contra el contrato v1.2')"
+print('data/outputs/*.json válidos contra el contrato v1.4')"
 
 # Servidor estático del frontend (sin build)
 serve:
