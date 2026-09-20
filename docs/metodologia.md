@@ -50,8 +50,9 @@ solo en el icono "?" (`correccion/frontend_requisitos.md` §20).
 (`conapo_mun_0a14.parquet`, 0–14 = 00_04 + 05_09 + 10_14; `conapo_mun_quinq.parquet` conserva el
 detalle quinquenal, incluido 15–19 — que **no** coincide exactamente con 15–17; ver §1.1).
 
-**Cuatro ramas de oferta/disponibilidad (🔄 fase 9, generaliza lo que antes era una sola capa
-"oferta").** Habitancia no expone una sola capa de oferta: expone cuatro ramas
+**Cuatro ramas de oferta/disponibilidad (datos y modelo ✅ fase 5; contrato v1.4 🔄 fase 6,
+generaliza lo que antes era una sola capa "oferta").** Habitancia no expone una sola capa de
+oferta: expone cuatro ramas
 (`correccion/frontend_requisitos.md` §2), cada una con su propia fuente y su propio tratamiento
 temporal:
 
@@ -122,16 +123,22 @@ aplica sobre 0–14 y los segmentos **heredan el mismo factor de control** `k_m^
 aproximación, no una identidad: se declara aquí, en `diagnostico.json` y en el panel de metodología
 del frontend. No se inventa un desglose quinquenal que CONAPO no publica.
 
-### 1.3 Momentos históricos comparables (§ rúbrica 5)
+### 1.3 Momentos históricos comparables (§ rúbrica 5) ✅ fase 5
 
 `correccion/rubrica.md` §5 pide **al menos tres momentos históricos comparables**. La respuesta
-honesta no es la misma en las tres capas, y hay que decirla tal cual:
+honesta no es la misma en cada rama/capa, y hay que decirla tal cual:
 
 | Capa / nivel | Momentos comparables | Fuente |
 |---|---:|---|
-| Oferta, por AGEB | **3** (2016.79, 2019.87, 2024.87) | DENUE, fechas de levantamiento |
+| Oferta educación, por AGEB | **3** (2016.79, 2019.87, 2024.87) | DENUE infancias, fechas de levantamiento |
+| Oferta salud, por AGEB | **3** (2016.79, 2019.87, 2024.87) | DENUE salud, mismas ediciones que infancias |
+| Oferta comercio, por AGEB | **3** (2016.79, 2019.87, 2024.87) | DENUE comercios, mismo criterio "1 corte por periodo" pese a tener 11 ediciones disponibles |
+| Verde (áreas verdes y espacio público), por AGEB | **1** (inventario 2026, sin fecha de levantamiento por establecimiento) | Datos Abiertos CDMX; sin tendencia, se publica como disponibilidad actual (§10.1), nunca una línea futura inventada |
 | Demanda, por alcaldía | **serie anual 1990–2040** (31 observados hasta 2020) | CONAPO municipal |
 | Demanda, por AGEB | **2** (2010.44, 2020.20) | Censo INEGI |
+
+La rama verde es la única con un solo momento: un solo corte no identifica tendencia, igual que un
+solo censo no la identificaría (§3) -- no se inventa una comparación que los datos no permiten.
 
 Dos censos es el límite de INEGI por AGEB, no una omisión del equipo: la Encuesta Intercensal 2015
 no se publica a ese nivel. Esa es exactamente la razón de ser de la contracción hacia la alcaldía
@@ -652,7 +659,7 @@ mezcla con `O_{i,h,r}`** (`correccion/frontend_requisitos.md` §7: "una zona con
 representar una oportunidad de expansión, pero al mismo tiempo tener baja disponibilidad actual
 para las familias").
 
-### 10.6 Ramas, filtros y el contrato de datos (🔄 fase 9)
+### 10.6 Ramas, filtros y el contrato de datos (celdas ✅ fase 5 `panel.py`; contrato 🔄 fase 6)
 
 Los filtros de `correccion/frontend_requisitos.md` §10 (nivel/tipo × sector dentro de cada rama)
 cambian **qué establecimientos cuentan** como `S` de esa rama — es decir, cambian el subconjunto de
@@ -661,6 +668,19 @@ en tiempo real sin volver a llamar al pipeline, el backend no publica una sola s
 rama: publica una serie **por celda de filtro** (segmento SCIAN × sector), y el cliente **suma
 valores proyectados y varianzas** de las celdas seleccionadas (nunca suma tasas: la tasa no es
 lineal en el conteo, el conteo proyectado sí):
+
+**Celdas implementadas (Fase 5, `panel.py`):** educación 8 (`guarderia, preescolar, primaria,
+secundaria, educacion_especial, varios_niveles` por SCIAN `Principal`; `media_superior_tecnica,
+recreacion_cultura` por SCIAN `Complementario` — verificado en datos reales, "Actividad SCIAN"
+literal, nunca supuesto); salud 4 (`clinicas, hospitales, salud_mental, farmacias`, columnas
+booleanas ya presentes en el dato, más directas que reclasificar 51 códigos SCIAN); comercio 5
+(`supermercados_minisupers, abarrotes, frutas_verduras, carnes_otros_alimentos, farmacias`, por
+`subcategoria_proyecto`; `farmacias` es la única celda fuera de `es_primera_necesidad`, incluida
+porque `correccion/frontend_requisitos.md` §10.3 la deja como opcional, no excluida); verde 3
+(`cobertura_verde, areas_recreativas, espacios_publicos`, agregado espacial, sin componente
+temporal). `modelos.ajustar_oferta`/`simular_oferta` se reutilizan sin ningún cambio de código por
+celda (verificado extremo a extremo con la celda `salud/clinicas`, metodología §6.2 incluida). La
+publicación de estas celdas en el contrato v1.4 (`construir_capa_rama`, `exportar.py`) es Fase 6.
 
 ```
 Ŝ_{i,h,r}(filtro) = Σ_{c ∈ celdas(filtro)} Ŝ_{i,h,c}

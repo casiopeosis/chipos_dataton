@@ -222,45 +222,25 @@ def construir_panel_demanda(
 # `denue.loc[denue["alcance"] == "Principal"].groupby(["edicion", "scian"]).size()`.
 
 
-def construir_panel_oferta(
-    denue: pd.DataFrame,
-    universo: pd.DataFrame,
-    cortes: dict[str, float] = CORTES_OFERTA,
-) -> pd.DataFrame:
-    """Panel de oferta, formato largo: `cvegeo, cve_mun, t, s, s_2024`.
-
-    `s` = número de `ID` distintos con `alcance == "Principal"` por AGEB
-    urbana y corte (uno de `cortes.values()`, por defecto `CORTES_OFERTA`).
-    `s_2024` repite, en todas las filas de un mismo AGEB, el valor de `s`
-    del corte más reciente (`max(cortes.values())`), para que `features.py`
-    calcule la brecha `S_2024 / D_2020` sin tener que volver a filtrar.
-
-    Filtros (plan §4.3 / problema M2, claves fuera de CDMX con coordenadas
-    marcadas como válidas): clave de 13 caracteres, prefijo `"09"`,
-    `cve_mun` en `002`-`017`, y presente en el universo urbano. Las AGEB
-    urbanas sin ningún establecimiento en un corte quedan con `s = 0`
-    explícito (nunca se omite la fila); las claves rurales/sin polígono se
-    cuentan en `reporte_cobertura`, no aparecen en esta tabla.
-    """
-    urbano = universo.loc[universo["ambito"] == "urbano", ["cvegeo", "cve_mun"]]
-    claves_urbanas = set(urbano["cvegeo"])
-    cortes_t = sorted(set(cortes.values()))
-
-    principal = denue.loc[denue["alcance"] == "Principal"].copy()
-    principal = principal[
-        (principal["cvegeo"].str.len() == 13)
-        & (principal["cvegeo"].str.slice(0, 2) == "09")
-        & principal["cve_mun"].between("002", "017")
-        & principal["cvegeo"].isin(claves_urbanas)
-        & principal["t"].isin(cortes_t)
-    ]
-
-    conteos = (
-        principal.groupby(["cvegeo", "t"])["id"]
-        .nunique()
-        .rename("s")
-        .reset_index()
+def _filtro_territorio(df: pd.DataFrame, claves_urbanas: set[str]) -> pd.Series:
+    """Filtro de territorio (plan §4.3 / problema M2): clave de 13 caracteres, prefijo
+    `"09"`, `cve_mun` en `002`-`017`, y presente en el universo urbano. Compartido por
+    `construir_panel_oferta` y `construir_panel_oferta_celda` (Fase 5)."""
+    return (
+        (df["cvegeo"].str.len() == 13)
+        & (df["cvegeo"].str.slice(0, 2) == "09")
+        & df["cve_mun"].between("002", "017")
+        & df["cvegeo"].isin(claves_urbanas)
     )
+
+
+def _panel_desde_filas(
+    filas: pd.DataFrame, urbano: pd.DataFrame, cortes_t: list[float]
+) -> pd.DataFrame:
+    """Cuenta `id` únicos por AGEB x corte sobre `filas` (ya filtradas por territorio y,
+    si aplica, por celda) y completa la malla urbana x corte con ceros explícitos.
+    `filas` trae `cvegeo, cve_mun, t, id`. Devuelve `cvegeo, cve_mun, t, s, s_2024`."""
+    conteos = filas.groupby(["cvegeo", "t"])["id"].nunique().rename("s").reset_index()
 
     malla = urbano.merge(pd.DataFrame({"t": cortes_t}), how="cross")
     panel = malla.merge(conteos, on=["cvegeo", "t"], how="left")
@@ -283,6 +263,165 @@ def construir_panel_oferta(
         .sort_values(["cvegeo", "t"])
         .reset_index(drop=True)
     )
+
+
+def construir_panel_oferta(
+    denue: pd.DataFrame,
+    universo: pd.DataFrame,
+    cortes: dict[str, float] = CORTES_OFERTA,
+) -> pd.DataFrame:
+    """Panel de oferta educación (rama completa, `Alcance = 'Principal'`), formato largo:
+    `cvegeo, cve_mun, t, s, s_2024`.
+
+    `s` = número de `ID` distintos con `alcance == "Principal"` por AGEB
+    urbana y corte (uno de `cortes.values()`, por defecto `CORTES_OFERTA`).
+    `s_2024` repite, en todas las filas de un mismo AGEB, el valor de `s`
+    del corte más reciente (`max(cortes.values())`), para que `features.py`
+    calcule la brecha `S_2024 / D_2020` sin tener que volver a filtrar.
+
+    Las AGEB urbanas sin ningún establecimiento en un corte quedan con
+    `s = 0` explícito (nunca se omite la fila); las claves rurales/sin
+    polígono se cuentan en `reporte_cobertura`, no aparecen en esta tabla.
+
+    Mantenida sin cambios de comportamiento (contrato v1.2 todavía la usa,
+    `exportar.py`); `construir_panel_oferta_celda` (Fase 5) generaliza esto
+    por celda de filtro para las 4 ramas de Habitancia.
+    """
+    urbano = universo.loc[universo["ambito"] == "urbano", ["cvegeo", "cve_mun"]]
+    claves_urbanas = set(urbano["cvegeo"])
+    cortes_t = sorted(set(cortes.values()))
+
+    principal = denue.loc[denue["alcance"] == "Principal"].copy()
+    principal = principal[_filtro_territorio(principal, claves_urbanas) & principal["t"].isin(cortes_t)]
+
+    return _panel_desde_filas(principal, urbano, cortes_t)
+
+
+def construir_panel_oferta_celda(
+    denue: pd.DataFrame,
+    universo: pd.DataFrame,
+    filtro_celda: pd.Series,
+    cortes: dict[str, float] = CORTES_OFERTA,
+) -> pd.DataFrame:
+    """Panel de oferta para una celda de filtro genérica (Fase 5, metodología §10.6).
+
+    `filtro_celda`: máscara booleana alineada con el índice de `denue`, que
+    quien llama ya construyó (SCIAN + alcance para educación y salud,
+    `subcategoria` para comercio -- ver `filtro_celda_educacion`,
+    `filtro_celda_salud`, `filtro_celda_comercio`). A diferencia de
+    `construir_panel_oferta`, esta función **no** filtra por
+    `alcance == 'Principal'`: cada rama decide su propio criterio de
+    inclusión antes de llamar aquí (p. ej. educación sí usa `Principal` para
+    la mayoría de sus celdas, pero `media_superior_tecnica` y
+    `recreacion_cultura` son `Complementario`; comercio no distingue por
+    `alcance` en absoluto).
+
+    Misma forma de salida que `construir_panel_oferta`: `cvegeo, cve_mun, t,
+    s, s_2024`.
+    """
+    urbano = universo.loc[universo["ambito"] == "urbano", ["cvegeo", "cve_mun"]]
+    claves_urbanas = set(urbano["cvegeo"])
+    cortes_t = sorted(set(cortes.values()))
+
+    filas = denue.loc[filtro_celda].copy()
+    filas = filas[_filtro_territorio(filas, claves_urbanas) & filas["t"].isin(cortes_t)]
+
+    return _panel_desde_filas(filas, urbano, cortes_t)
+
+
+# ---------------------------------------------------------------------------
+# Celdas de filtro por rama (Fase 5, `correccion/frontend_requisitos.md` §10)
+# ---------------------------------------------------------------------------
+
+# Educación y cultura (§10.1): SCIAN verificado en datos reales
+# (`docs/metodologia.md` cita los códigos `Principal`; los `Complementario`
+# se verificaron por "Actividad SCIAN" -- ver commit de la Fase 5). Las
+# celdas `Principal` reproducen exactamente el conjunto que ya usaba
+# `construir_panel_oferta`; `media_superior_tecnica`/`recreacion_cultura`
+# son código nuevo, `Complementario` (metodología §1.1: "15-17 aparece sobre
+# todo en Complementario", mismo principio aplicado aquí a nivel de celda).
+CELDAS_EDUCACION: dict[str, dict] = {
+    "guarderia": {"alcance": "Principal", "scian": (624411, 624412)},
+    "preescolar": {"alcance": "Principal", "scian": (611111, 611112)},
+    "primaria": {"alcance": "Principal", "scian": (611121, 611122)},
+    "secundaria": {"alcance": "Principal", "scian": (611131, 611132, 611141, 611142)},
+    "educacion_especial": {"alcance": "Principal", "scian": (611181, 611182)},
+    "varios_niveles": {"alcance": "Principal", "scian": (611171, 611172)},
+    "media_superior_tecnica": {
+        "alcance": "Complementario",
+        "scian": (611151, 611152, 611161, 611162, 611512),
+    },
+    "recreacion_cultura": {
+        "alcance": "Complementario",
+        "scian": (611611, 611612, 611621, 611622, 611631, 611632, 611691, 611698, 611699),
+    },
+}
+
+
+def filtro_celda_educacion(denue: pd.DataFrame, celda: str) -> pd.Series:
+    """Máscara booleana para una celda de `CELDAS_EDUCACION` sobre un DataFrame de
+    `io.leer_denue_infancias` (columnas `alcance`, `scian`)."""
+    spec = CELDAS_EDUCACION[celda]
+    return (denue["alcance"] == spec["alcance"]) & denue["scian"].isin(spec["scian"])
+
+
+# Salud (§10.2): celdas ya vienen como columnas booleanas en el dato
+# (`io.leer_denue_salud`), más directo y confiable que reclasificar por
+# SCIAN (51 códigos distintos en salud, sin un mapeo 1:1 tan limpio como
+# educación). "Todos" (sin filtro) es la unión, no una celda propia.
+CELDAS_SALUD: dict[str, str] = {
+    "clinicas": "es_clinica",
+    "hospitales": "es_hospital",
+    "salud_mental": "es_salud_mental",
+    "farmacias": "es_farmacia",
+}
+
+
+def filtro_celda_salud(denue: pd.DataFrame, celda: str) -> pd.Series:
+    """Máscara booleana para una celda de `CELDAS_SALUD` sobre un DataFrame de
+    `io.leer_denue_salud`."""
+    columna = CELDAS_SALUD[celda]
+    return denue[columna] == 1
+
+
+# Comercio (§10.3): por `subcategoria_proyecto` (verificado en datos reales, Fase 5).
+# A diferencia de educación/salud, no se filtra por `alcance`: en comercios esa
+# columna separa "las 3 categorías más grandes" de "el resto", no relevancia
+# (`io.leer_denue_comercios`). `farmacias` es la única celda con
+# `es_primera_necesidad='NO'` en el dato real -- DENUE no las cuenta como "primera
+# necesidad" (aparecen también en la rama salud, `io.leer_denue_salud`); se incluyen
+# aquí igual porque el requisito las deja como opcionales, no excluidas
+# (`correccion/frontend_requisitos.md` §10.3: "si se decide incluirlas en esta rama").
+CELDAS_COMERCIO: dict[str, tuple[str, ...]] = {
+    "supermercados_minisupers": ("Minisúper", "Supermercado"),
+    "abarrotes": ("Abarrotes, ultramarinos y misceláneas",),
+    "frutas_verduras": ("Frutas y verduras",),
+    "carnes_otros_alimentos": (
+        "Carne de aves",
+        "Carnes rojas",
+        "Pescados y mariscos",
+        "Otros alimentos",
+        "Leche, lácteos y embutidos",
+        "Semillas, granos, especias y chiles secos",
+    ),
+    "farmacias": ("Farmacia con minisúper", "Farmacia sin minisúper"),
+}
+
+
+def filtro_celda_comercio(denue: pd.DataFrame, celda: str) -> pd.Series:
+    """Máscara booleana para una celda de `CELDAS_COMERCIO` sobre un DataFrame de
+    `io.leer_denue_comercios`."""
+    return denue["subcategoria"].isin(CELDAS_COMERCIO[celda])
+
+
+# Verde (§10.4): sin proyección (metodología §10.1, un solo corte). Las 3 celdas ya
+# vienen agregadas por AGEB en `io.leer_contexto_cdmx()`: no hay panel temporal que
+# construir aquí, solo el nombre de columna de conteo/área que corresponde a cada una.
+CELDAS_VERDE: dict[str, tuple[str, str]] = {
+    "cobertura_verde": ("n_cobertura_verde", "area_cobertura_verde_m2"),
+    "areas_recreativas": ("n_areas_recreativas", "area_areas_recreativas_m2"),
+    "espacios_publicos": ("n_espacios_publicos", "area_espacios_publicos_m2"),
+}
 
 
 # ---------------------------------------------------------------------------

@@ -142,6 +142,99 @@ class TestLeerDenueInfanciasDatosReales:
         ]
 
 
+# ---------------------------------------------------------------------------
+# Fase 5: leer_denue_salud, leer_denue_comercios, leer_contexto_cdmx
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.datos
+class TestLeerDenueSaludDatosReales:
+    @staticmethod
+    @pytest.fixture(scope="class")
+    def con():
+        con = io.conectar()
+        yield con
+        con.close()
+
+    @staticmethod
+    @pytest.fixture(scope="class")
+    def df_3_cortes(con: duckdb.DuckDBPyConnection) -> pd.DataFrame:
+        return io.leer_denue_salud(con, io.CORTES_OFERTA.keys())
+
+    def test_columnas_exactas(self, df_3_cortes: pd.DataFrame) -> None:
+        assert list(df_3_cortes.columns) == [
+            "id",
+            "cvegeo",
+            "cve_mun",
+            "alcance",
+            "sector",
+            "scian",
+            "subcategoria",
+            "edicion",
+            "es_hospital",
+            "es_clinica",
+            "es_salud_mental",
+            "es_farmacia",
+            "t",
+        ]
+
+    def test_booleanos_son_0_o_1(self, df_3_cortes: pd.DataFrame) -> None:
+        for col in ("es_hospital", "es_clinica", "es_salud_mental", "es_farmacia"):
+            assert set(df_3_cortes[col].unique()) <= {0, 1}
+            assert df_3_cortes[col].sum() > 0  # cada bandera aparece de verdad en los datos
+
+    def test_id_unico_por_edicion(self, df_3_cortes: pd.DataFrame) -> None:
+        for edicion, grupo in df_3_cortes.groupby("edicion"):
+            assert grupo["id"].is_unique, f"IDs duplicados en la edición {edicion}"
+
+    def test_lee_los_3_cortes(self, df_3_cortes: pd.DataFrame) -> None:
+        assert set(df_3_cortes["edicion"].unique()) == set(io.CORTES_OFERTA)
+
+
+@pytest.mark.datos
+class TestLeerDenueComerciosDatosReales:
+    @staticmethod
+    @pytest.fixture(scope="class")
+    def df_3_cortes() -> pd.DataFrame:
+        return io.leer_denue_comercios(io.CORTES_OFERTA.keys())
+
+    def test_columnas_exactas(self, df_3_cortes: pd.DataFrame) -> None:
+        assert list(df_3_cortes.columns) == [
+            "id",
+            "cvegeo",
+            "alcance",
+            "categoria",
+            "subcategoria",
+            "es_primera_necesidad",
+            "edicion",
+            "cve_mun",
+            "t",
+        ]
+
+    def test_cvegeo_de_13_caracteres(self, df_3_cortes: pd.DataFrame) -> None:
+        assert (df_3_cortes["cvegeo"].str.len() == 13).all()
+
+    def test_id_unico_por_edicion(self, df_3_cortes: pd.DataFrame) -> None:
+        for edicion, grupo in df_3_cortes.groupby("edicion"):
+            assert grupo["id"].is_unique, f"IDs duplicados en la edición {edicion}"
+
+    def test_es_primera_necesidad_si_o_no(self, df_3_cortes: pd.DataFrame) -> None:
+        assert set(df_3_cortes["es_primera_necesidad"].unique()) <= {"SI", "NO"}
+
+
+@pytest.mark.datos
+def test_leer_contexto_cdmx_una_fila_por_ageb() -> None:
+    df = io.leer_contexto_cdmx()
+    universo = io.leer_universo_ageb()
+    assert len(df) == len(universo)
+    assert not df["cvegeo"].duplicated().any()
+    for col in ("n_cobertura_verde", "n_areas_recreativas", "n_espacios_publicos"):
+        assert (df[col] >= 0).all()
+        assert df[col].sum() > 0  # hay áreas/espacios de verdad, no todo ceros
+    for col in ("area_cobertura_verde_m2", "area_areas_recreativas_m2", "area_espacios_publicos_m2"):
+        assert (df[col] >= 0).all()
+
+
 def test_leer_denue_infancias_lanza_id_duplicado_con_csv_sintetico(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

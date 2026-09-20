@@ -12,12 +12,27 @@ import duckdb
 import pandas as pd
 import pytest
 
-from chipos.io import CORTES_OFERTA, leer_censo_panel, leer_denue_infancias, leer_equivalencia, leer_universo_ageb
+from chipos.io import (
+    CORTES_OFERTA,
+    leer_censo_panel,
+    leer_denue_comercios,
+    leer_denue_infancias,
+    leer_denue_salud,
+    leer_equivalencia,
+    leer_universo_ageb,
+)
 from chipos.panel import (
+    CELDAS_COMERCIO,
+    CELDAS_EDUCACION,
+    CELDAS_SALUD,
     COLUMNAS_SEGMENTO,
     SEGMENTOS_DEMANDA,
     construir_panel_demanda,
     construir_panel_oferta,
+    construir_panel_oferta_celda,
+    filtro_celda_comercio,
+    filtro_celda_educacion,
+    filtro_celda_salud,
     reporte_cobertura,
 )
 
@@ -420,6 +435,139 @@ def test_panel_oferta_sin_cvegeo_duplicado_por_corte():
     universo = leer_universo_ageb()
     panel = construir_panel_oferta(denue, universo)
     assert not panel.duplicated(["cvegeo", "t"]).any()
+
+
+# ---------------------------------------------------------------------------
+# Fase 5: celdas de filtro por rama (correccion/frontend_requisitos.md §10)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def denue_celdas() -> pd.DataFrame:
+    """DENUE sintético de 2 AGEB con establecimientos en 3 celdas distintas de educación
+    (`Principal`) y una `Complementario`, para probar `construir_panel_oferta_celda` y
+    `filtro_celda_educacion` sin datos reales."""
+    t_2016, t_2019, t_2024 = CORTES_OFERTA["2016-10"], CORTES_OFERTA["2019-11"], CORTES_OFERTA["2024-11"]
+    filas = [
+        # AGEB 0900200011991: 1 preescolar + 1 primaria (Principal), 1 recreación (Complementario)
+        (1, "0900200011991", "002", "Principal", 611111, "2024-11", t_2024),
+        (2, "0900200011991", "002", "Principal", 611121, "2024-11", t_2024),
+        (3, "0900200011991", "002", "Complementario", 611621, "2024-11", t_2024),
+        # AGEB 0900300010112: 1 secundaria (Principal)
+        (4, "0900300010112", "003", "Principal", 611131, "2024-11", t_2024),
+    ]
+    marco = pd.DataFrame(filas, columns=["id", "cvegeo", "cve_mun", "alcance", "scian", "edicion", "t"])
+    return marco
+
+
+class TestConstruirPanelOfertaCelda:
+    def test_filtra_por_celda_y_territorio(self, universo_demanda, denue_celdas):
+        filtro = filtro_celda_educacion(denue_celdas, "preescolar")
+        panel = construir_panel_oferta_celda(denue_celdas, universo_demanda, filtro)
+        fila = panel.set_index(["cvegeo", "t"]).loc[("0900200011991", CORTES_OFERTA["2024-11"])]
+        assert fila["s"] == 1  # solo el preescolar, no la primaria ni la recreación
+
+        # AGEB sin establecimientos de esa celda: cero explícito, no ausente.
+        fila_otra = panel.set_index(["cvegeo", "t"]).loc[("0900300010112", CORTES_OFERTA["2024-11"])]
+        assert fila_otra["s"] == 0
+
+    def test_celda_complementario_no_se_confunde_con_principal(self, universo_demanda, denue_celdas):
+        filtro = filtro_celda_educacion(denue_celdas, "recreacion_cultura")
+        panel = construir_panel_oferta_celda(denue_celdas, universo_demanda, filtro)
+        fila = panel.set_index(["cvegeo", "t"]).loc[("0900200011991", CORTES_OFERTA["2024-11"])]
+        assert fila["s"] == 1  # el establecimiento 611621 Complementario
+
+    def test_misma_forma_que_construir_panel_oferta(self, universo_demanda, denue_celdas):
+        filtro = filtro_celda_educacion(denue_celdas, "primaria")
+        panel = construir_panel_oferta_celda(denue_celdas, universo_demanda, filtro)
+        assert list(panel.columns) == ["cvegeo", "cve_mun", "t", "s", "s_2024"]
+
+
+class TestFiltroCeldaSalud:
+    def test_filtra_por_columna_booleana(self) -> None:
+        denue = pd.DataFrame(
+            {
+                "es_hospital": [1, 0, 1],
+                "es_clinica": [0, 1, 0],
+                "es_farmacia": [0, 0, 0],
+                "es_salud_mental": [0, 0, 0],
+            }
+        )
+        assert filtro_celda_salud(denue, "hospitales").tolist() == [True, False, True]
+        assert filtro_celda_salud(denue, "clinicas").tolist() == [False, True, False]
+
+    def test_celdas_de_salud_no_se_solapan_con_datos_reales(self) -> None:
+        """Un establecimiento puede tener varias banderas en 1 (p. ej. clínica Y farmacia),
+        así que las celdas de salud SÍ pueden solaparse -- a diferencia de educación, no se
+        exige la invariante de partición disjunta aquí (documentado, no es un bug)."""
+        con = duckdb.connect()
+        salud = leer_denue_salud(con, ["2024-11"])
+        con_alguna = (
+            (salud["es_hospital"] == 1)
+            | (salud["es_clinica"] == 1)
+            | (salud["es_salud_mental"] == 1)
+            | (salud["es_farmacia"] == 1)
+        )
+        assert con_alguna.any()
+
+
+class TestFiltroCeldaComercio:
+    def test_filtra_por_subcategoria(self) -> None:
+        denue = pd.DataFrame({"subcategoria": ["Minisúper", "Frutas y verduras", "Supermercado"]})
+        assert filtro_celda_comercio(denue, "supermercados_minisupers").tolist() == [True, False, True]
+        assert filtro_celda_comercio(denue, "frutas_verduras").tolist() == [False, True, False]
+
+
+@pytest.mark.datos
+class TestCeldasConDatosReales:
+    def test_suma_de_celdas_educacion_principal_igual_al_total_legado(self) -> None:
+        """Fase 5, criterio de aceptación #40 de action_plan.md: Σ celdas = total sin
+        filtrar. Las 6 celdas `Principal` de educación deben sumar exactamente lo mismo que
+        `construir_panel_oferta` (que también filtra `Alcance='Principal'`, sin celdas)."""
+        con = duckdb.connect()
+        denue = leer_denue_infancias(con, list(CORTES_OFERTA.keys()))
+        universo = leer_universo_ageb()
+
+        legado = construir_panel_oferta(denue, universo).groupby("t")["s"].sum()
+
+        celdas_principal = [c for c, spec in CELDAS_EDUCACION.items() if spec["alcance"] == "Principal"]
+        suma = None
+        for celda in celdas_principal:
+            panel = construir_panel_oferta_celda(denue, universo, filtro_celda_educacion(denue, celda))
+            s = panel.groupby("t")["s"].sum()
+            suma = s if suma is None else suma.add(s, fill_value=0)
+
+        assert (legado.astype(int) == suma.astype(int)).all()
+
+    def test_celdas_de_educacion_no_se_solapan(self) -> None:
+        """Cada (alcance, scian) debe pertenecer a lo más a una celda de `CELDAS_EDUCACION`
+        (a diferencia de salud, educación SÍ debe partición disjunta: son niveles
+        educativos mutuamente excluyentes)."""
+        vistos: dict[tuple[str, int], str] = {}
+        for celda, spec in CELDAS_EDUCACION.items():
+            for scian in spec["scian"]:
+                clave = (spec["alcance"], scian)
+                assert clave not in vistos, f"{clave} en {celda} y {vistos.get(clave)}"
+                vistos[clave] = celda
+
+    def test_celdas_comercio_cubren_todo_es_primera_necesidad(self) -> None:
+        """Las celdas de comercio deben cubrir, como mínimo, TODAS las filas con
+        `es_primera_necesidad='SI'` (ninguna subcategoría de primera necesidad debe quedar
+        fuera de las celdas de filtro). `farmacias` es una celda EXTRA, explícitamente
+        opcional (`correccion/frontend_requisitos.md` §10.3: "si se decide incluirlas"): en
+        los datos reales, DENUE clasifica las farmacias como `es_primera_necesidad='NO'`
+        (aparecen en ambas ramas, salud y comercio -- no es un error de esta clasificación)."""
+        comercios = leer_denue_comercios(["2024-11"])
+        universo_rama = comercios.loc[comercios["es_primera_necesidad"] == "SI"]
+
+        cubiertas = pd.Series(False, index=comercios.index)
+        for celda in CELDAS_COMERCIO:
+            cubiertas |= filtro_celda_comercio(comercios, celda)
+
+        assert set(universo_rama.index) <= set(comercios.loc[cubiertas].index)
+        # Y la única celda "extra" (fuera de primera necesidad) es farmacias.
+        extra = comercios.loc[cubiertas & (comercios["es_primera_necesidad"] == "NO")]
+        assert set(extra["subcategoria"].unique()) <= {"Farmacia con minisúper", "Farmacia sin minisúper"}
 
 
 # ---------------------------------------------------------------------------
