@@ -410,9 +410,10 @@ def simular_demanda(
     lam_vec_principal = (
         rng.uniform(*LAMBDA_PREVIA, size=n_sim) if lam is None else np.full(n_sim, float(lam))
     )
-    r_fut_principal = _proyectar(lam_vec_principal)
+    r_fut_principal = np.clip(_proyectar(lam_vec_principal), -_TASA_MAX, _TASA_MAX)
     r_fut_lambdas = {
-        lam_fijo: _proyectar(np.full(n_sim, lam_fijo)) for lam_fijo in LAMBDAS_SENS
+        lam_fijo: np.clip(_proyectar(np.full(n_sim, lam_fijo)), -_TASA_MAX, _TASA_MAX)
+        for lam_fijo in LAMBDAS_SENS
     }
 
     n_obs = np.where(tiene_r, 2, 1)
@@ -504,6 +505,23 @@ def _columnas_s_oferta() -> list[str]:
 # recibiendo su propio `B_i`/`r_tilde`/`var_post` con su `var_b` real (typically ~100% de
 # contracción hacia la alcaldía, que es la respuesta correcta para un ajuste no confiable).
 _VAR_B_CONFIABLE_MAXIMA: float = 10.0
+
+# Tope numérico (no estadístico) sobre la tasa `r`/`b` simulada. `var_post` solo tiene piso
+# (`SIGMA_MIN_OFERTA`, config.py), nunca techo: es correcto que quede enorme cuando el ajuste de
+# alcaldía de una celda muy escasa (p. ej. una celda `__no_especificado` con un puñado de
+# establecimientos en una sola alcaldía, Fase 5 rework de sector) está genuinamente mal
+# determinado -- "no inventar precisión que no existe" (docstring de `simular_oferta`) corta en
+# las dos direcciones. Sin tope, algunas réplicas Monte Carlo generan `b` de cientos (varias
+# desviaciones estándar sobre un `var_post` de miles); `exp(b*horizonte)` desborda a `inf` en
+# float64 (> ~709) en CUALQUIER consumidor de `Simulacion.r_fut` (`resumir`, `agregar_alcaldia`,
+# `exportar.nivel_en`), y una vez que hay `inf` de por medio, un `np.percentile`/`np.log` puede
+# devolver `nan` -- un problema numérico, no estadístico, que rompe `validar_contrato` (`ic95` debe
+# contener `delta_pct`, `nan` no lo hace nunca). Por eso el tope se aplica una sola vez, aquí, al
+# construir la `Simulacion`, no en cada consumidor por separado. `_TASA_MAX=20` acota
+# `delta_pct`/`ic95` a un techo absurdamente generoso (`exp(20)≈4.85e8`, es decir ±4.85e10 % --
+# nunca se acerca ningún valor sustantivo real) que solo actúa sobre estas colas patológicas,
+# nunca sobre una tasa de crecimiento con sentido económico.
+_TASA_MAX: float = 20.0
 
 
 def ajustar_oferta(panel_o: pd.DataFrame) -> pd.DataFrame:
@@ -649,6 +667,26 @@ def simular_oferta(
     t_centro = CORTES_OFERTA["2019-11"]
     x_diseno = np.column_stack([np.ones(len(tiempos)), np.array(tiempos) - t_centro])
 
+    if n == 0:
+        # Celda vacía en toda la ciudad (posible desde el cruce por sector de la Fase 5
+        # rework: p. ej. `farmacias__publico`/`farmacias__privado` en salud tienen 0
+        # establecimientos en las 3 ediciones -- DENUE nunca clasifica farmacias con
+        # `Sector` distinto de "No especificado"). Sin AGEB con dato no hay nada que
+        # ajustar ni agregar por alcaldía: `Simulacion` vacía, que `resumir`/
+        # `agregar_alcaldia`/`construir_capa` ya saben tratar como `sin_datos` en todas
+        # las unidades (motivo `sin_establecimientos`, `motivos_oferta_por_clave`).
+        return Simulacion(
+            clave=np.array([], dtype=object),
+            cve_mun=np.array([], dtype=object),
+            n_obs=np.zeros(0, dtype=int),
+            base=np.zeros(0, dtype=float),
+            d2020_conf=None,
+            tope=np.zeros(0, dtype=object),
+            r_fut=np.empty((0, n_sim)),
+            r_fut_lambdas={},
+            horizonte_control=HORIZONTES["h3"] - max(CORTES_OFERTA.values()),
+        )
+
     agregado_mun = df.groupby("cve_mun")[columnas_s].sum()
     beta_mun, cov_mun = _newton_raphson_poisson(x_diseno, agregado_mun.to_numpy(dtype=float))
     b_m_serie = pd.Series(beta_mun[:, 1], index=agregado_mun.index)
@@ -670,6 +708,7 @@ def simular_oferta(
     var_post = np.maximum(var_post, SIGMA_MIN_OFERTA**2)
 
     b_post = b_tilde[:, None] + rng.standard_normal((n, n_sim)) * np.sqrt(var_post)[:, None]
+    b_post = np.clip(b_post, -_TASA_MAX, _TASA_MAX)
 
     ultimo_corte = max(CORTES_OFERTA.values())
     # Oferta nunca reporta más allá de h3 (config.HORIZONTES_OFERTA): no tiene
@@ -804,9 +843,17 @@ def agregar_alcaldia(sim: Simulacion) -> Simulacion:
     oferta). `d2020_conf` = suma de `D_2020` (solo demanda); `tope` = `None`
     en demanda (la agregación ya no arrastra el motivo AGEB-por-AGEB del
     tope), `'media'` en oferta (toda la capa).
+
+    **Alcaldías con `base_m = 0` se excluyen** (nunca `nan`): posible en oferta desde el cruce
+    por sector de la Fase 5 rework -- una alcaldía puede tener AGEB con dato en cortes anteriores
+    (ninguna de sus AGEB quedó `sin_datos` a nivel individual) pero cero establecimientos de esa
+    celda en el corte más reciente (`base` = S del corte 2024-11), de modo que `base_m` (la suma)
+    da exactamente 0. Una tasa a partir de un nivel base cero no es una cantidad definida
+    (`log(0/0)`); se trata igual que una unidad `sin_datos`: se excluye de `Simulacion` (nunca
+    aparece en `resumir()`) para que `construir_capa` la marque `sin_datos` por ausencia, el mismo
+    mecanismo ya usado para AGEB sin ningún establecimiento en los 3 cortes.
     """
-    munes = sorted(set(np.asarray(sim.cve_mun).tolist()))
-    n_mun = len(munes)
+    munes_todas = sorted(set(np.asarray(sim.cve_mun).tolist()))
     n_sim = sim.r_fut.shape[1]
     es_demanda = sim.d2020_conf is not None
 
@@ -816,41 +863,46 @@ def agregar_alcaldia(sim: Simulacion) -> Simulacion:
         for lam, r in sim.r_fut_lambdas.items()
     }
 
-    base_mun = np.empty(n_mun)
-    r_fut_mun = np.empty((n_mun, n_sim))
-    n_obs_mun = np.empty(n_mun, dtype=int)
-    d2020_conf_mun = np.empty(n_mun) if es_demanda else None
-    tope_mun = np.empty(n_mun, dtype=object)
-    r_fut_lambdas_mun: dict[float, np.ndarray] = {
-        lam: np.empty((n_mun, n_sim)) for lam in sim.r_fut_lambdas
-    }
+    munes: list[str] = []
+    base_mun_lista: list[float] = []
+    r_fut_mun_lista: list[np.ndarray] = []
+    n_obs_mun_lista: list[int] = []
+    d2020_conf_mun_lista: list[float] = []
+    tope_mun_lista: list[str | None] = []
+    r_fut_lambdas_mun: dict[float, list[np.ndarray]] = {lam: [] for lam in sim.r_fut_lambdas}
 
-    for j, m in enumerate(munes):
+    for m in munes_todas:
         idx = np.where(np.asarray(sim.cve_mun) == m)[0]
         base_m = sim.base[idx].sum()
-        base_mun[j] = base_m
-        r_fut_mun[j, :] = (
+        if base_m == 0:
+            continue
+        munes.append(m)
+        base_mun_lista.append(base_m)
+        r_fut_mun_lista.append(
             np.log(proyectado[idx, :].sum(axis=0) / base_m) / sim.horizonte_control
         )
-        n_obs_mun[j] = int(sim.n_obs[idx].max())
+        n_obs_mun_lista.append(int(sim.n_obs[idx].max()))
         if es_demanda:
-            d2020_conf_mun[j] = sim.d2020_conf[idx].sum()
-            tope_mun[j] = None
+            d2020_conf_mun_lista.append(sim.d2020_conf[idx].sum())
+            tope_mun_lista.append(None)
         else:
-            tope_mun[j] = "media"
+            tope_mun_lista.append("media")
         for lam, proy_lam in proyectado_lambdas.items():
-            r_fut_lambdas_mun[lam][j, :] = (
+            r_fut_lambdas_mun[lam].append(
                 np.log(proy_lam[idx, :].sum(axis=0) / base_m) / sim.horizonte_control
             )
 
     return Simulacion(
         clave=np.array(munes),
         cve_mun=np.array(munes),
-        n_obs=n_obs_mun,
-        base=base_mun,
-        d2020_conf=d2020_conf_mun,
-        tope=tope_mun,
-        r_fut=r_fut_mun,
-        r_fut_lambdas=r_fut_lambdas_mun,
+        n_obs=np.array(n_obs_mun_lista, dtype=int),
+        base=np.array(base_mun_lista, dtype=float),
+        d2020_conf=np.array(d2020_conf_mun_lista, dtype=float) if es_demanda else None,
+        tope=np.array(tope_mun_lista, dtype=object),
+        r_fut=np.array(r_fut_mun_lista) if munes else np.empty((0, n_sim)),
+        r_fut_lambdas={
+            lam: (np.array(filas) if filas else np.empty((0, n_sim)))
+            for lam, filas in r_fut_lambdas_mun.items()
+        },
         horizonte_control=sim.horizonte_control,
     )

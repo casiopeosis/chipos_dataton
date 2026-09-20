@@ -449,20 +449,23 @@ def denue_celdas() -> pd.DataFrame:
     `filtro_celda_educacion` sin datos reales."""
     t_2016, t_2019, t_2024 = CORTES_OFERTA["2016-10"], CORTES_OFERTA["2019-11"], CORTES_OFERTA["2024-11"]
     filas = [
-        # AGEB 0900200011991: 1 preescolar + 1 primaria (Principal), 1 recreación (Complementario)
-        (1, "0900200011991", "002", "Principal", 611111, "2024-11", t_2024),
-        (2, "0900200011991", "002", "Principal", 611121, "2024-11", t_2024),
-        (3, "0900200011991", "002", "Complementario", 611621, "2024-11", t_2024),
-        # AGEB 0900300010112: 1 secundaria (Principal)
-        (4, "0900300010112", "003", "Principal", 611131, "2024-11", t_2024),
+        # AGEB 0900200011991: 1 preescolar público + 1 primaria privada (Principal),
+        # 1 recreación pública (Complementario)
+        (1, "0900200011991", "002", "Principal", 611111, "Público", "2024-11", t_2024),
+        (2, "0900200011991", "002", "Principal", 611121, "Privado", "2024-11", t_2024),
+        (3, "0900200011991", "002", "Complementario", 611621, "Público", "2024-11", t_2024),
+        # AGEB 0900300010112: 1 secundaria pública (Principal)
+        (4, "0900300010112", "003", "Principal", 611131, "Público", "2024-11", t_2024),
     ]
-    marco = pd.DataFrame(filas, columns=["id", "cvegeo", "cve_mun", "alcance", "scian", "edicion", "t"])
+    marco = pd.DataFrame(
+        filas, columns=["id", "cvegeo", "cve_mun", "alcance", "scian", "sector", "edicion", "t"]
+    )
     return marco
 
 
 class TestConstruirPanelOfertaCelda:
     def test_filtra_por_celda_y_territorio(self, universo_demanda, denue_celdas):
-        filtro = filtro_celda_educacion(denue_celdas, "preescolar")
+        filtro = filtro_celda_educacion(denue_celdas, "preescolar__publico")
         panel = construir_panel_oferta_celda(denue_celdas, universo_demanda, filtro)
         fila = panel.set_index(["cvegeo", "t"]).loc[("0900200011991", CORTES_OFERTA["2024-11"])]
         assert fila["s"] == 1  # solo el preescolar, no la primaria ni la recreación
@@ -472,29 +475,45 @@ class TestConstruirPanelOfertaCelda:
         assert fila_otra["s"] == 0
 
     def test_celda_complementario_no_se_confunde_con_principal(self, universo_demanda, denue_celdas):
-        filtro = filtro_celda_educacion(denue_celdas, "recreacion_cultura")
+        filtro = filtro_celda_educacion(denue_celdas, "recreacion_cultura__publico")
         panel = construir_panel_oferta_celda(denue_celdas, universo_demanda, filtro)
         fila = panel.set_index(["cvegeo", "t"]).loc[("0900200011991", CORTES_OFERTA["2024-11"])]
         assert fila["s"] == 1  # el establecimiento 611621 Complementario
 
     def test_misma_forma_que_construir_panel_oferta(self, universo_demanda, denue_celdas):
-        filtro = filtro_celda_educacion(denue_celdas, "primaria")
+        filtro = filtro_celda_educacion(denue_celdas, "primaria__privado")
         panel = construir_panel_oferta_celda(denue_celdas, universo_demanda, filtro)
         assert list(panel.columns) == ["cvegeo", "cve_mun", "t", "s", "s_2024"]
 
+    def test_sector_distingue_celdas(self, universo_demanda, denue_celdas):
+        """El establecimiento 2 (primaria) es Privado: no debe contar en
+        `primaria__publico`, solo en `primaria__privado`."""
+        filtro_publico = filtro_celda_educacion(denue_celdas, "primaria__publico")
+        panel_publico = construir_panel_oferta_celda(denue_celdas, universo_demanda, filtro_publico)
+        fila = panel_publico.set_index(["cvegeo", "t"]).loc[("0900200011991", CORTES_OFERTA["2024-11"])]
+        assert fila["s"] == 0
+
+        filtro_todos = sum(
+            (filtro_celda_educacion(denue_celdas, f"primaria__{s}") for s in ("publico", "privado", "no_especificado")),
+            start=pd.Series(False, index=denue_celdas.index),
+        )
+        assert filtro_todos.sum() == 1  # reproduce el total sin sector: 1 primaria
+
 
 class TestFiltroCeldaSalud:
-    def test_filtra_por_columna_booleana(self) -> None:
+    def test_filtra_por_columna_booleana_y_sector(self) -> None:
         denue = pd.DataFrame(
             {
                 "es_hospital": [1, 0, 1],
                 "es_clinica": [0, 1, 0],
                 "es_farmacia": [0, 0, 0],
                 "es_salud_mental": [0, 0, 0],
+                "sector": ["Público", "Privado", "Privado"],
             }
         )
-        assert filtro_celda_salud(denue, "hospitales").tolist() == [True, False, True]
-        assert filtro_celda_salud(denue, "clinicas").tolist() == [False, True, False]
+        assert filtro_celda_salud(denue, "hospitales__publico").tolist() == [True, False, False]
+        assert filtro_celda_salud(denue, "hospitales__privado").tolist() == [False, False, True]
+        assert filtro_celda_salud(denue, "clinicas__privado").tolist() == [False, True, False]
 
     def test_celdas_de_salud_no_se_solapan_con_datos_reales(self) -> None:
         """Un establecimiento puede tener varias banderas en 1 (p. ej. clínica Y farmacia),
@@ -540,13 +559,15 @@ class TestCeldasConDatosReales:
         assert (legado.astype(int) == suma.astype(int)).all()
 
     def test_celdas_de_educacion_no_se_solapan(self) -> None:
-        """Cada (alcance, scian) debe pertenecer a lo más a una celda de `CELDAS_EDUCACION`
-        (a diferencia de salud, educación SÍ debe partición disjunta: son niveles
-        educativos mutuamente excluyentes)."""
-        vistos: dict[tuple[str, int], str] = {}
+        """Cada (alcance, scian, sector) debe pertenecer a lo más a una celda de
+        `CELDAS_EDUCACION` (a diferencia de salud, educación SÍ debe partición disjunta: son
+        niveles educativos mutuamente excluyentes; el sector es la tercera dimensión de la
+        partición desde el cruce de Fase 5 -- un mismo (alcance, scian) sí aparece en varias
+        celdas, una por sector, y eso es correcto)."""
+        vistos: dict[tuple[str, int, str], str] = {}
         for celda, spec in CELDAS_EDUCACION.items():
             for scian in spec["scian"]:
-                clave = (spec["alcance"], scian)
+                clave = (spec["alcance"], scian, spec["sector"])
                 assert clave not in vistos, f"{clave} en {celda} y {vistos.get(clave)}"
                 vistos[clave] = celda
 

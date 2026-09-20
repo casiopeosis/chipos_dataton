@@ -126,6 +126,20 @@ No hay una celda "total" publicada: cada celda es su propio registro en el contr
 sigue siendo el valor por omisión del mapa y del veredicto principal, pero eso es un eje aparte del
 de las celdas de oferta.
 
+**Sector (público/privado), rework de Fase 5 -- ver `plans/frontend_specs.md` §10.11/§17.3.**
+`frontend_requisitos.md` exige un selector SECTOR (Todos/Público/Privado) para educación y salud
+que la tabla de arriba no tenía: DENUE sí trae una columna `Sector` cruda (Público/Privado/No
+especificado, verificado en datos reales) que `io.leer_denue_infancias`/`leer_denue_salud` ya
+leían pero `panel.py` no usaba. Cada nivel/tipo de la tabla de arriba se cruza con los 3 valores de
+sector (`panel.SECTORES`), publicando **3 celdas por fila** en vez de 1: educación pasa de 8 a
+**24 celdas**, salud de 4 a **12**. `no_especificado` se publica como celda propia (nunca se
+descarta): es necesario para que "Todos" siga sumando exactamente el total sin sector — en
+`salud/farmacias`, el caso extremo, el 100 % de los establecimientos son `no_especificado` (DENUE
+nunca clasifica el sector de una farmacia), así que sin esa celda "Todos" perdería el 100% del
+dato. Comercio y verde no tienen esta columna en el dato crudo, así que no se cruzan por sector.
+Esto sube el total de celdas con proyección de 17 a **41** (24 + 12 + 5) y el peso del contrato de
+~1.02 MB a ~1.42 MB gzip (`plans/frontend_specs.md` §16.1).
+
 **Aproximación documentada:** CONAPO publica grupos quinquenales (00_04, 05_09, 10_14) que **no**
 coinciden con las bandas censales 0–2 / 3–5 / 6–11 / 12–14. El ancla municipal (§2.3, §2.5) se
 aplica sobre 0–14 y los segmentos **heredan el mismo factor de control** `k_m^s`. Es una
@@ -686,19 +700,29 @@ rama: publica una serie **por celda de filtro** (segmento SCIAN × sector), y el
 valores proyectados y varianzas** de las celdas seleccionadas (nunca suma tasas: la tasa no es
 lineal en el conteo, el conteo proyectado sí):
 
-**Celdas implementadas (Fase 5, `panel.py`):** educación 8 (`guarderia, preescolar, primaria,
-secundaria, educacion_especial, varios_niveles` por SCIAN `Principal`; `media_superior_tecnica,
+**Celdas implementadas (Fase 5, `panel.py`; cruce por sector añadido en el rework post-Fase 6, ver
+§1.2):** educación 24 (8 niveles/tipo `guarderia, preescolar, primaria, secundaria,
+educacion_especial, varios_niveles` por SCIAN `Principal`, `media_superior_tecnica,
 recreacion_cultura` por SCIAN `Complementario` — verificado en datos reales, "Actividad SCIAN"
-literal, nunca supuesto); salud 4 (`clinicas, hospitales, salud_mental, farmacias`, columnas
-booleanas ya presentes en el dato, más directas que reclasificar 51 códigos SCIAN); comercio 5
-(`supermercados_minisupers, abarrotes, frutas_verduras, carnes_otros_alimentos, farmacias`, por
+literal, nunca supuesto — × 3 sectores `publico/privado/no_especificado`); salud 12 (4 tipos
+`clinicas, hospitales, salud_mental, farmacias`, columnas booleanas ya presentes en el dato, más
+directas que reclasificar 51 códigos SCIAN, × 3 sectores); comercio 5 (sin sector:
+`supermercados_minisupers, abarrotes, frutas_verduras, carnes_otros_alimentos, farmacias`, por
 `subcategoria_proyecto`; `farmacias` es la única celda fuera de `es_primera_necesidad`, incluida
-porque `correccion/frontend_requisitos.md` §10.3 la deja como opcional, no excluida); verde 3
-(`cobertura_verde, areas_recreativas, espacios_publicos`, agregado espacial, sin componente
+porque `correccion/frontend_requisitos.md` §10.3 la deja como opcional, no excluida); verde 3 (sin
+sector: `cobertura_verde, areas_recreativas, espacios_publicos`, agregado espacial, sin componente
 temporal). `modelos.ajustar_oferta`/`simular_oferta` se reutilizan sin ningún cambio de código por
-celda (verificado extremo a extremo con la celda `salud/clinicas`, metodología §6.2 incluida). La
-publicación de estas celdas en el contrato v1.4 (`construir_capa_rama_v14`/`construir_capa_verde`,
-`exportar.py`) es Fase 6, entregada: `capas.ramas.<rama>[cvegeo].celdas.<celda>`.
+celda (verificado extremo a extremo con la celda `salud/clinicas`, metodología §6.2 incluida) —
+salvo dos guardas nuevas que el cruce por sector hizo necesarias: una celda puede quedar vacía en
+TODA la ciudad (`salud/farmacias__publico`, 0 establecimientos en las 3 ediciones: `simular_oferta`
+devuelve una `Simulacion` vacía en vez de intentar un ajuste sobre un arreglo de 0 filas) o una
+alcaldía puede tener AGEB con dato histórico pero 0 establecimientos en el corte más reciente
+(`agregar_alcaldia` excluye esas alcaldías, nunca publica un `nan`); y un tope numérico
+`_TASA_MAX=20` sobre la tasa simulada (`modelos.py`, nunca sobre `var_post`, que sigue sin techo)
+evita que la cola de una celda muy escasa desborde `exp()` a `inf`/`nan` en cualquier consumidor de
+`Simulacion.r_fut`. La publicación de estas celdas en el contrato v1.4
+(`construir_capa_rama_v14`/`construir_capa_verde`, `exportar.py`) es Fase 6, entregada:
+`capas.ramas.<rama>[cvegeo].celdas.<celda>`.
 
 ```
 Ŝ_{i,h,r}(filtro) = Σ_{c ∈ celdas(filtro)} Ŝ_{i,h,c}

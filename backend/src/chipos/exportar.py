@@ -396,7 +396,13 @@ def _simulacion_cdmx(sim: Simulacion) -> Simulacion:
 
 
 def _bloque_cdmx(resumen: dict[str, pd.DataFrame]) -> dict:
+    """Agregado CDMX de un horizonte. `resumen[h]` puede llegar vacío (0 filas) cuando la
+    celda no tiene ningún establecimiento en toda la ciudad (p. ej. `salud/farmacias__publico`,
+    Fase 5 rework de sector): en ese caso el agregado CDMX también es `sin_datos`, nunca un
+    `iloc[0]` sobre un DataFrame vacío."""
     primera = next(iter(resumen.values()))
+    if primera.empty:
+        return {"n_obs": 0, "h": {h: dict(_REGISTRO_H_SIN_DATOS) for h in resumen}}
     return {
         "n_obs": int(primera.iloc[0]["n_obs"]),
         "h": {h: _registro_h_valido(df.iloc[0]) for h, df in resumen.items()},

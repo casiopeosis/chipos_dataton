@@ -333,14 +333,27 @@ def construir_panel_oferta_celda(
 # Celdas de filtro por rama (Fase 5, `correccion/frontend_requisitos.md` §10)
 # ---------------------------------------------------------------------------
 
+# Sector (público/privado), Fase 5 (rework): cruza nivel/tipo en educación y salud
+# (`correccion/frontend_requisitos.md` §10.11.1/§10.11.2 exige un selector "Todos ·
+# Público · Privado"). La columna cruda `Sector` de DENUE ya trae exactamente estos 3
+# valores (verificado en datos reales, `docs/perfil_datos.md`); `no_especificado` se
+# publica como celda propia -- nunca se descarta -- para que "Todos" (la suma de las 3)
+# reproduzca exactamente el total sin sector que ya validaba `test_panel.py` antes de
+# este cruce (invariante Σ celdas = total, `correccion/action_plan.md` #40).
+SECTORES: dict[str, str] = {
+    "publico": "Público",
+    "privado": "Privado",
+    "no_especificado": "No especificado",
+}
+
 # Educación y cultura (§10.1): SCIAN verificado en datos reales
 # (`docs/metodologia.md` cita los códigos `Principal`; los `Complementario`
-# se verificaron por "Actividad SCIAN" -- ver commit de la Fase 5). Las
-# celdas `Principal` reproducen exactamente el conjunto que ya usaba
+# se verificaron por "Actividad SCIAN" -- ver commit de la Fase 5). Los 8
+# niveles/tipos reproducen exactamente el conjunto que ya usaba
 # `construir_panel_oferta`; `media_superior_tecnica`/`recreacion_cultura`
 # son código nuevo, `Complementario` (metodología §1.1: "15-17 aparece sobre
 # todo en Complementario", mismo principio aplicado aquí a nivel de celda).
-CELDAS_EDUCACION: dict[str, dict] = {
+_NIVELES_EDUCACION: dict[str, dict] = {
     "guarderia": {"alcance": "Principal", "scian": (624411, 624412)},
     "preescolar": {"alcance": "Principal", "scian": (611111, 611112)},
     "primaria": {"alcance": "Principal", "scian": (611121, 611122)},
@@ -357,31 +370,50 @@ CELDAS_EDUCACION: dict[str, dict] = {
     },
 }
 
+# Clave de celda `{nivel}__{sector}` (`plans/frontend_specs.md` §17.3): 8 niveles x 3
+# sectores = 24 celdas.
+CELDAS_EDUCACION: dict[str, dict] = {
+    f"{nivel}__{sector}": {**spec, "sector": sector_crudo}
+    for nivel, spec in _NIVELES_EDUCACION.items()
+    for sector, sector_crudo in SECTORES.items()
+}
+
 
 def filtro_celda_educacion(denue: pd.DataFrame, celda: str) -> pd.Series:
     """Máscara booleana para una celda de `CELDAS_EDUCACION` sobre un DataFrame de
-    `io.leer_denue_infancias` (columnas `alcance`, `scian`)."""
+    `io.leer_denue_infancias` (columnas `alcance`, `scian`, `sector`)."""
     spec = CELDAS_EDUCACION[celda]
-    return (denue["alcance"] == spec["alcance"]) & denue["scian"].isin(spec["scian"])
+    return (
+        (denue["alcance"] == spec["alcance"])
+        & denue["scian"].isin(spec["scian"])
+        & (denue["sector"] == spec["sector"])
+    )
 
 
-# Salud (§10.2): celdas ya vienen como columnas booleanas en el dato
+# Salud (§10.2): tipo ya viene como columna booleana en el dato
 # (`io.leer_denue_salud`), más directo y confiable que reclasificar por
 # SCIAN (51 códigos distintos en salud, sin un mapeo 1:1 tan limpio como
-# educación). "Todos" (sin filtro) es la unión, no una celda propia.
-CELDAS_SALUD: dict[str, str] = {
+# educación); sector cruza igual que en educación (`SECTORES` arriba).
+_TIPOS_SALUD: dict[str, str] = {
     "clinicas": "es_clinica",
     "hospitales": "es_hospital",
     "salud_mental": "es_salud_mental",
     "farmacias": "es_farmacia",
 }
 
+# Clave de celda `{tipo}__{sector}`: 4 tipos x 3 sectores = 12 celdas.
+CELDAS_SALUD: dict[str, dict] = {
+    f"{tipo}__{sector}": {"columna": columna, "sector": sector_crudo}
+    for tipo, columna in _TIPOS_SALUD.items()
+    for sector, sector_crudo in SECTORES.items()
+}
+
 
 def filtro_celda_salud(denue: pd.DataFrame, celda: str) -> pd.Series:
     """Máscara booleana para una celda de `CELDAS_SALUD` sobre un DataFrame de
-    `io.leer_denue_salud`."""
-    columna = CELDAS_SALUD[celda]
-    return denue[columna] == 1
+    `io.leer_denue_salud` (columna booleana del tipo + `sector`)."""
+    spec = CELDAS_SALUD[celda]
+    return (denue[spec["columna"]] == 1) & (denue["sector"] == spec["sector"])
 
 
 # Comercio (§10.3): por `subcategoria_proyecto` (verificado en datos reales, Fase 5).

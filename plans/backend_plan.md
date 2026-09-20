@@ -149,10 +149,13 @@ así.** Lo que se entregó separa las dos capas, cada una con su propio nombre d
   `todas` (0–17, por omisión), `primera_infancia` (`p_0a2`), `preescolar` (`p_3a5`), `primaria`
   (`p_6a11`), `secundaria` (`p_12a14`), `adolescencia` (`p_15a17`). Invariante real: Σ de los 5
   segmentos con dato = `todas`, exacto (`test_panel_demanda_suma_de_segmentos_igual_a_todas`).
-- **Oferta (B22, `panel.CELDAS_EDUCACION`)**: 8 celdas por SCIAN dentro de la rama educación
+- **Oferta (B22, `panel.CELDAS_EDUCACION`)**: 8 niveles/tipo por SCIAN dentro de la rama educación
   (`guarderia, preescolar, primaria, secundaria, educacion_especial, varios_niveles,
-  media_superior_tecnica, recreacion_cultura`) — más las celdas de las ramas salud (4) y comercio
-  (5), que no existían en esta sección del plan. Las celdas de oferta no se combinan con `pob_0a14`
+  media_superior_tecnica, recreacion_cultura`), cruzados × 3 sectores (`publico, privado,
+  no_especificado`, rework post-Fase 6 para el filtro SECTOR de `frontend_requisitos.md` §10.11 —
+  el dato crudo ya traía la columna `Sector`, `panel.py` no la usaba) = **24 celdas** — más las
+  celdas de las ramas salud (4 tipos × 3 sectores = 12) y comercio (5, sin sector), que no existían
+  en esta sección del plan. Las celdas de oferta no se combinan con `pob_0a14`
   aquí: cada rama tiene su propio ajuste Poisson+EB, independiente del segmento de demanda activo.
 
 Firmas:

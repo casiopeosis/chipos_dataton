@@ -266,7 +266,7 @@ class TestConstruirCapa:
             assert rural_d["h"][h]["veredicto"] == "sin_datos"
             assert rural_d["h"][h]["delta_pct"] is None
 
-        rural_o = salida_ageb["capas"]["ramas"]["educacion"]["090150001"]["celdas"]["guarderia"]
+        rural_o = salida_ageb["capas"]["ramas"]["educacion"]["090150001"]["celdas"]["guarderia__publico"]
         assert rural_o["h"]["h3"]["veredicto"] == "sin_datos"
 
         rural_verde = salida_ageb["capas"]["ramas"]["verde"]["090150001"]["celdas"]["cobertura_verde"]
@@ -275,7 +275,7 @@ class TestConstruirCapa:
 
     def test_sin_establecimientos_en_ramas(self, pipeline) -> None:
         salida_ageb, _ = pipeline
-        registro = salida_ageb["capas"]["ramas"]["educacion"]["0900300010112"]["celdas"]["guarderia"]
+        registro = salida_ageb["capas"]["ramas"]["educacion"]["0900300010112"]["celdas"]["guarderia__publico"]
         assert registro["motivo_sin_datos"] == "sin_establecimientos"
         assert registro["n_obs"] == 3
         assert registro["h"]["h3"]["veredicto"] == "sin_datos"
@@ -390,7 +390,7 @@ class TestValidarContrato:
         salida_ageb, _ = pipeline
         malo = copy.deepcopy(salida_ageb)
         clave = next(iter(malo["capas"]["ramas"]["educacion"]))
-        malo["capas"]["ramas"]["educacion"][clave]["celdas"]["guarderia"]["h"]["h3"]["confianza"] = "alta"
+        malo["capas"]["ramas"]["educacion"][clave]["celdas"]["guarderia__publico"]["h"]["h3"]["confianza"] = "alta"
         with pytest.raises(ErrorContrato):
             validar_contrato(malo, "ageb")
 
@@ -406,7 +406,7 @@ class TestValidarContrato:
         salida_ageb, _ = pipeline
         malo = copy.deepcopy(salida_ageb)
         clave = next(iter(malo["capas"]["ramas"]["educacion"]))
-        del malo["capas"]["ramas"]["educacion"][clave]["celdas"]["guarderia"]
+        del malo["capas"]["ramas"]["educacion"][clave]["celdas"]["guarderia__publico"]
         with pytest.raises(ErrorContrato):
             validar_contrato(malo, "ageb")
 

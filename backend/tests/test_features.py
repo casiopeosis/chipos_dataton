@@ -484,9 +484,13 @@ class TestIndiceOportunidadConDatosReales:
         infancias = leer_denue_infancias(con, list(CORTES_OFERTA.keys()))
 
         panel_d = construir_panel_demanda(censo, equivalencia, universo, segmento="primaria")
-        panel_o_celda = construir_panel_oferta_celda(
-            infancias, universo, filtro_celda_educacion(infancias, "primaria")
+        # "primaria" ya no es una sola celda (Fase 5 rework: cruce por sector) -- se suman las 3
+        # celdas de sector para reproducir el nivel/tipo "primaria" completo, sin filtrar sector.
+        filtro_primaria = sum(
+            (filtro_celda_educacion(infancias, f"primaria__{s}") for s in ("publico", "privado", "no_especificado")),
+            start=pd.Series(False, index=infancias.index),
         )
+        panel_o_celda = construir_panel_oferta_celda(infancias, universo, filtro_primaria)
 
         rng = np.random.default_rng(SEMILLA)
         sim_d = simular_demanda(panel_d, conapo, rng)

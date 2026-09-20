@@ -735,26 +735,37 @@ Comercio
 Nunca añade complejidad matemática nueva: solo decide qué celdas de filtro (§17.3) se suman.
 
 **10.11.1 Educación y cultura.** Pregunta: *"¿Qué servicios de educación y cultura quieres
-considerar?"* — NIVEL/TIPO: Guarderías y estancias infantiles · Preescolar · Primaria · Secundaria
-· Media superior o técnica · Educación especial · Recreación o cultura infantil. SECTOR: Todos ·
-Público · Privado. **Sugerencia automática, no forzada**: si la población objetivo (§5.3) es
-6–11, sugiere "Primaria"; si es 15–17, sugiere "Media superior o técnica" cuando los datos lo
-permitan — el usuario puede modificarlo. Icono "?": *"Estos filtros indican qué tipos de servicios
-educativos o culturales quieres incluir en el análisis de esta rama."*
+considerar?"* — NIVEL/TIPO: Guarderías y estancias infantiles (`guarderia`) · Preescolar
+(`preescolar`) · Primaria (`primaria`) · Secundaria (`secundaria`) · Educación especial
+(`educacion_especial`) · Varios niveles (`varios_niveles`, SCIAN sin un solo nivel educativo) ·
+Media superior o técnica (`media_superior_tecnica`) · Recreación o cultura infantil
+(`recreacion_cultura`). SECTOR: Todos · Público · Privado (internamente "Todos" suma también
+`no_especificado`, §17.3 — no es una opción visible). **Sugerencia automática, no forzada**: si la
+población objetivo (§5.3) es 6–11, sugiere "Primaria"; si es 15–17, sugiere "Media superior o
+técnica" cuando los datos lo permitan — el usuario puede modificarlo. Icono "?": *"Estos filtros
+indican qué tipos de servicios educativos o culturales quieres incluir en el análisis de esta
+rama."*
 
 **10.11.2 Salud.** Pregunta: *"¿Qué instalaciones de salud quieres considerar?"* — TIPO: Clínicas o
-consultorios · Hospitales · Salud mental o psicológica · Farmacias. SECTOR: Todos · Público ·
-Privado. Icono "?": *"Habitancia utiliza únicamente los tipos de instalaciones que selecciones
-para calcular la disponibilidad de servicios de salud."*
+consultorios (`clinicas`) · Hospitales (`hospitales`) · Salud mental o psicológica
+(`salud_mental`) · Farmacias (`farmacias`). SECTOR: Todos · Público · Privado (mismo matiz de
+`no_especificado` que educación — en `farmacias` es el 100 % de los casos: DENUE nunca clasifica
+el sector de una farmacia, así que "Farmacias" con sector "Público" o "Privado" siempre da 0,
+solo "Todos" trae resultado). Icono "?": *"Habitancia utiliza únicamente los tipos de instalaciones
+que selecciones para calcular la disponibilidad de servicios de salud."*
 
 **10.11.3 Comercio.** Pregunta: *"¿Qué comercios quieres considerar?"* — TIPO: Comercios de primera
-necesidad · Supermercados y minisúpers · Abarrotes · Frutas y verduras · Carnes y otros alimentos ·
-Farmacias (si se decide incluirlas también aquí). Selección de "Todos" o varios tipos. Icono "?":
-*"Este filtro permite decidir qué tipos de comercios cotidianos deben considerarse al analizar la
-disponibilidad de productos de primera necesidad."*
+necesidad (preset de cliente, §17.3: selecciona las 4 celdas siguientes salvo farmacias) ·
+Supermercados y minisúpers (`supermercados_minisupers`) · Abarrotes (`abarrotes`) · Frutas y
+verduras (`frutas_verduras`) · Carnes y otros alimentos (`carnes_otros_alimentos`) · Farmacias
+(`farmacias`, decidido incluirlas también aquí — DENUE las excluye de "primera necesidad" pero el
+requisito las deja como opcionales). Sin SECTOR: el dato crudo de comercio no lo trae. Selección de
+"Todos" o varios tipos. Icono "?": *"Este filtro permite decidir qué tipos de comercios cotidianos
+deben considerarse al analizar la disponibilidad de productos de primera necesidad."*
 
 **10.11.4 Áreas verdes y espacio público.** Pregunta: *"¿Qué tipo de espacio quieres
-considerar?"* — Áreas verdes recreativas · Cobertura verde · Espacio público. Icono "?": *"No toda
+considerar?"* — Cobertura verde (`cobertura_verde`) · Áreas recreativas (`areas_recreativas`) ·
+Espacios públicos (`espacios_publicos`). Icono "?": *"No toda
 superficie verde funciona como espacio recreativo. Este filtro permite diferenciar entre cobertura
 verde general y espacios que pueden tener una función de convivencia o recreación."*
 
@@ -1006,15 +1017,16 @@ estados nuevos:
 Igual que la versión anterior en la parte estática (HTML+CSS+JS propios ≤ 45 kB gzip, d3 vendor
 ≤ 40 kB, Inter ≤ 110 kB, `alcaldias.geojson` ≤ 60 kB, `ageb_cdmx_simplificado.geojson` ~420 kB
 gzip, diferido). **Nuevo**: `prediccion_ageb.json` con capas por rama y celda de filtro pesa más
-que la versión de dos capas — presupuesto revisado a **≤ 1.1 MB gzip** (medido con datos reales
-tras Fase 6 de `correccion/action_plan.md`: 21.4 MB sin comprimir / ~1.02 MB gzip, 2 453 AGEB × 6
-segmentos de demanda + 17 celdas de oferta con proyección + 3 celdas de verde). El objetivo
-original de ≤ 600 kB (línea de base de la versión de dos capas) no es alcanzable sin sacrificar
-granularidad de celda o partir el archivo por rama; se decidió (equipo, Fase 6) mantener un solo
-archivo con la granularidad completa y documentar el presupuesto real en vez de fusionar celdas
-(el ahorro de fusionar 1-2 celdas marginales, p. ej. `media_superior_tecnica` +
-`educacion_especial` en educación, es de solo ~4 % — gzip ya comprime la estructura repetida entre
-celdas, así que fusionar no cierra la brecha). Sigue diferido igual que el GeoJSON de AGEB (primer
+que la versión de dos capas — presupuesto revisado a **≤ 1.5 MB gzip** (medido con datos reales
+tras Fase 6 + el cruce por sector de Fase 5 rework, `correccion/action_plan.md`: 44.2 MB sin
+comprimir / ~1.42 MB gzip, 2 453 AGEB × 6 segmentos de demanda + 41 celdas de oferta con proyección
+[educación 24 = 8 niveles × 3 sectores, salud 12 = 4 tipos × 3 sectores, comercio 5 sin sector] + 3
+celdas de verde). El objetivo original de ≤ 600 kB (línea de base de la versión de dos capas) no es
+alcanzable sin sacrificar granularidad de celda o partir el archivo por rama; se decidió (equipo,
+Fase 6) mantener un solo archivo con la granularidad completa —incluido el filtro Público/Privado
+de educación y salud que exige §10.11, aunque triplique esas dos ramas (publico/privado/
+no_especificado, este último necesario para que "Todos" siga sumando exactamente el total sin
+sector)— y documentar el presupuesto real en vez de recortar filtros. Sigue diferido igual que el GeoJSON de AGEB (primer
 hover con intención o reposo), así que no bloquea el render inicial ni el presupuesto estático de
 arriba. El **motor de composición cliente** (§17.4) debe recalcular oportunidad/disponibilidad e
 índice compuesto para las 2 453 AGEB en **< 80 ms** al mover un peso o un filtro (medido con
@@ -1094,19 +1106,32 @@ la página" (`correccion/frontend_requisitos.md` §22). Por eso el backend publi
 
 ### 17.3 Celdas de filtro por rama
 
-Detalle exacto de qué SCIAN/subcategoría compone cada `clave_celda`: `docs/metodologia.md` §10.6 y
-`plans/backend_plan.md` tarea B22. Resumen operativo para el frontend — el nombre de cada celda
-combina `{nivel_o_tipo}__{sector}` (sin sector para comercio y verde):
+Detalle exacto de qué SCIAN/subcategoría/columna compone cada celda: `docs/metodologia.md` §10.6 y
+`plans/backend_plan.md` tarea B22 (nombres y conteos reales, verificados contra datos reales —
+**difieren** de los que traía esta sección en una versión anterior del spec: `media_superior` →
+`media_superior_tecnica`, `recreacion_cultural` → `recreacion_cultura`, faltaba `varios_niveles`,
+y `primera_necesidad`/`clinica_consultorio`/`hospital`/`farmacia` no son los nombres reales). El
+nombre de cada celda combina `{nivel_o_tipo}__{sector}` en educación/salud (sin sector en comercio
+y verde, que nunca lo tuvieron en el dato crudo):
 
 | rama | celdas (nivel/tipo) | sector | horizontes |
 |---|---|---|---|
-| Educación | guarderia, preescolar, primaria, secundaria, media_superior, educacion_especial, recreacion_cultural | publico, privado | h1, h3 |
-| Salud | clinica_consultorio, hospital, salud_mental, farmacia | publico, privado | h1, h3 |
-| Comercio | primera_necesidad, supermercado, abarrotes, frutas_verduras, carnes_alimentos, farmacia | — | h1, h3 |
-| Verde | areas_verdes_recreativas, cobertura_verde, espacio_publico | — | sin horizonte, solo `nivel_base` |
+| Educación (24 celdas) | guarderia, preescolar, primaria, secundaria, educacion_especial, varios_niveles, media_superior_tecnica, recreacion_cultura | publico, privado, no_especificado | h1, h3 |
+| Salud (12 celdas) | clinicas, hospitales, salud_mental, farmacias | publico, privado, no_especificado | h1, h3 |
+| Comercio (5 celdas) | supermercados_minisupers, abarrotes, frutas_verduras, carnes_otros_alimentos, farmacias | — | h1, h3 |
+| Verde (3 celdas) | cobertura_verde, areas_recreativas, espacios_publicos | — | sin horizonte, solo `nivel_base` |
+
+`no_especificado` (DENUE no siempre clasifica el sector) se publica como celda propia, nunca se
+descarta: el filtro "Todos" de §10.11 suma las 3 celdas de sector, no solo público+privado — si
+sumara solo esas dos, "Todos" no reproduciría el total real de esa rama (`salud/farmacias` es el
+caso extremo: **0** establecimientos están clasificados público o privado, el 100% es
+`no_especificado`, así que "Farmacias" con "Todos" seleccionado depende enteramente de esa celda).
+"Comercios de primera necesidad" (§10.11.3) no es una celda del contrato: es un preset de cliente
+que selecciona `{supermercados_minisupers, abarrotes, frutas_verduras, carnes_otros_alimentos}`
+(todas las celdas de comercio excepto `farmacias`, que DENUE no clasifica como primera necesidad).
 
 Los filtros de §10.11 se traducen a un conjunto de claves de celda; "Todos" en un filtro selecciona
-todas las celdas de esa fila.
+todas las celdas de esa fila (las 3 de sector cuando aplica).
 
 ### 17.4 Motor de composición cliente (`frontend/js/composicion.js`)
 
