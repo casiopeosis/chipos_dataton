@@ -17,6 +17,8 @@ import { despachar as despacharEstado, ACCIONES } from "./estado.js";
 
 const ALTO_DETALLE_PX = 136;
 const TOP_N_DEFECTO = 20;
+/** Debounce del buscador de AGEB (§7.3: "buscador de AGEB por clave... debounce 120 ms"). */
+const DEBOUNCE_BUSCADOR_MS = 120;
 
 const ORDEN = Object.freeze({ VALOR: "valor", ALCALDIA: "alcaldia", CONFIANZA: "confianza" });
 const RANGO_CONFIANZA = Object.freeze({ alta: 0, media: 1, baja: 2 });
@@ -242,16 +244,59 @@ export function montarRanking(contenedor, filasIniciales, opciones = {}) {
   let topN = opciones.topN ?? TOP_N_DEFECTO;
   let temporizadorIntencion = null;
   let temporizadorRepliegue = null;
+  let consultaBuscador = "";
+  let temporizadorBuscador = null;
 
   const raiz = crear("div", { clase: "ranking-contenedor" });
+  const buscadorRaiz = crear("div", { clase: "ranking__buscador" });
+  const sinResultadosRaiz = crear("p", { clase: "ranking__sin-resultados" });
   const caption = crear("caption", { clase: "visualmente-oculto" });
   const thead = crear("thead");
   const tbody = crear("tbody");
   const tabla = crear("table", { clase: "ranking" }, [caption, thead, tbody]);
   const pieRaiz = crear("div", { clase: "ranking__pie" });
+  raiz.appendChild(buscadorRaiz);
+  raiz.appendChild(sinResultadosRaiz);
   raiz.appendChild(tabla);
   raiz.appendChild(pieRaiz);
   contenedor.appendChild(raiz);
+
+  // ------------------------------------------------------------------------------------------
+  // Buscador de AGEB por clave (§7.3): solo en vista de alcaldía, filtra sin red, debounce 120 ms.
+  // ------------------------------------------------------------------------------------------
+
+  function filasVisiblesPorBusqueda(filasOrdenadas) {
+    if (!config.enAlcaldia || consultaBuscador.trim() === "") return filasOrdenadas;
+    const consulta = consultaBuscador.trim().toLowerCase();
+    return filasOrdenadas.filter((f) => f.clave.toLowerCase().includes(consulta));
+  }
+
+  function renderBuscador() {
+    if (!config.enAlcaldia) {
+      reemplazarContenido(buscadorRaiz, []);
+      return;
+    }
+    const idCampo = "ranking-buscador-ageb";
+    const etiqueta = crear("label", { for: idCampo, clase: "ranking__buscador-etiqueta" }, [
+      textos.ranking.buscador.etiqueta,
+    ]);
+    const campo = crear("input", {
+      id: idCampo,
+      type: "search",
+      clase: "ranking__buscador-campo",
+      value: consultaBuscador,
+      autocomplete: "off",
+      oninput: (evento) => {
+        const valorActual = evento.target.value;
+        if (temporizadorBuscador !== null) window.clearTimeout(temporizadorBuscador);
+        temporizadorBuscador = window.setTimeout(() => {
+          consultaBuscador = valorActual;
+          renderCuerpo({ conFlip: false });
+        }, DEBOUNCE_BUSCADOR_MS);
+      },
+    });
+    reemplazarContenido(buscadorRaiz, [etiqueta, campo]);
+  }
 
   function etiquetaNivel() {
     return config.busqueda === "disponibilidad" ? textos.resumen.campo.disponibilidad : textos.resumen.campo.oportunidad;
@@ -451,7 +496,7 @@ export function montarRanking(contenedor, filasIniciales, opciones = {}) {
 
   function renderCuerpo({ conFlip = false } = {}) {
     const posicionesAntes = conFlip ? medirPosiciones() : null;
-    const filasOrdenadas = ordenarFilas(filas, orden);
+    const filasOrdenadas = filasVisiblesPorBusqueda(ordenarFilas(filas, orden));
     const visibles = filasOrdenadas.slice(0, topN);
     limpiar(tbody);
     for (const fila of visibles) {
@@ -460,6 +505,12 @@ export function montarRanking(contenedor, filasIniciales, opciones = {}) {
     }
     actualizarCaption(visibles.length);
     renderPie(filasOrdenadas.length);
+    reemplazarContenido(
+      sinResultadosRaiz,
+      config.enAlcaldia && consultaBuscador.trim() !== "" && filasOrdenadas.length === 0
+        ? [textos.ranking.buscador.sinResultados({ texto: consultaBuscador.trim() })]
+        : [],
+    );
     if (posicionesAntes) animarFlip(posicionesAntes);
   }
 
@@ -469,8 +520,12 @@ export function montarRanking(contenedor, filasIniciales, opciones = {}) {
 
   function actualizar(nuevasFilas, nuevasOpciones = {}) {
     if (Array.isArray(nuevasFilas)) filas = nuevasFilas.map(normalizarFila);
+    const cambioDeUniverso = typeof nuevasOpciones.enAlcaldia === "boolean" && nuevasOpciones.enAlcaldia !== config.enAlcaldia;
     if (typeof nuevasOpciones.enAlcaldia === "boolean") config.enAlcaldia = nuevasOpciones.enAlcaldia;
-    if (Object.prototype.hasOwnProperty.call(nuevasOpciones, "cveMun")) config.cveMun = nuevasOpciones.cveMun;
+    if (Object.prototype.hasOwnProperty.call(nuevasOpciones, "cveMun")) {
+      if (nuevasOpciones.cveMun !== config.cveMun) consultaBuscador = "";
+      config.cveMun = nuevasOpciones.cveMun;
+    }
     if (typeof nuevasOpciones.busqueda === "string") config.busqueda = nuevasOpciones.busqueda;
     if (Object.prototype.hasOwnProperty.call(nuevasOpciones, "topN") && typeof nuevasOpciones.topN === "number") {
       topN = nuevasOpciones.topN;
@@ -479,6 +534,7 @@ export function montarRanking(contenedor, filasIniciales, opciones = {}) {
       // en vez de conservar un "Ver más" que ya no corresponde al nuevo conjunto.
       topN = opciones.topN ?? TOP_N_DEFECTO;
     }
+    if (cambioDeUniverso) renderBuscador();
     renderEncabezado();
     renderCuerpo({ conFlip: false });
   }
@@ -488,6 +544,7 @@ export function montarRanking(contenedor, filasIniciales, opciones = {}) {
     raiz.remove();
   }
 
+  renderBuscador();
   renderEncabezado();
   renderCuerpo({ conFlip: false });
 

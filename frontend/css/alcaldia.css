@@ -1,329 +1,69 @@
 /*
- * alcaldia.css — vista de alcaldía: resumen, lista de AGEB, buscador (plans/frontend_specs.md
- * §7.3). Tarea F45. Valores de color, tipografía, espaciado y movimiento siempre vía
- * `tokens.css`; sin colores literales, sin `!important`.
+ * alcaldia.css — buscador de alcaldía por nombre (plans/frontend_specs.md §5.2, plan F55).
+ * Solo variables de tokens.css (CLAUDE.md, spec §4).
  */
 
-.alcaldia-contenedor {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e-4);
-}
-
-/* ------------------------------------------------------------------------------------------ */
-/* Resumen de 4 líneas, sin acordeón (§7.3)                                                     */
-/* ------------------------------------------------------------------------------------------ */
-
-.alcaldia__resumen {
+.alcaldia-buscador {
   display: flex;
   flex-direction: column;
   gap: var(--e-1);
-  padding-bottom: var(--e-3);
-  border-bottom: 1px solid var(--linea);
+  position: relative;
 }
 
-.alcaldia__resumen-linea {
-  margin: 0;
-  font-size: var(--t-cuerpo-tam);
-  line-height: var(--t-cuerpo-alto);
+.alcaldia-buscador__etiqueta {
+  font-size: calc(var(--t-nota-tam) * var(--escala));
   color: var(--tinta-2);
 }
 
-.alcaldia__resumen-linea--principal {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--e-3);
-  color: var(--tinta);
-}
-
-.alcaldia__resumen-nombre {
-  font-size: var(--t-h2-tam);
-  line-height: var(--t-h2-alto);
-  font-weight: var(--t-h2-peso);
-  letter-spacing: var(--t-h2-tracking);
-  text-transform: uppercase;
-  color: var(--tinta);
-}
-
-.alcaldia__resumen-veredicto {
-  font-weight: 500;
-}
-
-.alcaldia__resumen-cambio {
-  font-variant-numeric: tabular-nums;
-}
-
-.alcaldia__resumen-confianza {
-  color: var(--tinta-2);
-  font-size: var(--t-nota-tam);
-}
-
-.alcaldia__distribucion {
-  display: flex;
-  align-items: center;
-  gap: var(--e-2);
-  font-size: var(--t-nota-tam);
-}
-
-.alcaldia__distribucion-barra {
-  display: flex;
-  flex: 0 0 auto;
-  width: 160px;
-  height: 8px;
-  overflow: hidden;
+.alcaldia-buscador__campo {
+  padding: var(--e-1) var(--e-2);
   border: 1px solid var(--linea-fuerte);
-}
-
-.alcaldia__distribucion-segmento {
-  /* `flex-grow` real se fija en JS con `fijarEstilo()` (Web Animations API): la CSP del proyecto
-     (`style-src 'self'`) no permite un atributo `style`/custom property puesto desde JS. */
-  flex-grow: 0;
-  flex-shrink: 0;
-  flex-basis: 0;
-  height: 100%;
-}
-
-.alcaldia__distribucion-segmento--sube {
-  background: var(--sube-2);
-}
-
-.alcaldia__distribucion-segmento--se_mantiene {
-  background: var(--mantiene);
-}
-
-.alcaldia__distribucion-segmento--baja {
-  background: var(--baja-2);
-}
-
-.alcaldia__distribucion-segmento--sin_datos {
-  background: var(--sin-datos);
-  background-image: repeating-linear-gradient(
-    45deg,
-    var(--sin-datos-hachura) 0,
-    var(--sin-datos-hachura) 1px,
-    transparent 1px,
-    transparent 6px
-  );
-}
-
-/* ------------------------------------------------------------------------------------------ */
-/* Buscador (§7.3: "<input type='search'> con etiqueta visible")                                */
-/* ------------------------------------------------------------------------------------------ */
-
-.alcaldia__buscador-zona {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e-1);
-}
-
-.alcaldia__buscador-etiqueta {
-  font-size: var(--t-etiqueta-tam);
-  line-height: var(--t-etiqueta-alto);
-  font-weight: var(--t-etiqueta-peso);
-  letter-spacing: var(--t-etiqueta-tracking);
-  text-transform: uppercase;
-  color: var(--tinta-2);
-}
-
-.alcaldia__buscador-campo {
-  appearance: none;
-  box-sizing: border-box;
-  width: 100%;
-  height: 32px;
-  padding: 0 var(--e-2);
-  border: 1px solid var(--linea-fuerte);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  color: var(--tinta);
   background: var(--superficie);
-  color: var(--tinta);
-  font: inherit;
-  font-variant-numeric: tabular-nums;
 }
 
-.alcaldia__buscador-campo:focus-visible {
+.alcaldia-buscador__campo:focus-visible {
   outline: 2px solid var(--foco);
   outline-offset: 2px;
 }
 
-/* ------------------------------------------------------------------------------------------ */
-/* Lista de AGEB (§7.3: filas de 34 px, columnas AGEB · VEREDICTO · CAMBIO · CONF.)             */
-/* ------------------------------------------------------------------------------------------ */
-
-.alcaldia__lista-contenedor {
-  max-height: calc(12 * 34px + 32px);
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.alcaldia__lista-contenedor--expandida {
-  max-height: none;
-}
-
-.alcaldia__tabla {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.alcaldia__th--clave {
-  width: 40%;
-}
-
-.alcaldia__th--veredicto {
-  width: 26%;
-}
-
-.alcaldia__th--cambio {
-  width: 20%;
-  text-align: right;
-}
-
-.alcaldia__th--confianza {
-  width: 14%;
-  text-align: center;
-}
-
-thead .alcaldia__th {
-  height: 32px;
-  box-sizing: border-box;
-  padding: 0 var(--e-2);
-  border-bottom: 1px solid var(--linea);
-  font-size: var(--t-etiqueta-tam);
-  line-height: var(--t-etiqueta-alto);
-  font-weight: var(--t-etiqueta-peso);
-  letter-spacing: var(--t-etiqueta-tracking);
-  text-transform: uppercase;
-  color: var(--tinta-2);
-  text-align: left;
-  position: sticky;
-  top: 0;
-  background: var(--papel);
-  z-index: 1;
-}
-
-.alcaldia__th-boton {
-  appearance: none;
-  background: none;
-  border: none;
-  padding: 0;
+.alcaldia-buscador__resultados {
+  list-style: none;
   margin: 0;
-  font: inherit;
-  color: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--e-1);
+  padding: 0;
 }
 
-.alcaldia__th-boton:hover {
+.alcaldia-buscador__resultados:empty {
+  display: none;
+}
+
+.alcaldia-buscador__opcion {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--e-1) var(--e-2);
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-top: none;
   color: var(--tinta);
-}
-
-.alcaldia__th-boton:focus-visible {
-  outline: 2px solid var(--foco);
-  outline-offset: 2px;
-}
-
-.alcaldia__th[aria-sort="ascending"] .alcaldia__th-boton::after {
-  content: " \25B2"; /* ▲ */
-  font-size: 0.85em;
-}
-
-.alcaldia__th[aria-sort="descending"] .alcaldia__th-boton::after {
-  content: " \25BC"; /* ▼ */
-  font-size: 0.85em;
-}
-
-.alcaldia__fila {
-  height: 34px;
-  border-bottom: 1px solid var(--linea);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
   cursor: pointer;
 }
 
-.alcaldia__fila:hover,
-.alcaldia__fila:focus-visible,
-.alcaldia__fila--activa {
+.alcaldia-buscador__opcion:hover {
   background: var(--superficie-realzada);
 }
 
-.alcaldia__fila:focus-visible {
+.alcaldia-buscador__opcion:focus-visible {
   outline: 2px solid var(--foco);
   outline-offset: -2px;
 }
 
-.alcaldia__fila--sin-datos {
+.alcaldia-buscador__sin-resultados {
+  padding: var(--e-1) var(--e-2);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
   color: var(--tinta-3);
-}
-
-.alcaldia__celda {
-  box-sizing: border-box;
-  padding: 0 var(--e-2);
-  font-size: var(--t-cuerpo-tam);
-  line-height: var(--t-cuerpo-alto);
-  color: var(--tinta);
-  vertical-align: middle;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.alcaldia__celda--clave {
-  font-variant-numeric: tabular-nums;
-}
-
-.alcaldia__celda--veredicto {
-  font-weight: 500;
-}
-
-.alcaldia__celda--cambio {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.alcaldia__celda--confianza {
-  text-align: center;
-}
-
-.alcaldia__fila-vacia {
-  height: 68px;
-}
-
-.alcaldia__celda--vacia {
-  text-align: center;
-  color: var(--tinta-3);
-  white-space: normal;
-}
-
-/* ------------------------------------------------------------------------------------------ */
-/* "Ver los {n} AGEB ↓" (§7.3: expande dentro del mismo contenedor con scroll, sin virtualizar) */
-/* ------------------------------------------------------------------------------------------ */
-
-.alcaldia__expandir-zona {
-  display: flex;
-  justify-content: center;
-}
-
-.alcaldia__expandir {
-  appearance: none;
-  background: none;
-  border: none;
-  padding: var(--e-2) 0;
-  margin: 0;
-  font-size: var(--t-etiqueta-tam);
-  font-weight: var(--t-etiqueta-peso);
-  letter-spacing: var(--t-etiqueta-tracking);
-  text-transform: uppercase;
-  color: var(--tinta-2);
-  cursor: pointer;
-}
-
-.alcaldia__expandir:hover {
-  color: var(--tinta);
-  text-decoration: underline;
-}
-
-.alcaldia__expandir:focus-visible {
-  outline: 2px solid var(--foco);
-  outline-offset: 2px;
 }

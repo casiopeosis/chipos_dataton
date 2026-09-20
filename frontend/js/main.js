@@ -43,6 +43,8 @@ import { montarBusqueda } from "./busqueda.js";
 import { montarPrioridades } from "./prioridades.js";
 import { montarRiesgo, FACTOR_CONFIANZA_RIESGO } from "./riesgo.js";
 import { montarFiltros } from "./filtros.js";
+import { montarAlcaldia } from "./alcaldia.js";
+import { montarFicha } from "./ficha.js";
 
 // Rutas planas bajo frontend/data/, que `make frontend-datos` llena con copias de
 // data/reference/ y data/outputs/ (data/ es solo lectura, CLAUDE.md).
@@ -317,6 +319,16 @@ function ramaPrincipalDeFila(oPorRama, pesos) {
 // ---------------------------------------------------------------------------------------------
 
 function pintarVistaPrincipal(instancias, composicion, datos, nombresAlcaldia, estado) {
+  const esFicha = estado.vista === VISTA.AGEB && Boolean(estado.cvegeo);
+  instancias.resumenHost.hidden = esFicha;
+  instancias.rankingHost.hidden = esFicha;
+  instancias.fichaHost.hidden = !esFicha;
+
+  if (esFicha) {
+    pintarFicha(instancias.ficha, composicion, datos, nombresAlcaldia, estado);
+    return;
+  }
+
   const enAlcaldia = estado.vista !== VISTA.CIUDAD;
   const clavesAgregado = enAlcaldia
     ? composicion.claves.filter((c) => datos.capas.demanda[c]?.cve_mun === estado.cve_mun)
@@ -371,6 +383,44 @@ function pintarVistaPrincipal(instancias, composicion, datos, nombresAlcaldia, e
     enAlcaldia,
     cveMun: estado.cve_mun,
     busqueda: estado.busqueda,
+  });
+}
+
+/** Ficha de zona (§7.4): Nivel 1 de UNA sola AGEB (nunca agregado, a diferencia de §6.1/§6.3). */
+function pintarFicha(fichaInstancia, composicion, datos, nombresAlcaldia, estado) {
+  const registro = composicion.porClave.get(estado.cvegeo);
+  const registroDatos = datos.capas.demanda[estado.cvegeo];
+  const cveMun = registroDatos?.cve_mun ?? estado.cve_mun;
+  const nombreAlcaldia = nombresAlcaldia.get(cveMun) ?? cveMun ?? "";
+  const etiquetaNivel = estado.busqueda === BUSQUEDA.DISPONIBILIDAD
+    ? textos.resumen.campo.disponibilidad
+    : textos.resumen.campo.oportunidad;
+  const poblacionTexto = textos.poblacion.nombre[estado.poblacion];
+  const anios = composicion.horizonteEntrada?.anios ?? "";
+
+  const segmento = registroDatos?.segmentos?.[estado.poblacion] ?? registroDatos?.segmentos?.[SEGMENTO_POR_OMISION];
+  const motivoSinDatosCodigo = segmento?.motivo_sin_datos ?? null;
+
+  const motivos = RAMAS.map((rama) => ({ rama, tercil: registro?.tercilPorRama?.[rama] ?? "sin_datos" }));
+  const ramasIncidencia = RAMAS
+    .filter((rama) => registro && !Number.isNaN(registro.oPorRama[rama]))
+    .sort((a, b) => estado.pesos[b] * registro.oPorRama[b] - estado.pesos[a] * registro.oPorRama[a])
+    .slice(0, 2);
+
+  fichaInstancia.actualizar({
+    cvegeo: estado.cvegeo,
+    alcaldiaNombre: nombreAlcaldia,
+    motivoSinDatosCodigo,
+    resumen: {
+      titulo: textos.resumen.tituloAlcaldia({ alcaldia: nombreAlcaldia, poblacion: poblacionTexto, h: anios }),
+      poblacion: poblacionTexto,
+      horizonte: textos.horizonte.etiquetaAnios(anios),
+      etiquetaNivel,
+      tercil: registro?.tercil ?? "sin_datos",
+      confianza: registro?.confianza ?? "baja",
+      ramasIncidencia,
+      motivos,
+    },
   });
 }
 
@@ -432,25 +482,34 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
   limpiar(vistaPrincipal);
   const resumenHost = crear("div", { clase: "vista-principal__resumen" });
   const rankingHost = crear("div", { clase: "vista-principal__ranking" });
+  const fichaHost = crear("div", { clase: "vista-principal__ficha", hidden: true });
   vistaPrincipal.appendChild(resumenHost);
   vistaPrincipal.appendChild(rankingHost);
+  vistaPrincipal.appendChild(fichaHost);
   const instanciasVistaPrincipal = {
     resumen: montarResumen(resumenHost),
     ranking: montarRanking(rankingHost, []),
+    ficha: montarFicha(fichaHost),
+    resumenHost,
+    rankingHost,
+    fichaHost,
   };
 
   if (panelConfiguracion) {
     limpiar(panelConfiguracion);
+    const alcaldiaHost = crear("div", { clase: "panel-configuracion__alcaldia" });
     const poblacionHost = crear("div", { clase: "panel-configuracion__poblacion" });
     const busquedaHost = crear("div", { clase: "panel-configuracion__busqueda" });
     const prioridadesHost = crear("div", { clase: "panel-configuracion__prioridades" });
     const filtrosHost = crear("div", { clase: "panel-configuracion__filtros" });
     const riesgoHost = crear("div", { clase: "panel-configuracion__riesgo" });
+    panelConfiguracion.appendChild(alcaldiaHost);
     panelConfiguracion.appendChild(poblacionHost);
     panelConfiguracion.appendChild(busquedaHost);
     panelConfiguracion.appendChild(prioridadesHost);
     panelConfiguracion.appendChild(filtrosHost);
     panelConfiguracion.appendChild(riesgoHost);
+    montarAlcaldia(alcaldiaHost, nombresAlcaldia);
     montarPoblacion(poblacionHost);
     montarBusqueda(busquedaHost);
     montarPrioridades(prioridadesHost);

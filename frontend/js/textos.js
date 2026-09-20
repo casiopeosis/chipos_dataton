@@ -65,6 +65,15 @@ const navegacion = {
 };
 
 // ---------------------------------------------------------------------------------------------
+// §5.2 Buscador de alcaldía (siempre visible)
+// ---------------------------------------------------------------------------------------------
+
+const buscadorAlcaldia = {
+  etiqueta: 'Selecciona una alcaldía en el mapa o búscala por nombre.',
+  sinResultados: (v) => interpolar('Ninguna alcaldía coincide con «{texto}».', v),
+};
+
+// ---------------------------------------------------------------------------------------------
 // §9 Vista de mapa (vista general + 4 ramas)
 // ---------------------------------------------------------------------------------------------
 
@@ -336,8 +345,11 @@ const ranking = {
 // ---------------------------------------------------------------------------------------------
 
 const ficha = {
-  ubicacion: (v) => interpolar('{alcaldia} · {tipo}', v),
-  tipoAgeb: { urbana: 'Urbana', rural: 'Rural' },
+  // "{tipo}" (urbana/rural, §7.4 de la versión anterior) se retiró: el contrato no trae un
+  // indicador urbano/rural fuera del motivo "rural" de `motivosSinDatos` (solo aparece cuando la
+  // zona además es sin_datos) -- no hay una columna que lo dé siempre, así que la ubicación usa
+  // la clave AGEB en su lugar, dato que sí siempre existe (CLAUDE.md: no inventar datos).
+  ubicacion: (v) => interpolar('{alcaldia} · AGEB {cvegeo}', v),
   oportunidadLabel: 'Oportunidad relativa',
   disponibilidadLabel: 'Disponibilidad relativa',
   confianzaLabel: 'Confianza',
@@ -704,6 +716,7 @@ const pie = {
 export const textos = {
   producto,
   navegacion,
+  buscadorAlcaldia,
   vista,
   busqueda,
   poblacion,

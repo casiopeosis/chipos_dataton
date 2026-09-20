@@ -1,140 +1,22 @@
 /*
- * ficha.css — ficha de AGEB (plans/frontend_specs.md §7.4). Tarea F50. Solo variables de
- * `tokens.css`, sin `!important`.
+ * ficha.css — ficha de zona AGEB, Nivel 1 (plans/frontend_specs.md §7.4, plan F60). El contenido
+ * de campos (`<dl>`) lo pinta `resumen.css`/`resumen.js` (reutilizado); aquí solo la ubicación y
+ * el motivo de sin_datos. Solo variables de tokens.css (CLAUDE.md, spec §4).
  */
 
-.ficha-contenedor {
-  display: flex;
-  flex-direction: column;
-  gap: var(--esp-3, 16px);
-  padding: var(--esp-4, 20px);
-  background: var(--superficie);
-  color: var(--tinta);
-}
-
-.ficha__volver {
-  align-self: flex-start;
-  background: none;
-  border: none;
-  color: var(--tinta-2);
-  font: inherit;
-  cursor: pointer;
-  padding: 4px 0;
-}
-
-.ficha__volver:hover,
-.ficha__volver:focus-visible {
-  color: var(--tinta);
-}
-
 .ficha__ubicacion {
-  margin: 0;
-  color: var(--tinta-3);
-  font-size: var(--t-nota-tam);
+  margin: 0 0 var(--e-1);
+  font-size: calc(var(--t-subtitulo-tam) * var(--escala));
+  color: var(--tinta-2);
 }
 
-.ficha__clave {
-  margin: 2px 0 0;
-  font-size: var(--t-h2-tam);
-  font-weight: var(--t-h2-peso);
-}
-
-.ficha__cifras {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.ficha__linea {
-  margin: 0;
-  font-size: var(--t-cuerpo-tam);
-  line-height: var(--t-cuerpo-alto);
-}
-
-.ficha__linea--principal {
-  display: flex;
-  align-items: baseline;
-  gap: var(--esp-3, 16px);
-  font-size: var(--t-h2-tam);
-}
-
-.ficha__veredicto {
-  font-weight: 600;
-}
-
-.ficha__linea--motivo {
+.ficha__motivo {
+  margin: 0 0 var(--e-4);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
   color: var(--tinta-3);
 }
 
-.ficha__zona-grafica {
-  min-height: 168px;
-}
-
-.ficha__grafica {
+.ficha__motivo:empty {
+  display: none;
   margin: 0;
-}
-
-.ficha-grafica__svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.ficha-grafica__eje-linea,
-.ficha-grafica__eje-marca {
-  stroke: var(--linea);
-  stroke-width: 1;
-}
-
-.ficha-grafica__eje-texto {
-  fill: var(--tinta-3);
-  font-size: var(--t-etiqueta-tam);
-}
-
-.ficha-grafica__tramo-solido {
-  stroke: var(--tinta);
-  stroke-width: 2;
-}
-
-.ficha-grafica__tramo-punteado {
-  stroke: var(--tinta-3);
-  stroke-width: 1.5;
-  stroke-dasharray: 3 3;
-}
-
-.ficha-grafica__proyeccion {
-  stroke-width: 2;
-  stroke-dasharray: none;
-}
-
-.ficha-grafica__regla-hoy {
-  stroke: var(--linea-fuerte);
-  stroke-dasharray: 2 2;
-}
-
-.ficha-grafica__regla-etiqueta {
-  fill: var(--tinta-3);
-  font-size: var(--t-etiqueta-tam);
-}
-
-.ficha-grafica__punto {
-  fill: var(--tinta);
-}
-
-.ficha-grafica__horizonte {
-  fill: var(--papel);
-}
-
-.ficha-grafica__horizonte-etiqueta {
-  fill: var(--tinta-2);
-  font-size: var(--t-etiqueta-tam);
-}
-
-.ficha__nota-degradacion {
-  margin: 0;
-  padding: var(--esp-3, 16px);
-  background: var(--esqueleto);
-  color: var(--tinta-3);
-  font-size: var(--t-nota-tam);
-  border-radius: 2px;
 }

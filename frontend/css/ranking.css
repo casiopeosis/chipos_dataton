@@ -10,6 +10,46 @@
   overflow-x: auto;
 }
 
+.ranking__buscador {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+  margin-bottom: var(--e-3);
+}
+
+.ranking__buscador:empty {
+  display: none;
+}
+
+.ranking__buscador-etiqueta {
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-2);
+}
+
+.ranking__buscador-campo {
+  padding: var(--e-1) var(--e-2);
+  border: 1px solid var(--linea-fuerte);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  color: var(--tinta);
+  background: var(--superficie);
+}
+
+.ranking__buscador-campo:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.ranking__sin-resultados {
+  margin: 0 0 var(--e-3);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}
+
+.ranking__sin-resultados:empty {
+  display: none;
+}
+
 .ranking {
   width: 100%;
   border-collapse: collapse;
