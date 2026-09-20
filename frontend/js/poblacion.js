@@ -8,6 +8,7 @@ import { crear, texto as nodoTexto, reemplazarContenido } from "./dom.js";
 import { textos } from "./textos.js";
 import { SEGMENTOS_DEMANDA } from "./config.js";
 import { despachar, suscribir, obtenerEstado, ACCIONES } from "./estado.js";
+import { crearAyuda } from "./ayuda.js";
 
 let contador = 0;
 
@@ -21,6 +22,11 @@ export function montarPoblacion(contenedor) {
   contador += 1;
   const nombreGrupo = `poblacion-${contador}`;
   const entradas = new Map();
+
+  const titulo = crear("div", { clase: "poblacion__titulo" }, [
+    crear("span", {}, [textos.poblacion.controlEtiqueta]),
+    crearAyuda("poblacionObjetivo", textos.poblacion.controlEtiqueta),
+  ]);
 
   const grupo = crear("div", {
     clase: "poblacion",
@@ -60,7 +66,7 @@ export function montarPoblacion(contenedor) {
   // para que se pueda anticipar antes de elegirlo).
   const nota = crear("p", { clase: "poblacion__nota" }, [textos.poblacion.notaAdolescencia]);
 
-  reemplazarContenido(contenedor, [grupo, nota]);
+  reemplazarContenido(contenedor, [titulo, grupo, nota]);
 
   function reflejarActiva(estado) {
     for (const [segmento, entrada] of entradas) {

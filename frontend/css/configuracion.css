@@ -18,6 +18,15 @@
  * Población objetivo (§5.3): radiogroup de 6 opciones.
  * -------------------------------------------------------------------- */
 
+.poblacion__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  margin-bottom: var(--e-2);
+  font-size: calc(var(--t-subtitulo-tam) * var(--escala));
+  color: var(--tinta-2);
+}
+
 .poblacion {
   display: flex;
   flex-wrap: wrap;
@@ -63,6 +72,7 @@
 
 .busqueda__item {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: var(--e-2);
   margin-bottom: var(--e-1);
@@ -79,6 +89,7 @@
 }
 
 .busqueda__ayuda {
+  flex-basis: 100%;
   margin: 0;
   font-size: calc(var(--t-nota-tam) * var(--escala));
   color: var(--tinta-3);

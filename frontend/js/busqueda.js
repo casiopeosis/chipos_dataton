@@ -9,6 +9,7 @@
 import { crear, texto as nodoTexto, reemplazarContenido } from "./dom.js";
 import { textos } from "./textos.js";
 import { despachar, suscribir, obtenerEstado, ACCIONES, BUSQUEDA } from "./estado.js";
+import { crearAyuda } from "./ayuda.js";
 
 /** Orden fijo del selector (spec §5.5: oportunidad primero, valor inicial del escenario §5.6). */
 const ORDEN_BUSQUEDA = Object.freeze([BUSQUEDA.OPORTUNIDAD, BUSQUEDA.DISPONIBILIDAD]);
@@ -55,9 +56,12 @@ export function montarBusqueda(contenedor) {
     );
 
     const ayuda = crear("p", { clase: "busqueda__ayuda" }, [textos.busqueda.ayuda[clave]]);
+    const iconoAyuda = crearAyuda(clave, textos.busqueda.nombre[clave]);
 
     entradas.set(clave, entrada);
-    grupo.appendChild(crear("div", { clase: "busqueda__item" }, [entrada, etiqueta, ayuda]));
+    grupo.appendChild(
+      crear("div", { clase: "busqueda__item" }, [entrada, etiqueta, iconoAyuda, ayuda]),
+    );
   }
 
   reemplazarContenido(contenedor, [grupo]);

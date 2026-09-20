@@ -11,6 +11,7 @@ import { crear, reemplazarContenido } from "./dom.js";
 import { textos } from "./textos.js";
 import { RAMAS } from "./composicion.js";
 import { despachar, suscribir, obtenerEstado, ACCIONES } from "./estado.js";
+import { crearAyuda } from "./ayuda.js";
 
 const PESO_MINIMO = 1;
 const PESO_MAXIMO = 5;
@@ -65,7 +66,10 @@ function crearCirculos(rama, pesoActual, onCambiar) {
  */
 export function montarPrioridades(contenedor) {
   const raiz = crear("section", { clase: "prioridades", "aria-labelledby": "prioridades-titulo" });
-  const titulo = crear("h3", { id: "prioridades-titulo", clase: "prioridades__titulo" }, [textos.prioridades.titulo]);
+  const titulo = crear("h3", { id: "prioridades-titulo", clase: "prioridades__titulo" }, [
+    textos.prioridades.titulo,
+    crearAyuda("prioridades", textos.prioridades.titulo),
+  ]);
   raiz.appendChild(titulo);
 
   const estadoInicial = obtenerEstado();
