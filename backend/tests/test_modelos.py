@@ -13,7 +13,7 @@ import pandas as pd
 import pytest
 import statsmodels.api as sm
 
-from chipos.config import HORIZONTES, SEMILLA, T_2010, T_2020, T_HOR
+from chipos.config import HORIZONTES, HORIZONTES_OFERTA, SEMILLA, T_2010, T_2020, T_HOR
 from chipos.io import CORTES_OFERTA
 from chipos.modelos import (
     Simulacion,
@@ -606,7 +606,7 @@ class TestAgregarAlcaldia:
 
 
 # ---------------------------------------------------------------------------
-# resumir: horizontes de reporte 3/5/7 años (contrato v1.2)
+# resumir: horizontes de reporte 1/3/5 años (`correccion/rubrica.md` §5)
 # ---------------------------------------------------------------------------
 
 
@@ -618,34 +618,34 @@ class TestResumirHorizontes:
         sim = simular_demanda(panel_demanda_sintetico, conapo_anual_dos_mun, rng, n_sim=300)
         res = resumir(sim, HORIZONTES)
 
-        assert set(res.keys()) == {"h3", "h5", "h7"}
+        assert set(res.keys()) == {"h1", "h3", "h5"}
+        pd.testing.assert_series_equal(
+            res["h1"]["veredicto"], res["h3"]["veredicto"], check_names=False
+        )
         pd.testing.assert_series_equal(
             res["h3"]["veredicto"], res["h5"]["veredicto"], check_names=False
         )
         pd.testing.assert_series_equal(
-            res["h3"]["veredicto"], res["h7"]["veredicto"], check_names=False
+            res["h1"]["confianza"], res["h3"]["confianza"], check_names=False
         )
         pd.testing.assert_series_equal(
             res["h3"]["confianza"], res["h5"]["confianza"], check_names=False
         )
         pd.testing.assert_series_equal(
-            res["h3"]["confianza"], res["h7"]["confianza"], check_names=False
-        )
-        pd.testing.assert_series_equal(
             res["h3"]["tasa_anual_pct"], res["h5"]["tasa_anual_pct"], check_names=False
         )
 
-        # `delta_pct` crece en magnitud (valor absoluto) de h3 -> h5 -> h7
+        # `delta_pct` crece en magnitud (valor absoluto) de h1 -> h3 -> h5
         # (monotonía de `exp`, mismo signo de la tasa en cada unidad).
+        mag_h1 = res["h1"]["delta_pct"].abs().to_numpy()
         mag_h3 = res["h3"]["delta_pct"].abs().to_numpy()
         mag_h5 = res["h5"]["delta_pct"].abs().to_numpy()
-        mag_h7 = res["h7"]["delta_pct"].abs().to_numpy()
+        assert np.all(mag_h3 >= mag_h1)
         assert np.all(mag_h5 >= mag_h3)
-        assert np.all(mag_h7 >= mag_h5)
 
-    def test_oferta_solo_admite_h3(self, panel_oferta_para_ajuste: pd.DataFrame) -> None:
+    def test_oferta_admite_h1_y_h3_nunca_h5(self, panel_oferta_para_ajuste: pd.DataFrame) -> None:
         ajuste = ajustar_oferta(panel_oferta_para_ajuste)
         rng = np.random.default_rng(SEMILLA)
         sim = simular_oferta(ajuste, rng, n_sim=200)
-        res = resumir(sim, {"h3": HORIZONTES["h3"]})
-        assert set(res.keys()) == {"h3"}
+        res = resumir(sim, {h: HORIZONTES[h] for h in HORIZONTES_OFERTA})
+        assert set(res.keys()) == {"h1", "h3"}

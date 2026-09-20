@@ -1,4 +1,4 @@
-"""Tests de `chipos.exportar` (B11: contrato v1.2, horizontes h3/h5/h7).
+"""Tests de `chipos.exportar` (B11: contrato v1.2, horizontes h1/h3/h5).
 
 Usa fixtures sintéticas pequeñas (no lee `data/` real, salvo el marcador
 `@pytest.mark.datos` de `test_pipeline_datos_reales`, que se salta si falta
@@ -118,10 +118,11 @@ def pipeline(universo, panel_d, panel_o, conapo):
     sim_d_mun = agregar_alcaldia(sim_d)
     sim_o_mun = agregar_alcaldia(sim_o)
 
+    horizontes_oferta = {h: HORIZONTES[h] for h in HORIZONTES_OFERTA}
     res_d = resumir(sim_d, HORIZONTES)
-    res_o = resumir(sim_o, {"h3": HORIZONTES["h3"]})
+    res_o = resumir(sim_o, horizontes_oferta)
     res_d_mun = resumir(sim_d_mun, HORIZONTES)
-    res_o_mun = resumir(sim_o_mun, {"h3": HORIZONTES["h3"]})
+    res_o_mun = resumir(sim_o_mun, horizontes_oferta)
 
     motivos_d = motivos_demanda_por_clave(panel_d)
     ajuste = ajustar_oferta(panel_o)
@@ -167,7 +168,7 @@ def pipeline(universo, panel_d, panel_o, conapo):
     distribucion_oferta = construir_distribucion_ageb(capa_oferta, list(HORIZONTES_OFERTA))
 
     resumen_cdmx_d = resumir(_simulacion_cdmx(sim_d), HORIZONTES)
-    resumen_cdmx_o = resumir(_simulacion_cdmx(sim_o), {"h3": HORIZONTES["h3"]})
+    resumen_cdmx_o = resumir(_simulacion_cdmx(sim_o), horizontes_oferta)
     agregado_cdmx = construir_agregado_cdmx(resumen_cdmx_d, resumen_cdmx_o)
 
     salida_alcaldia = construir_salida_alcaldia(
@@ -210,11 +211,11 @@ class TestConstruirCapa:
         assert registro["n_obs"] == 3
         assert registro["h"]["h3"]["veredicto"] == "sin_datos"
 
-    def test_oferta_solo_trae_h3(self, pipeline) -> None:
+    def test_oferta_solo_trae_h1_y_h3(self, pipeline) -> None:
         salida_ageb, _ = pipeline
         for registro in salida_ageb["capas"]["oferta"].values():
-            assert list(registro["h"].keys()) == ["h3"]
-            assert registro["horizontes_disponibles"] == ["h3"]
+            assert list(registro["h"].keys()) == ["h1", "h3"]
+            assert registro["horizontes_disponibles"] == ["h1", "h3"]
 
     def test_demanda_no_trae_horizontes_disponibles(self, pipeline) -> None:
         salida_ageb, _ = pipeline
@@ -256,7 +257,7 @@ class TestValidarContrato:
         salida_ageb, _ = pipeline
         malo = copy.deepcopy(salida_ageb)
         for registro in malo["capas"]["demanda"].values():
-            del registro["h"]["h7"]
+            del registro["h"]["h5"]
         with pytest.raises(ErrorContrato):
             validar_contrato(malo, "ageb")
 

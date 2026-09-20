@@ -62,18 +62,20 @@ SEMILLA: int = 20260918
 T_2010: float = 2010.44
 T_2020: float = 2020.20
 
-# Fecha base de reporte (mediados de 2026) y horizontes de 3, 5 y 7 años
-# (contrato v1.2, `plans/frontend_specs.md` §17-18): `delta_pct`/`ic95` se
-# miden desde `T_BASE`, no desde el censo 2020 (ver `resumir()` en
-# `modelos.py` y `docs/metodologia.md` §2/§7).
+# Fecha base de reporte (mediados de 2026) y horizontes de 1, 3 y 5 años
+# (`correccion/rubrica.md` §5: "uno, tres o cinco años"; contrato se queda en
+# v1.2 hasta que las Fases 4-6 completen el salto a v1.4, `plans/backend_plan.md`
+# tarea B13): `delta_pct`/`ic95` se miden desde `T_BASE`, no desde el censo
+# 2020 (ver `resumir()` en `modelos.py` y `docs/metodologia.md` §2/§7).
 T_BASE: float = 2026.5
-HORIZONTES: dict[str, float] = {"h3": T_BASE + 3, "h5": T_BASE + 5, "h7": T_BASE + 7}
-T_HOR: float = HORIZONTES["h7"]  # ancla del control CONAPO (horizonte más lejano)
+HORIZONTES: dict[str, float] = {"h1": T_BASE + 1, "h3": T_BASE + 3, "h5": T_BASE + 5}
+T_HOR: float = HORIZONTES["h5"]  # ancla del control CONAPO (horizonte más lejano)
 
-# La capa de oferta solo reporta el horizonte más cercano (metodología §6:
-# la caída 2024-11 y el tope de confianza `media` no justifican calibrar
-# más allá de 3 años).
-HORIZONTES_OFERTA: tuple[str, ...] = ("h3",)
+# La oferta reporta h1 y h3, no h5 (metodología §6.3): no tiene control
+# externo y su único ancla temporal es el propio levantamiento DENUE; 3 años
+# desde la fecha base sigue siendo el techo defendible, pero 1 año sí es
+# reportable y la rúbrica lo pide.
+HORIZONTES_OFERTA: tuple[str, ...] = ("h1", "h3")
 
 # Banda muerta de "se_mantiene": ±1 %/año sobre la tasa proyectada.
 DELTA: float = 0.01

@@ -571,16 +571,16 @@ def resumir(
     tiene λ), se considera estable por definición.
 
     `horizontes`: `{clave: t_horizonte}` en años decimales absolutos (p. ej.
-    `config.HORIZONTES` para demanda, `{"h3": config.HORIZONTES["h3"]}` para
-    oferta). Para cada horizonte se calcula `horizonte_reporte = t_horizonte
-    - config.T_BASE` y `delta_draws_pct = 100*(exp(r*horizonte_reporte) - 1)`
-    (`delta_pct`/`ic95`/`tasa_anual_pct` se miden desde `T_BASE`, NO desde
-    `T_2020` ni desde `sim.horizonte_control`).
+    `config.HORIZONTES` para demanda, `{h: config.HORIZONTES[h] for h in
+    config.HORIZONTES_OFERTA}` para oferta). Para cada horizonte se calcula
+    `horizonte_reporte = t_horizonte - config.T_BASE` y `delta_draws_pct =
+    100*(exp(r*horizonte_reporte) - 1)` (`delta_pct`/`ic95`/`tasa_anual_pct`
+    se miden desde `T_BASE`, NO desde `T_2020` ni desde `sim.horizonte_control`).
 
     Importante: el veredicto y la confianza NO dependen del horizonte de
     reporte (solo de la tasa `r` simulada, que es una sola por unidad y
-    réplica); por diseño salen IGUALES en las 3 tablas devueltas (`h3`,
-    `h5`, `h7`). Lo único que cambia entre horizontes es `delta_pct`/`ic95`
+    réplica); por diseño salen IGUALES en todas las tablas devueltas (`h1`,
+    `h3`, `h5`). Lo único que cambia entre horizontes es `delta_pct`/`ic95`
     /`tasa_anual_pct` (crecen en magnitud con el horizonte, vía `exp`).
 
     Devuelve `dict[str, pd.DataFrame]`, una entrada por clave de

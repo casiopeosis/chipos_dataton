@@ -458,10 +458,10 @@ prueba("integración: prediccion_ageb.json (mock v1.2 base) valida y adapta con 
   afirmarIgual(json.version, "1.2");
   afirmar(typeof json.fecha_base === "string" && json.fecha_base !== "");
   const adaptado = adaptarV12(json, NIVEL.AGEB);
-  afirmarIgual(adaptado.horizontes.map((h) => h.clave), ["h3", "h5", "h7"]);
+  afirmarIgual(adaptado.horizontes.map((h) => h.clave), ["h1", "h3", "h5"]);
   const primeraClave = Object.keys(adaptado.capas.demanda)[0];
   const registro = adaptado.capas.demanda[primeraClave];
-  afirmar(registro.h.h3 !== undefined && registro.h.h5 !== undefined && registro.h.h7 !== undefined);
+  afirmar(registro.h.h1 !== undefined && registro.h.h3 !== undefined && registro.h.h5 !== undefined);
 });
 
 prueba("integración: prediccion_ageb_v11_invalido.json falla la validación por versión", async () => {
@@ -842,28 +842,28 @@ prueba("montarControlCapas: nombre de capa consistente con textos.js (fuente ún
 
 const HORIZONTE_UNICO = [{ clave: "hU", anios: null, fecha: "2027-06" }];
 const TRES_HORIZONTES = [
+  { clave: "h1", anios: 1, fecha: "2027-06" },
   { clave: "h3", anios: 3, fecha: "2029-06" },
   { clave: "h5", anios: 5, fecha: "2031-06" },
-  { clave: "h7", anios: 7, fecha: "2033-06" },
 ];
 
 prueba("ordenarHorizontes: ordena por 'anios' ascendente sin mutar la lista original", () => {
   const desordenada = [TRES_HORIZONTES[2], TRES_HORIZONTES[0], TRES_HORIZONTES[1]];
   const ordenada = ordenarHorizontes(desordenada);
-  afirmarIgual(ordenada.map((h) => h.clave), ["h3", "h5", "h7"]);
-  afirmarIgual(desordenada.map((h) => h.clave), ["h7", "h3", "h5"], "no debe mutar la lista de entrada");
+  afirmarIgual(ordenada.map((h) => h.clave), ["h1", "h3", "h5"]);
+  afirmarIgual(desordenada.map((h) => h.clave), ["h5", "h1", "h3"], "no debe mutar la lista de entrada");
 });
 
 prueba("indiceHorizonteActivo: encuentra el índice de la clave activa, o 0 si no existe", () => {
   const ordenada = ordenarHorizontes(TRES_HORIZONTES);
-  afirmarIgual(indiceHorizonteActivo(ordenada, "h5"), 1);
+  afirmarIgual(indiceHorizonteActivo(ordenada, "h3"), 1);
   afirmarIgual(indiceHorizonteActivo(ordenada, "no-existe"), 0);
 });
 
-prueba("textoValorHorizonte: '5 años, a mediados de 2031' para una entrada con años", () => {
-  const texto5 = textoValorHorizonte({ clave: "h5", anios: 5, fecha: "2031-06" });
-  afirmar(texto5.includes("5 años"), `debe mencionar '5 años', obtuvo: ${texto5}`);
-  afirmar(texto5.includes("2031"), `debe mencionar el año, obtuvo: ${texto5}`);
+prueba("textoValorHorizonte: '3 años, a mediados de 2029' para una entrada con años", () => {
+  const texto3 = textoValorHorizonte({ clave: "h3", anios: 3, fecha: "2029-06" });
+  afirmar(texto3.includes("3 años"), `debe mencionar '3 años', obtuvo: ${texto3}`);
+  afirmar(texto3.includes("2029"), `debe mencionar el año, obtuvo: ${texto3}`);
 });
 
 prueba("textoValorHorizonte: sin 'anios' (horizonte único v1.1) usa la nota de degradación", () => {
@@ -893,18 +893,18 @@ prueba("montarControlHorizonte: con 3 horizontes el slider se habilita y aria-va
   afirmar(input.disabled === false, "con 3 horizontes el slider no debe quedar disabled");
   afirmarIgual(input.min, "0");
   afirmarIgual(input.max, "2");
-  afirmarIgual(input.value, "0");
+  afirmarIgual(input.value, "1");
   afirmar(input.getAttribute("aria-valuetext").includes("2029"), "aria-valuetext inicial debe ser h3 (2029)");
 
   input.value = "2";
   input.dispatchEvent(new Event("input", { bubbles: true }));
   afirmar(
-    input.getAttribute("aria-valuetext").includes("2033"),
+    input.getAttribute("aria-valuetext").includes("2031"),
     `aria-valuetext debe actualizarse en cada input, obtuvo: ${input.getAttribute("aria-valuetext")}`,
   );
 
   const marcaActiva = contenedor.querySelector(".control-horizonte__marca--activa .control-horizonte__marca-anio");
-  afirmar(marcaActiva.textContent === "2033", "la marca activa debe reflejar el índice seleccionado");
+  afirmar(marcaActiva.textContent === "2031", "la marca activa debe reflejar el índice seleccionado");
 });
 
 prueba("montarControlHorizonte: mover el control despacha CAMBIAR_HORIZONTE y nunca llama a fetch", async () => {
@@ -922,7 +922,7 @@ prueba("montarControlHorizonte: mover el control despacha CAMBIAR_HORIZONTE y nu
     input.value = "1";
     input.dispatchEvent(new Event("input", { bubbles: true }));
     input.dispatchEvent(new Event("change", { bubbles: true }));
-    afirmarIgual(obtenerEstado().horizonte, "h5", "change debe despachar CAMBIAR_HORIZONTE con la clave del índice");
+    afirmarIgual(obtenerEstado().horizonte, "h3", "change debe despachar CAMBIAR_HORIZONTE con la clave del índice");
     afirmar(!seLlamoFetch, "mover el slider nunca debe disparar una petición de red");
   } finally {
     window.fetch = fetchOriginal;

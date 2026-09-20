@@ -77,7 +77,7 @@ const metodologia = {
       titulo: 'Qué mide esta herramienta',
       parrafos: [
         'Pronostica si la población de 0 a 14 años de cada alcaldía y de cada AGEB urbana de la '
-        + 'Ciudad de México subirá, se mantendrá o bajará a 3, 5 y 7 años. Esa población es la '
+        + 'Ciudad de México subirá, se mantendrá o bajará a 1, 3 y 5 años. Esa población es la '
         + 'demanda potencial de servicios para infancias: guarderías, preescolares, primarias, '
         + 'secundarias y servicios de apoyo.',
       ],
@@ -128,11 +128,11 @@ const metodologia = {
       ],
     },
     {
-      titulo: 'Por qué a 7 años hay más incertidumbre',
+      titulo: 'Por qué a 5 años hay más incertidumbre',
       parrafos: [
         'Solo hay dos censos con datos por AGEB. Todo pronóstico supone que las tendencias de '
         + '2010–2020 y las proyecciones de CONAPO siguen vigentes. Cuanto más lejano el horizonte, '
-        + 'más amplio el rango probable. A 7 años, el resultado es una orientación, no una '
+        + 'más amplio el rango probable. A 5 años, el resultado es una orientación, no una '
         + 'predicción precisa.',
       ],
     },

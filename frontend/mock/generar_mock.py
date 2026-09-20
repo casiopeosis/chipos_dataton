@@ -7,7 +7,7 @@ obtener el universo real de AGEB y alcaldias, y con eso escribe:
 
 - ``prediccion_ageb.json`` / ``prediccion_alcaldia.json``
   Contrato v1.2 (plans/frontend_specs.md §17): ``fecha_base``, 3 horizontes
-  (``h3``/``h5``/``h7``), ``serie``/``nivel_base`` por registro y, en el
+  (``h1``/``h3``/``h5``), ``serie``/``nivel_base`` por registro y, en el
   archivo de alcaldia, ``distribucion_ageb``/``agregado_cdmx``. Es el mock
   "base" (``?mock=1``/sin parametro), fixture principal de desarrollo.
 - ``prediccion_ageb_v11.json`` / ``prediccion_alcaldia_v11.json``
@@ -44,14 +44,19 @@ VERSION_CONTRATO_V12 = "1.2"
 VERSION_INVALIDA = "1.9"
 HORIZONTE = "2027-06"  # v1.1: horizonte unico (decision previa, ver CLAUDE.md).
 
-# v1.2 (plan "horizontes 3/5/7 anios", plans/frontend_specs.md §18.1/§18.2 [DECISION DEL EQUIPO]).
+# v1.2 (horizontes 1/3/5 anios, correccion/action_plan.md Fase 1: cumple
+# correccion/rubrica.md §5 "uno, tres o cinco anios"; version del contrato se
+# queda en 1.2 hasta que las Fases 4-6 completen el salto a 1.4).
 FECHA_BASE_V12 = "2026-06"
 HORIZONTES_V12 = (
+    {"clave": "h1", "anios": 1, "fecha": "2027-06"},
     {"clave": "h3", "anios": 3, "fecha": "2029-06"},
     {"clave": "h5", "anios": 5, "fecha": "2031-06"},
-    {"clave": "h7", "anios": 7, "fecha": "2033-06"},
 )
-HORIZONTES_OFERTA_V12 = ("h3",)  # oferta solo reporta a 3 anios (§18.2).
+_ANIOS_POR_CLAVE = {h["clave"]: h["anios"] for h in HORIZONTES_V12}
+# La oferta reporta h1 y h3, no h5 (metodologia §6.3): sin control externo,
+# 3 anios sigue siendo el techo defendible pero 1 anio si es reportable.
+HORIZONTES_OFERTA_V12 = ("h1", "h3")
 T_2010 = 2010.44
 T_2020 = 2020.20
 T_BASE_V12 = 2026.5
@@ -290,9 +295,9 @@ def generar_capa_alcaldia(universo: list[dict]) -> tuple[dict, dict]:
 
 
 def _horizontes_demanda_v12(rng: random.Random, veredicto: str, confianza: str, n_obs: int) -> dict:
-    """Un `h.{h3,h5,h7}` con el MISMO veredicto/confianza en los 3 (el modelo real controla la
-    tasa una sola vez contra el horizonte mas lejano, docs/metodologia.md §3): solo escalan
-    `delta_pct`/`ic95`, aproximadamente proporcional a los anios (plan Fase 8)."""
+    """Un `h.{h1,h3,h5}` con el MISMO veredicto/confianza en los 3 (el modelo real controla la
+    tasa una sola vez contra el horizonte mas lejano, docs/metodologia.md §2.5/§7): solo escalan
+    `delta_pct`/`ic95`, aproximadamente proporcional a los anios."""
     if veredicto == "sube":
         tasa_anual = rng.uniform(1.1, 4.5)
     elif veredicto == "baja":
@@ -384,18 +389,22 @@ def _registro_demanda_sin_datos_v12(rng: random.Random, cve_mun: str | None, mot
 
 
 def _registro_oferta_v12(rng: random.Random, cve_mun: str | None) -> dict:
-    """Oferta: solo `h3` (§18.2, tope de confianza 'media', CLAUDE.md)."""
+    """Oferta: `h1` y `h3` (metodologia §6.3, tope de confianza 'media', CLAUDE.md); nunca `h5`."""
     veredicto = rng.choices(VEREDICTOS_VALIDOS + ("sin_datos",), weights=[25, 25, 35, 15])[0]
 
     t_denue = [2016.79, 2019.87, 2024.87]
     if veredicto == "sin_datos":
+        h_sin_datos = {
+            clave: {"veredicto": "sin_datos", "delta_pct": None, "tasa_anual_pct": None, "ic95": None, "confianza": "baja"}
+            for clave in HORIZONTES_OFERTA_V12
+        }
         registro = {
             "n_obs": rng.choice([0, 1]),
             "motivo_sin_datos": "cobertura_denue",
             "serie": None,
             "nivel_base": None,
             "horizontes_disponibles": list(HORIZONTES_OFERTA_V12),
-            "h": {"h3": {"veredicto": "sin_datos", "delta_pct": None, "tasa_anual_pct": None, "ic95": None, "confianza": "baja"}},
+            "h": h_sin_datos,
         }
         if cve_mun is not None:
             registro = {"cve_mun": cve_mun, **registro}
@@ -404,12 +413,25 @@ def _registro_oferta_v12(rng: random.Random, cve_mun: str | None) -> dict:
     confianza = rng.choices(CONFIANZAS_OFERTA, weights=[55, 45])[0]
     n_obs = rng.randint(3, 7) if confianza == "media" else rng.randint(1, 3)
     if veredicto == "sube":
-        delta_pct = rng.uniform(1.0, 9.0)
+        delta_pct_h3 = rng.uniform(1.0, 9.0)
     elif veredicto == "baja":
-        delta_pct = -rng.uniform(1.0, 15.0)
+        delta_pct_h3 = -rng.uniform(1.0, 15.0)
     else:
-        delta_pct = rng.uniform(-2.0, 2.0)
-    tasa_anual_pct = _redondear(delta_pct / 3)
+        delta_pct_h3 = rng.uniform(-2.0, 2.0)
+    tasa_anual_pct = _redondear(delta_pct_h3 / 3)
+
+    h = {}
+    for clave in HORIZONTES_OFERTA_V12:
+        factor = _ANIOS_POR_CLAVE[clave] / 3
+        delta_pct = _redondear(delta_pct_h3 * factor)
+        h[clave] = {
+            "veredicto": veredicto,
+            "delta_pct": delta_pct,
+            "tasa_anual_pct": tasa_anual_pct,
+            "ic95": [_redondear(delta_pct - rng.uniform(5, 15)), _redondear(delta_pct + rng.uniform(5, 15))],
+            "confianza": confianza,
+        }
+
     nivel_2024 = rng.randint(1, 30)
     nivel_2019 = max(0, nivel_2024 + rng.randint(-2, 2))
     nivel_2016 = max(0, nivel_2019 + rng.randint(-2, 2))
@@ -419,15 +441,7 @@ def _registro_oferta_v12(rng: random.Random, cve_mun: str | None) -> dict:
         "serie": {"t": t_denue, "valor": [nivel_2016, nivel_2019, nivel_2024]},
         "nivel_base": nivel_2024,
         "horizontes_disponibles": list(HORIZONTES_OFERTA_V12),
-        "h": {
-            "h3": {
-                "veredicto": veredicto,
-                "delta_pct": _redondear(delta_pct),
-                "tasa_anual_pct": tasa_anual_pct,
-                "ic95": [_redondear(delta_pct - rng.uniform(5, 15)), _redondear(delta_pct + rng.uniform(5, 15))],
-                "confianza": confianza,
-            }
-        },
+        "h": h,
     }
     if cve_mun is not None:
         registro = {"cve_mun": cve_mun, **registro}
@@ -485,7 +499,7 @@ def calcular_distribucion_ageb(
     """`distribucion_ageb` por alcaldia y horizonte (spec §17 P4), para UNA capa (demanda u
     oferta: cada una lleva la suya, "en cada alcaldia de demanda y oferta"). El veredicto no
     cambia entre horizontes de demanda (docs/metodologia.md §3), asi que sus 3 distribuciones por
-    alcaldia son iguales; oferta solo trae `h3` (§18.2)."""
+    alcaldia son iguales; oferta trae `h1`/`h3`, nunca `h5` (metodologia §6.3)."""
     alcaldias = sorted({ageb["cve_mun"] for ageb in universo})
     resultado: dict[str, dict] = {}
     for cve_mun in alcaldias:
@@ -553,7 +567,7 @@ def main() -> None:
     }
     escribir_json(DIR_SALIDA / "prediccion_ageb_v11_invalido.json", prediccion_invalida)
 
-    # --- v1.2 (horizontes 3/5/7 anios): mock "base", `?mock=1`/sin parametro (js/config.js). ---
+    # --- v1.2 (horizontes 1/3/5 anios): mock "base", `?mock=1`/sin parametro (js/config.js). ---
     demanda_ageb_v12, oferta_ageb_v12 = generar_capa_ageb_v12(universo)
     prediccion_ageb_v12 = {
         "version": VERSION_CONTRATO_V12,

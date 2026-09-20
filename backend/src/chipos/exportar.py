@@ -51,9 +51,9 @@ from chipos.modelos import Simulacion, agregar_alcaldia, resumir
 
 VERSION_CONTRATO = "1.2"
 FECHA_BASE_ETIQUETA = "2026-06"
-ORDEN_HORIZONTES: tuple[str, ...] = ("h3", "h5", "h7")
-FECHAS_HORIZONTE: dict[str, str] = {"h3": "2029-06", "h5": "2031-06", "h7": "2033-06"}
-ANIOS_HORIZONTE: dict[str, int] = {"h3": 3, "h5": 5, "h7": 7}
+ORDEN_HORIZONTES: tuple[str, ...] = ("h1", "h3", "h5")
+FECHAS_HORIZONTE: dict[str, str] = {"h1": "2027-06", "h3": "2029-06", "h5": "2031-06"}
+ANIOS_HORIZONTE: dict[str, int] = {"h1": 1, "h3": 3, "h5": 5}
 
 VEREDICTOS_VALIDOS: frozenset[str] = frozenset(
     {"sube", "se_mantiene", "baja", "sin_datos"}
@@ -606,10 +606,11 @@ def main() -> None:
     sim_d_mun = agregar_alcaldia(sim_d)
     sim_o_mun = agregar_alcaldia(sim_o)
 
+    horizontes_oferta = {h: HORIZONTES[h] for h in HORIZONTES_OFERTA}
     res_d = resumir(sim_d, HORIZONTES)
-    res_o = resumir(sim_o, {"h3": HORIZONTES["h3"]})
+    res_o = resumir(sim_o, horizontes_oferta)
     res_d_mun = resumir(sim_d_mun, HORIZONTES)
-    res_o_mun = resumir(sim_o_mun, {"h3": HORIZONTES["h3"]})
+    res_o_mun = resumir(sim_o_mun, horizontes_oferta)
 
     motivos_d = motivos_demanda_por_clave(panel_d)
     ajuste = ajustar_oferta(panel_o)
@@ -652,7 +653,7 @@ def main() -> None:
     distribucion_oferta = construir_distribucion_ageb(capa_oferta, list(HORIZONTES_OFERTA))
 
     resumen_cdmx_d = resumir(_simulacion_cdmx(sim_d), HORIZONTES)
-    resumen_cdmx_o = resumir(_simulacion_cdmx(sim_o), {"h3": HORIZONTES["h3"]})
+    resumen_cdmx_o = resumir(_simulacion_cdmx(sim_o), horizontes_oferta)
     agregado_cdmx = construir_agregado_cdmx(resumen_cdmx_d, resumen_cdmx_o)
 
     salida_alcaldia = construir_salida_alcaldia(
