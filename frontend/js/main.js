@@ -5,13 +5,13 @@
 // contenedores que ya deja `index.html`, reaccionando a `estado.js`.
 //
 // NOTA DE ALCANCE (Fase 7, en progreso): este archivo ya conecta el pipeline completo de datos ->
-// composicion.js -> mapa.js/leyenda.js (la parte más difícil de acertar, spec §17). El panel de
+// composicion.js -> mapa.js/leyenda.js (la parte más difícil de acertar, spec §17), la cabecera,
+// la franja/drawer de metodología, el modo presentación y el manejador global de Esc. El panel de
 // `#vista-principal` (resumen estructurado Nivel 1 + ranking, plans/frontend_plan.md F45/F50) usa
 // por ahora un ranking mínimo inline -- placeholder deliberado hasta que `resumen.js`/`ranking.js`
 // existan; se reemplaza sin tocar el resto de este archivo (mismo patrón que ya separa
 // mapa/leyenda). `prioridades.js`/`filtros.js`/`poblacion.js`/`busqueda.js`/`riesgo.js`/
-// `comparar.js`/`ayuda.js`/`franja.js`/`ficha.js`/`graficas.js`/`interaccion.js`/`presentacion.js`
-// aún no están conectados aquí -- ver el commit para el detalle exacto.
+// `comparar.js`/`ayuda.js`/`ficha.js`/`graficas.js` aún no están conectados aquí.
 
 import { NIVEL, RAMAS, RAMAS_CON_PROYECCION, HORIZONTES_OFERTA, SEGMENTO_POR_OMISION } from "./config.js";
 import { cargarPrediccion, ErrorDatos } from "./api.js";
@@ -24,6 +24,9 @@ import { montarVistaMapa } from "./vista_mapa.js";
 import { montarControlHorizonte } from "./horizonte.js";
 import { montarMapa } from "./mapa.js";
 import { montarLeyenda } from "./leyenda.js";
+import { montarFranja } from "./franja.js";
+import { iniciarPresentacion } from "./presentacion.js";
+import { iniciarInteraccionGlobal } from "./interaccion.js";
 import {
   sumaCeldas,
   tasaAnualImplicita,
@@ -51,6 +54,8 @@ const mapaHost = document.getElementById("mapa-svg-host");
 const leyendaHost = document.getElementById("leyenda");
 const horizonteHost = document.getElementById("control-horizonte");
 const pieEl = document.getElementById("pie");
+const franjaEl = document.getElementById("franja-metodologia");
+const dialogoEl = document.getElementById("drawer-metodologia");
 
 // ---------------------------------------------------------------------------------------------
 // Estados de carga/error (spec §15).
@@ -248,6 +253,8 @@ function pintarVistaPrincipal(composicion, datos, nombresAlcaldia, estado) {
 async function iniciar() {
   let cabecera = null;
   if (elementoHeader) cabecera = iniciarCabecera(elementoHeader);
+  if (cabecera) iniciarPresentacion(cabecera.botonPresentacion);
+  iniciarInteraccionGlobal();
 
   pintarCargando();
 
@@ -305,6 +312,8 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
       crear("p", { clase: "pie__advertencia" }, [textos.pie.advertenciaSesgos]),
     ]);
   }
+
+  if (franjaEl && dialogoEl) montarFranja(franjaEl, dialogoEl, { generado: datosAlcaldia.generado ?? null });
 
   function recalcularYPintar(estado) {
     const enAlcaldia = estado.vista !== VISTA.CIUDAD;

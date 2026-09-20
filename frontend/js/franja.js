@@ -208,15 +208,3 @@ export function montarFranja(elementoFranja, elementoDialogo, opciones = {}) {
 
   return cancelarSuscripcion;
 }
-
-// Autoarranque (igual que cabecera.js, F25): hasta que exista js/main.js (F100), este módulo
-// se monta solo al cargarse como módulo desde index.html. F100 solo necesita importar y llamar
-// `montarFranja` desde ahí; `montarFranja` es idempotente en el sentido de que vuelve a pintar
-// el contenido del drawer si se llama de nuevo con los mismos contenedores.
-if (typeof document !== "undefined") {
-  const elementoFranja = document.getElementById("franja-metodologia");
-  const elementoDialogo = document.getElementById("drawer-metodologia");
-  if (elementoFranja && elementoDialogo) {
-    montarFranja(elementoFranja, elementoDialogo);
-  }
-}
