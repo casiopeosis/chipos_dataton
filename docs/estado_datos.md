@@ -33,7 +33,9 @@ Revisión 2026-09-18. Regenerar: `make descargas && make datos && make perfil`.
   (> 50 MB) ya estaban versionados antes; no se tocaron.
 
 ## Pendiente para el modelado (no bloquea)
-- ⚪ Implementar `backend/src/chipos/` según `docs/metodologia.md` (demanda, oferta, validaciones §4).
+- ⚪ `backend/src/chipos/` ya implementa demanda y oferta (B0-B8, B10-B12); pendiente
+  `backtest.py` (validaciones de `docs/metodologia.md` §4, `correccion/action_plan.md` Fase 2) y la
+  generalización a horizontes 1/3/5, segmentos 0–17 y cuatro ramas (Fases 1, 3-6).
 - ⚪ Decidir si las 5 claves DENUE de localidades rurales se asignan a su AGEB rural de 9 caracteres
   (quedan `sin_datos` en demanda de todos modos).
 
