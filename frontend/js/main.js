@@ -45,6 +45,7 @@ import { montarRiesgo, FACTOR_CONFIANZA_RIESGO } from "./riesgo.js";
 import { montarFiltros } from "./filtros.js";
 import { montarAlcaldia } from "./alcaldia.js";
 import { montarComparar } from "./comparar.js";
+import { montarMovil } from "./movil.js";
 import { montarFicha } from "./ficha.js";
 import { graficaPoblacion, graficaServicios, graficaCobertura } from "./graficas.js";
 import { crearExplicacion } from "./explicacion.js";
@@ -60,6 +61,7 @@ const RUTA_AGEB_GEOJSON = "data/ageb_cdmx_simplificado.geojson";
 // ---------------------------------------------------------------------------------------------
 
 const elementoHeader = document.querySelector("body > header");
+const panelDatos = document.getElementById("panel-datos");
 const panelConfiguracion = document.getElementById("panel-configuracion");
 const vistaPrincipal = document.getElementById("vista-principal");
 const mapaHost = document.getElementById("mapa-svg-host");
@@ -635,6 +637,8 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
   if (leyendaHost) {
     instanciaLeyenda = montarLeyenda(leyendaHost, { registros: [], nombresAlcaldia });
   }
+
+  if (panelDatos) montarMovil(panelDatos);
 
   limpiar(vistaPrincipal);
   const resumenHost = crear("div", { clase: "vista-principal__resumen" });
