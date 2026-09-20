@@ -6,12 +6,10 @@
 //
 // NOTA DE ALCANCE (Fase 7, en progreso): este archivo ya conecta el pipeline completo de datos ->
 // composicion.js -> mapa.js/leyenda.js (la parte más difícil de acertar, spec §17), la cabecera,
-// la franja/drawer de metodología, el modo presentación y el manejador global de Esc. El panel de
-// `#vista-principal` (resumen estructurado Nivel 1 + ranking, plans/frontend_plan.md F45/F50) usa
-// por ahora un ranking mínimo inline -- placeholder deliberado hasta que `resumen.js`/`ranking.js`
-// existan; se reemplaza sin tocar el resto de este archivo (mismo patrón que ya separa
-// mapa/leyenda). `prioridades.js`/`filtros.js`/`poblacion.js`/`busqueda.js`/`riesgo.js`/
-// `comparar.js`/`ayuda.js`/`ficha.js`/`graficas.js` aún no están conectados aquí.
+// la franja/drawer de metodología, el modo presentación, el manejador global de Esc, el resumen
+// Nivel 1 + ranking (F45/F50) y el flujo de configuración del escenario (población, búsqueda,
+// prioridades, riesgo -- F31/F35). `filtros.js`/`comparar.js`/`ayuda.js`/`ficha.js`/`alcaldia.js`/
+// `graficas.js` aún no están conectados aquí.
 
 import { NIVEL, RAMAS, RAMAS_CON_PROYECCION, HORIZONTES_OFERTA, SEGMENTO_POR_OMISION } from "./config.js";
 import { cargarPrediccion, ErrorDatos } from "./api.js";
@@ -40,6 +38,10 @@ import {
 } from "./composicion.js";
 import { montarResumen } from "./resumen.js";
 import { montarRanking } from "./ranking.js";
+import { montarPoblacion } from "./poblacion.js";
+import { montarBusqueda } from "./busqueda.js";
+import { montarPrioridades } from "./prioridades.js";
+import { montarRiesgo, FACTOR_CONFIANZA_RIESGO } from "./riesgo.js";
 
 // Rutas planas bajo frontend/data/, que `make frontend-datos` llena con copias de
 // data/reference/ y data/outputs/ (data/ es solo lectura, CLAUDE.md).
@@ -51,6 +53,7 @@ const RUTA_AGEB_GEOJSON = "data/ageb_cdmx_simplificado.geojson";
 // ---------------------------------------------------------------------------------------------
 
 const elementoHeader = document.querySelector("body > header");
+const panelConfiguracion = document.getElementById("panel-configuracion");
 const vistaPrincipal = document.getElementById("vista-principal");
 const mapaHost = document.getElementById("mapa-svg-host");
 const leyendaHost = document.getElementById("leyenda");
@@ -338,7 +341,16 @@ function pintarVistaPrincipal(instancias, composicion, datos, nombresAlcaldia, e
     motivos: agregado.motivos,
   });
 
-  const filasRanking = clavesAgregado.map((clave) => {
+  // Filtro de nivel de riesgo (§10.12): solo el ranking, nunca el mapa ni el resumen -- "un
+  // control aparte... vive junto al ranking". `umbralRiesgo === null` = sin filtrar.
+  const clavesFiltradasRiesgo = estado.umbralRiesgo === null
+    ? clavesAgregado
+    : clavesAgregado.filter((c) => {
+        const confianza = composicion.porClave.get(c)?.confianza ?? "baja";
+        return (FACTOR_CONFIANZA_RIESGO[confianza] ?? 0) >= estado.umbralRiesgo;
+      });
+
+  const filasRanking = clavesFiltradasRiesgo.map((clave) => {
     const registro = composicion.porClave.get(clave);
     const cveMun = datos.capas.demanda[clave]?.cve_mun ?? null;
     return {
@@ -425,6 +437,22 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
     resumen: montarResumen(resumenHost),
     ranking: montarRanking(rankingHost, []),
   };
+
+  if (panelConfiguracion) {
+    limpiar(panelConfiguracion);
+    const poblacionHost = crear("div", { clase: "panel-configuracion__poblacion" });
+    const busquedaHost = crear("div", { clase: "panel-configuracion__busqueda" });
+    const prioridadesHost = crear("div", { clase: "panel-configuracion__prioridades" });
+    const riesgoHost = crear("div", { clase: "panel-configuracion__riesgo" });
+    panelConfiguracion.appendChild(poblacionHost);
+    panelConfiguracion.appendChild(busquedaHost);
+    panelConfiguracion.appendChild(prioridadesHost);
+    panelConfiguracion.appendChild(riesgoHost);
+    montarPoblacion(poblacionHost);
+    montarBusqueda(busquedaHost);
+    montarPrioridades(prioridadesHost);
+    montarRiesgo(riesgoHost);
+  }
 
   const controlHorizonte = horizonteHost
     ? montarControlHorizonte(horizonteHost, datosAlcaldia.horizontes, { claveActiva: obtenerEstado().horizonte })

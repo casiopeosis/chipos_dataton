@@ -20,6 +20,8 @@
     <link rel="stylesheet" href="css/layout.css" />
     <link rel="stylesheet" href="css/cabecera.css" />
     <link rel="stylesheet" href="css/vista-mapa.css" />
+    <link rel="stylesheet" href="css/configuracion.css" />
+    <link rel="stylesheet" href="css/prioridades.css" />
     <link rel="stylesheet" href="css/resumen.css" />
     <link rel="stylesheet" href="css/ranking.css" />
     <link rel="stylesheet" href="css/horizonte.css" />
@@ -28,8 +30,7 @@
     <link rel="stylesheet" href="css/franja.css" />
     <link rel="stylesheet" href="css/presentacion.css" />
     <!-- Pendientes de Fase 7 (aún sin adaptar a v1.4, ver plans/frontend_plan.md §9):
-         ficha.css, alcaldia.css, prioridades.css, filtros.css, comparar.css, ayuda.css,
-         movil.css. -->
+         ficha.css, alcaldia.css, filtros.css, comparar.css, ayuda.css, movil.css. -->
   </head>
   <body>
     <!-- El contenido de la cabecera (h1 oculto, nombre, migas, selector de vista de mapa, modo
@@ -43,6 +44,10 @@
            en estado.js (plans/frontend_plan.md F45/F50/F55/F60 -- hoy un ranking mínimo
            provisional, ver la nota de cabecera de js/main.js). -->
       <section id="panel-datos" class="panel-datos" aria-label="Datos de la vista">
+        <!-- Flujo de configuración del escenario (§5.3/§5.5/§10.10/§10.12, F31/F35): población
+             objetivo, tipo de búsqueda, prioridades por rama y filtro de nivel de riesgo. Cambia
+             el escenario activo sin red (estado.js); el resumen/ranking de abajo reacciona solo. -->
+        <div id="panel-configuracion" class="panel-configuracion"></div>
         <div id="vista-principal"></div>
       </section>
 
