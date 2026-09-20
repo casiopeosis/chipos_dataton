@@ -2,7 +2,7 @@
 PY ?= .venv/bin/python
 PUERTO ?= 8000
 
-.PHONY: perfil pipeline test validar serve censo datos descargas vendor-d3
+.PHONY: perfil pipeline backtest test validar serve censo datos descargas vendor-d3
 
 # Descarga fuentes oficiales y extrae la CDMX a data/processed/ (no sobrescribe)
 descargas:
@@ -26,6 +26,11 @@ perfil: datos
 pipeline: datos
 	@test -d backend/src/chipos || { echo "backend/src/chipos no existe todavía (fase de implementación)"; exit 1; }
 	PYTHONPATH=backend/src $(PY) -m chipos.exportar
+
+# Corre las validaciones retrospectivas y escribe data/outputs/backtest.json + docs/backtest.md
+# (Fase 2 de correccion/action_plan.md; solo reporte, no modifica data/outputs/prediccion_*.json).
+backtest: datos
+	PYTHONPATH=backend/src $(PY) -m chipos.backtest
 
 test:
 	@test -d backend/tests || { echo "backend/tests no existe todavía"; exit 1; }

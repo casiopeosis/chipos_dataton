@@ -14,9 +14,9 @@ Contenido:
 - `validar_contrato`: valida un documento (AGEB o alcaldía) por separado;
   `verificar_suma_ageb_alcaldia` valida la identidad cruzada entre ambos
   archivos (Σ AGEB == alcaldía).
-- `main()`: orquesta `io → panel → modelos → exportar` y escribe los dos
-  JSON de `data/outputs/`. `backtest.py` (B9) no existe todavía en el
-  repositorio: `main()` no lo invoca (ver docstring de `main`).
+- `main()`: orquesta `io → panel → backtest → modelos → exportar` y escribe
+  los dos JSON de `data/outputs/` más `data/outputs/backtest.json` /
+  `docs/backtest.md` (ver docstring de `main`).
 """
 
 from __future__ import annotations
@@ -564,12 +564,15 @@ def _generado_iso() -> str:
 
 
 def main() -> None:
-    """`io -> panel -> modelos -> exportar`; log en español con conteos.
+    """`io -> panel -> backtest -> modelos -> features -> exportar`; log en español con conteos.
 
-    `backtest.py` (B9 de `plans/backend_plan.md`) no existe todavía en el
-    repositorio (fuera del alcance de esta tarea): este `main()` no lo
-    invoca; cuando exista, se añade aquí entre `panel` y `exportar` sin
-    cambiar el resto del pipeline.
+    `backtest.py` (B9 de `plans/backend_plan.md`, Fase 2 de
+    `correccion/action_plan.md`) escribe su propio reporte
+    (`RUTA_BACKTEST_JSON`/`RUTA_BACKTEST_MD`) como efecto secundario, sin
+    alterar `panel_d`/`panel_o` ni las simulaciones que ya se calcularon: la
+    calibración del piso de incertidumbre (`SIGMA_MIN_TASA`) que devuelve
+    `backtest.ejecutar()` se aplica a `modelos.py`/`config.py` en la Fase 3
+    (🔄 pendiente), no aquí.
     """
     from chipos.features import calcular_brecha_ageb, calcular_brecha_alcaldia
     from chipos.io import (
@@ -582,6 +585,7 @@ def main() -> None:
     )
     from chipos.panel import construir_panel_demanda, construir_panel_oferta, reporte_cobertura
     from chipos.modelos import ajustar_oferta, simular_demanda, simular_oferta
+    from chipos.backtest import ejecutar as ejecutar_backtest, escribir_reporte as escribir_reporte_backtest
 
     print("chipos.exportar: leyendo datos...")
     universo = leer_universo_ageb()
@@ -598,6 +602,16 @@ def main() -> None:
         f"chipos.exportar: universo={cobertura['universo_total']} "
         f"(urbano={cobertura['universo_urbano']}, rural={cobertura['universo_rural']}); "
         f"demanda con dato={cobertura['demanda_n_con_dato']}"
+    )
+
+    print("chipos.exportar: corriendo backtest (validación retrospectiva)...")
+    rng_backtest = np.random.default_rng(SEMILLA)
+    resultados_backtest = ejecutar_backtest(panel_d, panel_o, conapo, rng_backtest)
+    escribir_reporte_backtest(resultados_backtest)
+    print(
+        f"chipos.exportar: backtest -> modelo_se_adopta="
+        f"{resultados_backtest['adopcion']['modelo_se_adopta']} "
+        f"(ver docs/backtest.md)"
     )
 
     rng = np.random.default_rng(SEMILLA)

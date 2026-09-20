@@ -212,15 +212,27 @@ Con dos puntos **no se puede saber** si la caída se aceleró, si la tendencia s
 cambio después de 2020. El modelo lo reconoce explícitamente (previa amplia sobre `λ`, piso de
 incertidumbre §2.7) y la UI lo dice. Lo que no se hace es fingir precisión que los datos no tienen.
 
-## 4. (b) Validación retrospectiva (🔄 fase 2)
+## 4. (b) Validación retrospectiva ✅ (implementado; resultado real 🔄, ver nota)
 
-> **Estado: pendiente.** `backend/src/chipos/backtest.py`, `data/outputs/backtest.json` y
-> `docs/backtest.md` **no existen todavía** en el repositorio; `config.py` ya reserva sus rutas
-> (`RUTA_BACKTEST_JSON`, `RUTA_BACKTEST_MD`) y `exportar.main()` reserva su lugar en el pipeline.
-> Esta sección describe lo acordado, no lo implementado. `correccion/rubrica.md` §5-6 exige
-> validación retrospectiva y es el hueco más grave del proyecto
-> (`correccion/detalles_a_tratar.md` §6A). Ningún resultado de esta sección se cita en la
-> presentación hasta que los dos archivos de salida existan.
+> **Estado: implementado.** `backend/src/chipos/backtest.py`, `data/outputs/backtest.json` y
+> `docs/backtest.md` ya existen y `exportar.main()` los invoca en cada `make pipeline`
+> (`io → panel → backtest → modelos → exportar`), deterministas con `SEMILLA`. Las 4 validaciones
+> de §4.2-4.3 corren sobre datos reales: 154 tests de backend en verde
+> (`backend/tests/test_backtest.py`).
+>
+> **Resultado real, sin maquillar (`docs/backtest.md`, corrida sobre datos reales):**
+> demanda supera al baseline `r=0` en MAE y F1 macro en ambas fracciones de adelgazamiento
+> (MAE 0.68-0.69 vs 2.34 pp/año; F1 0.79-0.86 vs 0.11), pero la cobertura del IC95 de LOAO sale en
+> **1.00** (por encima de la banda `[0.90, 0.97]`: el intervalo está sobrecubierto, no
+> subcubierto). **Oferta NO supera al baseline "S constante" en MAE** (5.45 vs 3.61 en log-razón),
+> aunque sí lo supera en F1 macro (0.67 vs 0.20): el modelo acierta mejor la *dirección* del
+> cambio pero se equivoca más en la *magnitud*, consistente con que el objetivo 2024 contiene la
+> caída C3 (§6.1) — una extrapolación de 2016→2019 no puede anticipar un ajuste de padrón que
+> ocurre después. Con el criterio de adopción sin escapatoria de §4.3, `modelo_se_adopta = False`.
+> Esta es exactamente la pregunta abierta B1 de `plans/backend_plan.md` §9.2 ("ramas sin ventaja
+> sobre el baseline"), ahora con cifras — la resolución (publicar oferta como descriptiva vs.
+> mantenerla con el tratamiento actual) es una decisión del equipo, pendiente al cierre de esta
+> revisión.
 
 ### 4.1 El backtest de CONAPO original estaba mal planteado — corregido aquí
 

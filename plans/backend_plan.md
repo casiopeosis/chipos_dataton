@@ -558,10 +558,13 @@ Criterios añadidos por `correccion/action_plan.md`:
   Aproximación declarada, no una identidad.
 
 **Abiertas:**
-1. **B1 · Ramas sin ventaja sobre el baseline.** Si el backtest de oferta (B9) no supera a "S
-   constante" para alguna rama: ¿se publica esa rama como descriptiva (cambio observado, sin
-   veredicto), o se omite del índice de oportunidad para esa rama? No se puede decidir antes de
-   tener las cifras. Bloquea B17 (índice de oportunidad) para la rama afectada, no a las demás.
+1. **B1 · Ramas sin ventaja sobre el baseline.** `B9` ya corrió sobre datos reales
+   (`docs/metodologia.md` §4): el modelo de oferta (educación) NO supera a "S constante" en MAE
+   (5.45 vs 3.61 en log-razón), aunque sí en F1 macro (0.67 vs 0.20). La pregunta sigue abierta con
+   cifras concretas: ¿se publica la rama como descriptiva (cambio observado, sin veredicto), o se
+   mantiene con el tratamiento actual y el hallazgo se documenta como limitación? No se resuelve
+   por cuenta propia — decisión del equipo. Bloquea B17 (índice de oportunidad) para la rama
+   afectada, no a las demás.
 2. **B7 · Umbral del índice de oportunidad.** El percentil de `indice_oportunidad` (metodología
    §10.2) ¿se calcula sobre todas las AGEB con dato, o solo sobre las urbanas del mismo segmento y
    rama? Afecta el ranking, no el modelo. Recomendación: solo sobre las urbanas del mismo
