@@ -44,6 +44,7 @@ import { montarPrioridades } from "./prioridades.js";
 import { montarRiesgo, FACTOR_CONFIANZA_RIESGO } from "./riesgo.js";
 import { montarFiltros } from "./filtros.js";
 import { montarAlcaldia } from "./alcaldia.js";
+import { montarComparar } from "./comparar.js";
 import { montarFicha } from "./ficha.js";
 import { graficaPoblacion, graficaServicios, graficaCobertura } from "./graficas.js";
 import { crearExplicacion } from "./explicacion.js";
@@ -651,6 +652,7 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
     fichaHost,
   };
 
+  let instanciaComparar = null;
   if (panelConfiguracion) {
     limpiar(panelConfiguracion);
     const alcaldiaHost = crear("div", { clase: "panel-configuracion__alcaldia" });
@@ -659,18 +661,21 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
     const prioridadesHost = crear("div", { clase: "panel-configuracion__prioridades" });
     const filtrosHost = crear("div", { clase: "panel-configuracion__filtros" });
     const riesgoHost = crear("div", { clase: "panel-configuracion__riesgo" });
+    const compararHost = crear("div", { clase: "panel-configuracion__comparar" });
     panelConfiguracion.appendChild(alcaldiaHost);
     panelConfiguracion.appendChild(poblacionHost);
     panelConfiguracion.appendChild(busquedaHost);
     panelConfiguracion.appendChild(prioridadesHost);
     panelConfiguracion.appendChild(filtrosHost);
     panelConfiguracion.appendChild(riesgoHost);
+    panelConfiguracion.appendChild(compararHost);
     montarAlcaldia(alcaldiaHost, nombresAlcaldia);
     montarPoblacion(poblacionHost);
     montarBusqueda(busquedaHost);
     montarPrioridades(prioridadesHost);
     montarFiltros(filtrosHost);
     montarRiesgo(riesgoHost);
+    instanciaComparar = montarComparar(compararHost, nombresAlcaldia);
   }
 
   const controlHorizonte = horizonteHost
@@ -693,6 +698,29 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
     const enAlcaldia = estado.vista !== VISTA.CIUDAD;
     const datosVista = enAlcaldia ? datosAgeb : datosAlcaldia;
     const composicion = calcularComposicion(datosVista, estado);
+
+    if (instanciaComparar) {
+      if (estado.comparando) {
+        const [cveMunA, cveMunB] = estado.comparando;
+        const composicionAlcaldias = estado.vista === VISTA.CIUDAD ? composicion : calcularComposicion(datosAlcaldia, estado);
+        const regA = composicionAlcaldias.porClave.get(cveMunA);
+        const regB = composicionAlcaldias.porClave.get(cveMunB);
+        instanciaComparar.actualizar(regA && regB ? {
+          cveMunA,
+          cveMunB,
+          nombreA: nombresAlcaldia.get(cveMunA) ?? cveMunA,
+          nombreB: nombresAlcaldia.get(cveMunB) ?? cveMunB,
+          ramasA: regA.tercilPorRama,
+          ramasB: regB.tercilPorRama,
+          oportunidadA: regA.tercil,
+          oportunidadB: regB.tercil,
+          confianzaA: regA.confianza,
+          confianzaB: regB.confianza,
+        } : null);
+      } else {
+        instanciaComparar.actualizar(null);
+      }
+    }
 
     if (instanciaFranja) {
       const esFicha = estado.vista === VISTA.AGEB && Boolean(estado.cvegeo);

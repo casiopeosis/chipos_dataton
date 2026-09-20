@@ -1,0 +1,101 @@
+/*
+ * comparar.css — comparar alcaldías (plans/frontend_specs.md §10.13, plan F88). Solo variables de
+ * tokens.css (CLAUDE.md, spec §4).
+ */
+
+.comparar {
+  padding-top: var(--e-3);
+  border-top: 1px solid var(--linea);
+}
+
+.comparar__titulo {
+  margin: 0 0 var(--e-2);
+  font-size: calc(var(--t-subtitulo-tam) * var(--escala));
+  font-weight: var(--t-subtitulo-peso);
+  color: var(--tinta-2);
+}
+
+.comparar__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--e-3);
+  margin-bottom: var(--e-2);
+}
+
+.comparar__campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+}
+
+.comparar__etiqueta {
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-2);
+}
+
+.comparar__select {
+  padding: var(--e-1) var(--e-2);
+  border: 1px solid var(--linea-fuerte);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  color: var(--tinta);
+  background: var(--superficie);
+}
+
+.comparar__select:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.comparar__quitar {
+  padding: var(--e-1) var(--e-2);
+  background: var(--superficie);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--tinta);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  cursor: pointer;
+}
+
+.comparar__quitar:hover {
+  background: var(--superficie-realzada);
+}
+
+.comparar__quitar:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.comparar__nota {
+  margin: 0 0 var(--e-2);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}
+
+.comparar__tabla-host:empty {
+  display: none;
+}
+
+.comparar__tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+}
+
+.comparar__tabla th,
+.comparar__tabla td {
+  padding: var(--e-1) var(--e-2);
+  text-align: left;
+  border-bottom: 1px solid var(--linea);
+}
+
+.comparar__fila-etiqueta {
+  color: var(--tinta-2);
+  font-weight: 400;
+}
+
+.comparar__celda--alta { color: var(--prioridad-5); font-weight: 500; }
+.comparar__celda--media { color: var(--prioridad-3); }
+.comparar__celda--baja { color: var(--tinta-2); }
+.comparar__celda--sin_datos { color: var(--tinta-3); }
