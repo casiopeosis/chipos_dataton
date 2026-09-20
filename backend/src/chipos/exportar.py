@@ -595,7 +595,9 @@ def main() -> None:
     con = conectar()
     denue = leer_denue_infancias(con, list(CORTES_OFERTA.keys()))
 
-    panel_d = construir_panel_demanda(censo, equivalencia, universo)
+    # segmento="total_0a14" (Fase 4): el contrato sigue siendo v1.2, 0-14, hasta que la
+    # Fase 6 haga el salto a v1.4 con los 6 segmentos de una vez (panel.py#COLUMNAS_SEGMENTO).
+    panel_d = construir_panel_demanda(censo, equivalencia, universo, segmento="total_0a14")
     panel_o = construir_panel_oferta(denue, universo)
     cobertura = reporte_cobertura(panel_d, panel_o, universo)
     print(

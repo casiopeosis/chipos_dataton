@@ -520,7 +520,8 @@ def test_tau_agrupado_datos_reales_aproxima_metodologia() -> None:
     censo = leer_censo_panel()
     equivalencia = leer_equivalencia()
     universo = leer_universo_ageb()
-    panel = construir_panel_demanda(censo, equivalencia, universo)
+    # segmento="total_0a14": la cifra de referencia de metodologia.md §3 es sobre 0-14.
+    panel = construir_panel_demanda(censo, equivalencia, universo, segmento="total_0a14")
 
     subconjunto = panel.loc[
         (panel["relacion"] == "misma") & (panel["d_2010"] >= 20) & (panel["d_2020"] >= 20)

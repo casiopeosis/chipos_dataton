@@ -25,7 +25,8 @@ fases está en **`correccion/action_plan.md`**; este documento es la fuente de v
 
 ## 1. Variables y fuentes
 
-**Demanda potencial (capa principal). ✅ (ampliación a 15–17 🔄 fase 4/9)** `D_it = P_0A2 + P_3A5 +
+**Demanda potencial (capa principal). ✅ (panel por segmento ✅ fase 4 `panel.construir_panel_demanda`;
+contrato v1.4 con los 6 segmentos 🔄 fase 6, frontend 🔄 fase 7/9)** `D_it = P_0A2 + P_3A5 +
 P_6A11 + P_12A14` (0–14, suma simple), AGEB urbana *i*, censo *t* ∈ {2010.44, 2020.20} (fechas de
 referencia 12-jun-2010 y 15-mar-2020; Δt = 9.76). Fuente: INEGI RESAGEBURB 2010 y 2020
 (`data/interim/censo_ageb_panel.parquet`). El panel censal **ya trae** `p_15a17` (verificado en
@@ -86,7 +87,17 @@ situación actual y NO inventar una línea futura").
 de oportunidad de expansión. Hoy el contrato solo publica la razón **histórica** `S_2024 / D_2020 ×
 1000`, que mezcla dos momentos distintos y no es proyectiva.
 
-### 1.2 Segmentos de servicio y población objetivo (🔄 fase 4)
+### 1.2 Segmentos de servicio y población objetivo — mapeo SCIAN de la oferta (🔄 fase 5)
+
+> **Nota de consistencia (Fase 4).** Esta tabla mapea SCIAN → columna censal para el lado de
+> **oferta** (qué establecimientos cuentan en cada segmento); es insumo de la Fase 5 (celdas de
+> filtro por rama), no de la Fase 4. Todavía usa los nombres `total`/`mixto` de la revisión anterior
+> a la ampliación a 0–17: **no coincide 1:1** con los 6 segmentos de **demanda** vigentes de §1.1
+> (`todas, primera_infancia, preescolar, primaria, secundaria, adolescencia`, ya implementados en
+> `panel.construir_panel_demanda`). En particular, esta tabla no tiene fila para `adolescencia`
+> (15–17) — su mapeo SCIAN sí está en §1.1 (`Complementario`, media superior/recreación juvenil).
+> Pendiente reconciliar nombres al implementar B22 (Fase 5): la fila `mixto` (SCIAN sin segmentar)
+> no tiene un segmento de demanda 1:1 y necesitará una decisión de diseño propia en esa fase.
 
 Sumar todas las edades 0–14 contra todos los establecimientos oculta desajustes reales: una
 guardería y una secundaria no atienden a la misma población. Los datos **ya están desagregados en

@@ -13,7 +13,13 @@ import pandas as pd
 import pytest
 
 from chipos.io import CORTES_OFERTA, leer_censo_panel, leer_denue_infancias, leer_equivalencia, leer_universo_ageb
-from chipos.panel import construir_panel_demanda, construir_panel_oferta, reporte_cobertura
+from chipos.panel import (
+    COLUMNAS_SEGMENTO,
+    SEGMENTOS_DEMANDA,
+    construir_panel_demanda,
+    construir_panel_oferta,
+    reporte_cobertura,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -57,21 +63,29 @@ def equivalencia_demanda() -> pd.DataFrame:
 
 @pytest.fixture
 def censo_demanda() -> pd.DataFrame:
+    """Cada fila trae las bandas censales (Fase 4) en vez de `pob_0a14` directo; las 4
+    bandas 0-14 (`p_0a2, p_3a5, p_6a11, p_12a14`) suman exactamente el total que antes
+    tenía `pob_0a14` en cada caso, para que los tests que usan `segmento="total_0a14"`
+    (alias de 0-14, ver `panel.COLUMNAS_SEGMENTO`) conserven sus valores esperados."""
     filas = [
         # 2010: la madre de la división (0900200019999) tiene 200 niños;
         # su hija (0900200012005) NO debe reescalarlos por frac_de_2010.
-        ("0900200011991", 2010, 120),
-        ("0900200019999", 2010, 200),
-        ("0900300019999", 2010, 50),
+        # (cvegeo, anio, p_0a2, p_3a5, p_6a11, p_12a14, p_15a17)  -> total 0-14 en el comentario
+        ("0900200011991", 2010, 30, 30, 30, 30, 12),  # 120
+        ("0900200019999", 2010, 50, 50, 50, 50, 20),  # 200
+        ("0900300019999", 2010, 10, 15, 15, 10, 5),  # 50
         # 2020
-        ("0900200011991", 2020, 110),
-        ("0900200012005", 2020, 15),  # < 20 -> d2020_menor_20
-        ("0900300010112", 2020, None),  # suprimido INEGI
-        ("0900300010128", 2020, 80),  # sin_contraparte, con dato válido
+        ("0900200011991", 2020, 25, 25, 30, 30, 11),  # 110
+        ("0900200012005", 2020, 3, 4, 4, 4, 2),  # 15, < 20 -> d2020_menor_20
+        ("0900300010112", 2020, None, None, None, None, None),  # suprimido INEGI
+        ("0900300010128", 2020, 20, 20, 20, 20, 8),  # 80, sin_contraparte, con dato válido
         # `0900300010999` no aparece en 2020 -> sin_censo
     ]
-    marco = pd.DataFrame(filas, columns=["cvegeo", "anio", "pob_0a14"])
-    marco["pob_0a14"] = marco["pob_0a14"].astype("float64")
+    marco = pd.DataFrame(
+        filas, columns=["cvegeo", "anio", "p_0a2", "p_3a5", "p_6a11", "p_12a14", "p_15a17"]
+    )
+    for col in ["p_0a2", "p_3a5", "p_6a11", "p_12a14", "p_15a17"]:
+        marco[col] = marco[col].astype("float64")
     return marco
 
 
@@ -108,7 +122,9 @@ def denue_oferta() -> pd.DataFrame:
 
 
 def test_panel_demanda_una_fila_por_ageb_del_universo(universo_demanda, equivalencia_demanda, censo_demanda):
-    panel = construir_panel_demanda(censo_demanda, equivalencia_demanda, universo_demanda)
+    panel = construir_panel_demanda(
+        censo_demanda, equivalencia_demanda, universo_demanda, segmento="total_0a14"
+    )
     assert len(panel) == len(universo_demanda)
     assert not panel["cvegeo"].duplicated().any()
     assert list(panel.columns) == [
@@ -116,14 +132,18 @@ def test_panel_demanda_una_fila_por_ageb_del_universo(universo_demanda, equivale
         "cve_mun",
         "ambito",
         "relacion",
+        "segmento",
         "d_2010",
         "d_2020",
         "motivo_sin_datos",
     ]
+    assert (panel["segmento"] == "total_0a14").all()
 
 
 def test_panel_demanda_rural_sin_datos(universo_demanda, equivalencia_demanda, censo_demanda):
-    panel = construir_panel_demanda(censo_demanda, equivalencia_demanda, universo_demanda)
+    panel = construir_panel_demanda(
+        censo_demanda, equivalencia_demanda, universo_demanda, segmento="total_0a14"
+    )
     fila = panel.set_index("cvegeo").loc["090150001"]
     assert fila["motivo_sin_datos"] == "rural"
     assert pd.isna(fila["relacion"])
@@ -131,7 +151,9 @@ def test_panel_demanda_rural_sin_datos(universo_demanda, equivalencia_demanda, c
 
 
 def test_panel_demanda_misma_usa_su_propia_clave(universo_demanda, equivalencia_demanda, censo_demanda):
-    panel = construir_panel_demanda(censo_demanda, equivalencia_demanda, universo_demanda)
+    panel = construir_panel_demanda(
+        censo_demanda, equivalencia_demanda, universo_demanda, segmento="total_0a14"
+    )
     fila = panel.set_index("cvegeo").loc["0900200011991"]
     assert fila["relacion"] == "misma"
     assert fila["d_2010"] == 120
@@ -145,7 +167,9 @@ def test_panel_demanda_division_hereda_d2010_completo_de_la_madre(
     """`división`: la hija usa el `D_2010` completo de la madre (200), sin
     reescalarlo por `frac_de_2010` (0.85) -- decisión de `docs/metodologia.md`
     §5 ("hereda la tasa de la madre, no reparte por frac_de_2010")."""
-    panel = construir_panel_demanda(censo_demanda, equivalencia_demanda, universo_demanda)
+    panel = construir_panel_demanda(
+        censo_demanda, equivalencia_demanda, universo_demanda, segmento="total_0a14"
+    )
     fila = panel.set_index("cvegeo").loc["0900200012005"]
     assert fila["relacion"] == "division"
     assert fila["d_2010"] == 200  # NO 200 * 0.85 = 170
@@ -153,7 +177,9 @@ def test_panel_demanda_division_hereda_d2010_completo_de_la_madre(
 
 
 def test_panel_demanda_fusion_o_expansion_suprimido(universo_demanda, equivalencia_demanda, censo_demanda):
-    panel = construir_panel_demanda(censo_demanda, equivalencia_demanda, universo_demanda)
+    panel = construir_panel_demanda(
+        censo_demanda, equivalencia_demanda, universo_demanda, segmento="total_0a14"
+    )
     fila = panel.set_index("cvegeo").loc["0900300010112"]
     assert fila["relacion"] == "fusion_o_expansion"
     assert fila["d_2010"] == 50
@@ -162,7 +188,9 @@ def test_panel_demanda_fusion_o_expansion_suprimido(universo_demanda, equivalenc
 
 
 def test_panel_demanda_sin_contraparte(universo_demanda, equivalencia_demanda, censo_demanda):
-    panel = construir_panel_demanda(censo_demanda, equivalencia_demanda, universo_demanda)
+    panel = construir_panel_demanda(
+        censo_demanda, equivalencia_demanda, universo_demanda, segmento="total_0a14"
+    )
     fila = panel.set_index("cvegeo").loc["0900300010128"]
     assert fila["relacion"] == "sin_contraparte"
     assert pd.isna(fila["d_2010"])
@@ -171,10 +199,108 @@ def test_panel_demanda_sin_contraparte(universo_demanda, equivalencia_demanda, c
 
 
 def test_panel_demanda_sin_censo(universo_demanda, equivalencia_demanda, censo_demanda):
-    panel = construir_panel_demanda(censo_demanda, equivalencia_demanda, universo_demanda)
+    panel = construir_panel_demanda(
+        censo_demanda, equivalencia_demanda, universo_demanda, segmento="total_0a14"
+    )
     fila = panel.set_index("cvegeo").loc["0900300010999"]
     assert fila["motivo_sin_datos"] == "sin_censo"
     assert pd.isna(fila["d_2020"])
+
+
+# ---------------------------------------------------------------------------
+# Fase 4: segmentos de población objetivo (metodología §1.1, action_plan.md #22-27)
+# ---------------------------------------------------------------------------
+
+
+def test_segmento_todas_es_la_suma_de_las_cinco_bandas(
+    universo_demanda, equivalencia_demanda, censo_demanda
+):
+    panel_todas = construir_panel_demanda(
+        censo_demanda, equivalencia_demanda, universo_demanda, segmento="todas"
+    )
+    fila = panel_todas.set_index("cvegeo").loc["0900200011991"]
+    # 2010: 30+30+30+30+12 = 132; 2020: 25+25+30+30+11 = 121.
+    assert fila["d_2010"] == 132
+    assert fila["d_2020"] == 121
+    assert fila["segmento"] == "todas"
+
+
+def test_segmento_adolescencia_usa_solo_p_15a17(
+    universo_demanda, equivalencia_demanda, censo_demanda
+):
+    panel = construir_panel_demanda(
+        censo_demanda, equivalencia_demanda, universo_demanda, segmento="adolescencia"
+    )
+    fila = panel.set_index("cvegeo").loc["0900200011991"]
+    assert fila["d_2010"] == 12
+    assert fila["d_2020"] == 11
+
+
+def test_segmento_preescolar_usa_solo_p_3a5(universo_demanda, equivalencia_demanda, censo_demanda):
+    panel = construir_panel_demanda(
+        censo_demanda, equivalencia_demanda, universo_demanda, segmento="preescolar"
+    )
+    fila = panel.set_index("cvegeo").loc["0900200011991"]
+    assert fila["d_2010"] == 30
+    assert fila["d_2020"] == 25
+
+
+def test_segmento_todas_queda_nulo_si_falta_una_sola_banda(universo_demanda, equivalencia_demanda):
+    """`min_count=len(columnas)`: si UNA banda de las 5 de `todas` está suprimida, el
+    segmento completo queda `NaN` -- nunca se trata la banda faltante como cero."""
+    equivalencia = pd.DataFrame(
+        {
+            "cvegeo": ["0900200011991"],
+            "cvegeo_2010": ["0900200011991"],
+            "frac_de_2020": [1.0],
+            "frac_de_2010": [1.0],
+            "hijas_de_2010": [1.0],
+            "relacion": ["misma"],
+        }
+    )
+    censo = pd.DataFrame(
+        {
+            "cvegeo": ["0900200011991", "0900200011991"],
+            "anio": [2010, 2020],
+            "p_0a2": [30.0, 25.0],
+            "p_3a5": [30.0, 25.0],
+            "p_6a11": [30.0, 30.0],
+            "p_12a14": [30.0, 30.0],
+            "p_15a17": [12.0, None],  # suprimida solo en 2020
+        }
+    )
+    universo = universo_demanda.loc[universo_demanda["cvegeo"] == "0900200011991"]
+
+    panel_todas = construir_panel_demanda(censo, equivalencia, universo, segmento="todas")
+    fila_todas = panel_todas.set_index("cvegeo").loc["0900200011991"]
+    assert pd.isna(fila_todas["d_2020"])  # falta p_15a17 en 2020 -> "todas" queda sin dato
+
+    # Pero "primaria" (solo p_6a11), que sí tiene dato completo, no se ve afectada.
+    panel_primaria = construir_panel_demanda(censo, equivalencia, universo, segmento="primaria")
+    fila_primaria = panel_primaria.set_index("cvegeo").loc["0900200011991"]
+    assert fila_primaria["d_2020"] == 30.0
+
+
+def test_segmento_desconocido_lanza_valueerror(universo_demanda, equivalencia_demanda, censo_demanda):
+    with pytest.raises(ValueError):
+        construir_panel_demanda(
+            censo_demanda, equivalencia_demanda, universo_demanda, segmento="no_existe"
+        )
+
+
+def test_segmentos_demanda_no_incluye_el_alias_transitorio():
+    """`total_0a14` es un alias de compatibilidad (Fase 4->6, ver panel.py), no uno de los
+    6 segmentos reales de Habitancia que expondrá el contrato v1.4."""
+    assert "total_0a14" not in SEGMENTOS_DEMANDA
+    assert set(SEGMENTOS_DEMANDA) == {
+        "todas",
+        "primera_infancia",
+        "preescolar",
+        "primaria",
+        "secundaria",
+        "adolescencia",
+    }
+    assert "total_0a14" in COLUMNAS_SEGMENTO
 
 
 @pytest.mark.datos
@@ -183,7 +309,8 @@ def test_panel_demanda_conteos_de_aceptacion_perfil():
     equivalencia = leer_equivalencia()
     universo = leer_universo_ageb()
 
-    panel = construir_panel_demanda(censo, equivalencia, universo)
+    # segmento="total_0a14": las cifras de docs/perfil_datos.md son sobre 0-14 (pob_0a14).
+    panel = construir_panel_demanda(censo, equivalencia, universo, segmento="total_0a14")
 
     assert len(panel) == 2453
     assert not panel["cvegeo"].duplicated().any()
@@ -192,6 +319,34 @@ def test_panel_demanda_conteos_de_aceptacion_perfil():
     assert conteos.get("rural", 0) == 22
     assert conteos.get("suprimido_inegi", 0) == 41
     assert conteos.get("d2020_menor_20", 0) == 23
+
+
+@pytest.mark.datos
+def test_panel_demanda_suma_de_segmentos_igual_a_todas():
+    """Fase 4, criterio de aceptación de `correccion/action_plan.md` #27: la suma de los
+    cinco segmentos con dato debe ser igual al segmento `todas` (0-17), por AGEB."""
+    censo = leer_censo_panel()
+    equivalencia = leer_equivalencia()
+    universo = leer_universo_ageb()
+
+    panel_todas = construir_panel_demanda(censo, equivalencia, universo, segmento="todas")
+    paneles_segmento = {
+        seg: construir_panel_demanda(censo, equivalencia, universo, segmento=seg)
+        for seg in SEGMENTOS_DEMANDA
+        if seg != "todas"
+    }
+
+    base = panel_todas.set_index("cvegeo")[["d_2010", "d_2020"]]
+    suma_d2010 = sum(p.set_index("cvegeo")["d_2010"] for p in paneles_segmento.values())
+    suma_d2020 = sum(p.set_index("cvegeo")["d_2020"] for p in paneles_segmento.values())
+
+    # Solo donde TODOS los segmentos (incluido "todas") tienen dato: min_count exige que
+    # las 5 bandas estén presentes para que "todas" tenga dato, así que si "todas" no es
+    # NaN, los 5 segmentos individuales tampoco lo son -- la comparación es exacta ahí.
+    comparables = base["d_2010"].notna()
+    assert (suma_d2010.reindex(base.index)[comparables] == base.loc[comparables, "d_2010"]).all()
+    comparables_2020 = base["d_2020"].notna()
+    assert (suma_d2020.reindex(base.index)[comparables_2020] == base.loc[comparables_2020, "d_2020"]).all()
 
 
 # ---------------------------------------------------------------------------
@@ -273,7 +428,9 @@ def test_panel_oferta_sin_cvegeo_duplicado_por_corte():
 
 
 def test_reporte_cobertura_forma(universo_demanda, equivalencia_demanda, censo_demanda, denue_oferta):
-    panel_d = construir_panel_demanda(censo_demanda, equivalencia_demanda, universo_demanda)
+    panel_d = construir_panel_demanda(
+        censo_demanda, equivalencia_demanda, universo_demanda, segmento="total_0a14"
+    )
     panel_o = construir_panel_oferta(denue_oferta, universo_demanda)
 
     reporte = reporte_cobertura(panel_d, panel_o, universo_demanda)

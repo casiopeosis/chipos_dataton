@@ -46,47 +46,109 @@ MOTIVOS_SIN_DATOS: tuple[str, ...] = (
 
 # Umbral de supresión de `D_2020` (metodología §8; CLAUDE.md "Decisiones
 # vigentes"): por debajo de 20 niños, el conteo censal es demasiado ruidoso
-# para tasas y se marca `sin_datos` en vez de modelarlo.
+# para tasas y se marca `sin_datos` en vez de modelarlo. Se aplica igual a
+# cada segmento (Fase 4): un segmento con pocos casos es igual de ruidoso.
 _D2020_MINIMO = 20
+
+# Segmentos de población objetivo (metodología §1.1, Fase 4 de
+# `correccion/action_plan.md`): columnas del censo (`tools/build_censo.py`,
+# ya en disco, sin fuente nueva) que se suman para cada uno. `todas` (0-17)
+# es el valor por omisión del selector (action_plan.md #24) -- NO es
+# `total`/0-14: Habitancia ya no tiene como alcance "infancias 0-14".
+COLUMNAS_SEGMENTO: dict[str, tuple[str, ...]] = {
+    "todas": ("p_0a2", "p_3a5", "p_6a11", "p_12a14", "p_15a17"),
+    "primera_infancia": ("p_0a2",),
+    "preescolar": ("p_3a5",),
+    "primaria": ("p_6a11",),
+    "secundaria": ("p_12a14",),
+    "adolescencia": ("p_15a17",),
+    # Alias transitorio, SOLO para no cambiar lo que `exportar.py` ya emite en el
+    # contrato v1.2 (0-14) hasta que la Fase 6 haga el salto a v1.4 en un único bloque
+    # (`plans/backend_plan.md` §9.2: "no tocar exportar.py/validar_contrato tres veces").
+    # Reproduce exactamente `pob_0a14` (idéntico a la suma de estas 4 bandas, verificado
+    # en `test_io.py`). No es uno de los 6 segmentos de Habitancia: se excluye de
+    # `SEGMENTOS_DEMANDA` y se retira en la Fase 6.
+    "total_0a14": ("p_0a2", "p_3a5", "p_6a11", "p_12a14"),
+}
+SEGMENTOS_DEMANDA: tuple[str, ...] = (
+    "todas",
+    "primera_infancia",
+    "preescolar",
+    "primaria",
+    "secundaria",
+    "adolescencia",
+)
+SEGMENTO_POR_OMISION: str = "todas"
+
+
+def _columna_segmento(censo: pd.DataFrame, anio: int, segmento: str) -> pd.DataFrame:
+    """Suma las columnas censales del `segmento` para un `anio`, una fila por `cvegeo`.
+
+    `min_count=len(columnas)` (no el valor por omisión de pandas, 0): la
+    suma solo es válida si **todas** las columnas del segmento tienen dato
+    en esa fila; si falta una (p. ej. `p_15a17` suprimida por INEGI en una
+    AGEB donde las demás bandas sí se publican), el segmento completo queda
+    `NaN` -- nunca se trata la banda faltante como cero (CLAUDE.md, "no
+    imputar sin documentarlo").
+    """
+    columnas = list(COLUMNAS_SEGMENTO[segmento])
+    filas = censo.loc[censo["anio"] == anio, ["cvegeo", *columnas]]
+    valor = filas[columnas].sum(axis=1, min_count=len(columnas))
+    return pd.DataFrame({"cvegeo": filas["cvegeo"].to_numpy(), "valor": valor.to_numpy()})
 
 
 def construir_panel_demanda(
-    censo: pd.DataFrame, equivalencia: pd.DataFrame, universo: pd.DataFrame
+    censo: pd.DataFrame,
+    equivalencia: pd.DataFrame,
+    universo: pd.DataFrame,
+    segmento: str = SEGMENTO_POR_OMISION,
 ) -> pd.DataFrame:
     """Panel de demanda: una fila por AGEB del universo (2,453).
 
-    Columnas: `cvegeo, cve_mun, ambito, relacion, d_2010, d_2020,
+    Columnas: `cvegeo, cve_mun, ambito, relacion, segmento, d_2010, d_2020,
     motivo_sin_datos`.
 
-    - `d_2020` = `pob_0a14` del censo 2020 para la misma clave (AGEB rural:
-      `NaN`, no hay censo urbano de rurales).
-    - `d_2010` = `pob_0a14` del censo 2010 para la clave `cvegeo_2010` que
-      la equivalencia 2010→2020 asocia a este AGEB (columna
-      `equivalencia.cvegeo_2010`; para `relacion == "misma"` coincide con la
-      propia clave). Este mismo criterio cubre el caso `division`: la
-      decisión del equipo (`docs/metodologia.md` §5, "división: hereda la
-      tasa de la madre") es que la hija use el `D_2010` **completo** de la
-      madre, sin reescalarlo por `frac_de_2010` — que es exactamente lo que
-      produce esta unión, porque nunca se multiplica por `frac_de_2010`.
+    `segmento` (Fase 4, metodología §1.1): una de `SEGMENTOS_DEMANDA`
+    (`todas` por omisión, población objetivo 0-17; `primera_infancia`,
+    `preescolar`, `primaria`, `secundaria`, `adolescencia`). No requiere una
+    fuente nueva: `COLUMNAS_SEGMENTO` ya está en `data/interim/censo_ageb_panel.parquet`
+    (`tools/build_censo.py`). `modelos.py` no cambia: recibe este panel
+    (con la columna `segmento` ya fija) exactamente como recibía el de
+    `pob_0a14` (0-14) antes de la Fase 4.
+
+    - `d_2020` = suma de las columnas del segmento en el censo 2020 para la
+      misma clave (AGEB rural: `NaN`, no hay censo urbano de rurales).
+    - `d_2010` = suma de las columnas del segmento en el censo 2010 para la
+      clave `cvegeo_2010` que la equivalencia 2010→2020 asocia a este AGEB
+      (columna `equivalencia.cvegeo_2010`; para `relacion == "misma"`
+      coincide con la propia clave). Este mismo criterio cubre el caso
+      `division`: la decisión del equipo (`docs/metodologia.md` §5,
+      "división: hereda la tasa de la madre") es que la hija use el
+      `D_2010` **completo** de la madre, sin reescalarlo por
+      `frac_de_2010` — que es exactamente lo que produce esta unión, porque
+      nunca se multiplica por `frac_de_2010`.
     - `relacion` viene de `equivalencia.relacion` (`misma`, `division`,
       `fusion_o_expansion`, `cambio_limites`); `None` en AGEB rural;
       `"sin_contraparte"` si una AGEB urbana no tiene fila de equivalencia
       (no ocurre hoy, ver `MOTIVOS_SIN_DATOS`; rama defensiva).
     - `motivo_sin_datos`: `rural` (ambito rural); `sin_censo` (urbana sin
-      ninguna fila en el censo 2020); `suprimido_inegi` (fila censal con
-      `pob_0a14` nulo, 41 AGEB 2020); `d2020_menor_20` (`D_2020 < 20`, 23
-      AGEB); `None` si hay dato utilizable. El tope de confianza por
+      ninguna fila en el censo 2020); `suprimido_inegi` (fila censal del
+      segmento con dato nulo -- alguna columna del segmento suprimida por
+      INEGI, ver `_columna_segmento`); `d2020_menor_20` (`D_2020 < 20` de
+      ese segmento); `None` si hay dato utilizable. El tope de confianza por
       `relacion` (`media` si no es `misma`; `baja`/`n_obs=1` si
-      `sin_contraparte`) se aplica en `modelos.py` (B6), no aquí.
+      `sin_contraparte`) se aplica en `modelos.py` (B6), no aquí. El
+      segmento `adolescencia` (15-17) lleva además tope `media` obligatorio
+      por la oferta poco confiable de esa banda (metodología §1.1), aplicado
+      en `exportar.py`, no aquí (este panel es solo de demanda).
     """
-    censo_2010 = (
-        censo.loc[censo["anio"] == 2010, ["cvegeo", "pob_0a14"]]
-        .rename(columns={"cvegeo": "cvegeo_2010", "pob_0a14": "d_2010"})
+    if segmento not in COLUMNAS_SEGMENTO:
+        raise ValueError(f"segmento desconocido: {segmento!r} (válidos: {SEGMENTOS_DEMANDA})")
+
+    censo_2010 = _columna_segmento(censo, 2010, segmento).rename(
+        columns={"cvegeo": "cvegeo_2010", "valor": "d_2010"}
     )
-    censo_2020 = (
-        censo.loc[censo["anio"] == 2020, ["cvegeo", "pob_0a14"]]
-        .rename(columns={"pob_0a14": "d_2020"})
-    )
+    censo_2020 = _columna_segmento(censo, 2020, segmento).rename(columns={"valor": "d_2020"})
 
     panel = universo[["cvegeo", "cve_mun", "ambito"]].copy()
 
@@ -123,12 +185,14 @@ def construir_panel_demanda(
     motivo[menor_20] = "d2020_menor_20"
 
     panel["motivo_sin_datos"] = motivo
+    panel["segmento"] = segmento
 
     columnas = [
         "cvegeo",
         "cve_mun",
         "ambito",
         "relacion",
+        "segmento",
         "d_2010",
         "d_2020",
         "motivo_sin_datos",

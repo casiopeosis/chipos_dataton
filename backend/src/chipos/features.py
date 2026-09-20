@@ -244,7 +244,8 @@ def main() -> None:
     universo = leer_universo_ageb()
     censo = leer_censo_panel()
     equivalencia = leer_equivalencia()
-    panel_d = construir_panel_demanda(censo, equivalencia, universo)
+    # segmento="total_0a14": mismo alcance 0-14 que usa exportar.py hoy (Fase 4, ver su comentario).
+    panel_d = construir_panel_demanda(censo, equivalencia, universo, segmento="total_0a14")
 
     con = conectar()
     denue = leer_denue_infancias(con, list(CORTES_OFERTA.keys()))

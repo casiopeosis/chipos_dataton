@@ -156,11 +156,26 @@ def leer_denue_infancias(
 def leer_censo_panel() -> pd.DataFrame:
     """Lee `data/interim/censo_ageb_panel.parquet` (ya limpio, ver `tools/build_censo.py`).
 
-    Columnas: `cvegeo, anio, t, cve_mun, pob_0a14`.
+    Columnas: `cvegeo, anio, t, cve_mun, pob_0a14, p_0a2, p_3a5, p_6a11,
+    p_12a14, p_15a17` (las cinco últimas, Fase 4: segmentos de población
+    objetivo, `panel.COLUMNAS_SEGMENTO`; ya están en el parquet, no son una
+    fuente nueva).
     """
     _requiere_archivo(RUTA_CENSO_PANEL)
     marco = pd.read_parquet(
-        RUTA_CENSO_PANEL, columns=["cvegeo", "anio", "t", "cve_mun", "pob_0a14"]
+        RUTA_CENSO_PANEL,
+        columns=[
+            "cvegeo",
+            "anio",
+            "t",
+            "cve_mun",
+            "pob_0a14",
+            "p_0a2",
+            "p_3a5",
+            "p_6a11",
+            "p_12a14",
+            "p_15a17",
+        ],
     )
     # `t` llega como DECIMAL de Parquet (objetos `Decimal`); se castea a
     # float64 para aritmética de tiempo real en años decimales (plan §5).

@@ -220,10 +220,26 @@ def test_leer_universo_ageb_lanza_error_claro_si_falta_el_geojson(
 class TestLoadersDatosReales:
     def test_leer_censo_panel_columnas_y_tipos(self) -> None:
         df = io.leer_censo_panel()
-        assert list(df.columns) == ["cvegeo", "anio", "t", "cve_mun", "pob_0a14"]
+        assert list(df.columns) == [
+            "cvegeo",
+            "anio",
+            "t",
+            "cve_mun",
+            "pob_0a14",
+            "p_0a2",
+            "p_3a5",
+            "p_6a11",
+            "p_12a14",
+            "p_15a17",
+        ]
         assert set(df["anio"].unique()) == {2010, 2020}
         assert pd.api.types.is_float_dtype(df["t"])
         assert not df.empty
+        # pob_0a14 (0-14) debe ser exactamente la suma de las 4 bandas 0-14 (Fase 4,
+        # metodología §1.1); p_15a17 es una banda adicional, fuera de pob_0a14.
+        con_dato = df[["pob_0a14", "p_0a2", "p_3a5", "p_6a11", "p_12a14"]].dropna()
+        suma = con_dato[["p_0a2", "p_3a5", "p_6a11", "p_12a14"]].sum(axis=1)
+        assert (con_dato["pob_0a14"] == suma).all()
 
     def test_leer_conapo_0a14_columnas(self) -> None:
         df = io.leer_conapo_0a14()
