@@ -15,10 +15,9 @@
 
 import { NIVEL, RAMAS, RAMAS_CON_PROYECCION, HORIZONTES_OFERTA, SEGMENTO_POR_OMISION } from "./config.js";
 import { cargarPrediccion, ErrorDatos } from "./api.js";
-import { crear, limpiar, reemplazarContenido, texto as nodoTexto } from "./dom.js";
+import { crear, limpiar, reemplazarContenido } from "./dom.js";
 import { textos } from "./textos.js";
-import { formatoPorcentaje, formatoEntero } from "./formato.js";
-import { obtenerEstado, suscribir, despachar, ACCIONES, VISTA, VISTA_MAPA, BUSQUEDA } from "./estado.js";
+import { obtenerEstado, suscribir, VISTA, VISTA_MAPA, BUSQUEDA } from "./estado.js";
 import { iniciarCabecera, establecerNombreAlcaldia } from "./cabecera.js";
 import { montarVistaMapa } from "./vista_mapa.js";
 import { montarControlHorizonte } from "./horizonte.js";
@@ -37,7 +36,10 @@ import {
   clasificadorQuintiles,
   clasificadorTerciles,
   tercilDeQuintil,
+  rangoPercentilPromediado,
 } from "./composicion.js";
+import { montarResumen } from "./resumen.js";
+import { montarRanking } from "./ranking.js";
 
 // Rutas planas bajo frontend/data/, que `make frontend-datos` llena con copias de
 // data/reference/ y data/outputs/ (data/ es solo lectura, CLAUDE.md).
@@ -184,17 +186,34 @@ function calcularComposicion(datos, estado) {
 
   const clasificarQuintil = clasificadorQuintiles(valores);
   const clasificarTercil = clasificadorTerciles(valores);
+  const percentiles = rangoPercentilPromediado(valores);
+  // Terciles POR RAMA (§6.4: "mismos terciles de §6.2, aplicados a O_{i,h,r} de esa rama sola"):
+  // un clasificador por rama, sobre la distribución completa de esa rama entre las unidades del
+  // mismo nivel territorial -- nunca entre las 4 ramas de una sola unidad.
+  const clasificarTercilPorRama = {};
+  for (const rama of RAMAS) clasificarTercilPorRama[rama] = clasificadorTerciles(oPorRama[rama]);
 
   const porClave = new Map();
   claves.forEach((clave, i) => {
     const oRama = {};
-    for (const rama of RAMAS) oRama[rama] = oPorRama[rama][i];
+    const tercilPorRama = {};
+    for (const rama of RAMAS) {
+      oRama[rama] = oPorRama[rama][i];
+      tercilPorRama[rama] = clasificarTercilPorRama[rama](oPorRama[rama][i]);
+    }
+    const demanda = demandaPorClave.get(clave);
     porClave.set(clave, {
       valor: valores[i],
       quintil: clasificarQuintil(valores[i]),
       tercil: clasificarTercil(valores[i]),
-      confianzaBaja: demandaPorClave.get(clave)?.confianzaBaja ?? false,
+      percentil: percentiles[i],
+      confianza: demanda?.confianza ?? "baja",
+      confianzaBaja: demanda?.confianzaBaja ?? false,
+      // Peso poblacional (nivel de demanda proyectado, segmento activo) para agregados ponderados
+      // de §6.3/§6.1 (resumen.js): NaN (AGEB sin_datos) pesa 0, nunca se descarta de la suma.
+      pesoPoblacion: Number.isNaN(nivelDemandaH[i]) ? 0 : nivelDemandaH[i],
       oPorRama: oRama,
+      tercilPorRama,
     });
   });
 
@@ -202,48 +221,144 @@ function calcularComposicion(datos, estado) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Ranking mínimo (placeholder de F50, ver nota de cabecera): lista ordenada por prioridad
-// descendente, top 20 (acción_plan.md Fase 6 punto 33), sin FLIP ni acordeón todavía.
+// Agregación ponderada por población (spec §6.3: "media ponderada de sus AGEB con dato, mismo
+// motor de composición"), reutilizada tanto para el resumen de alcaldía como para el de CDMX
+// (§6.1, vista general): ninguna réplica de fórmulas de cobertura/oportunidad, solo combina
+// resultados YA calculados por `calcularComposicion` con el mismo peso poblacional que usa el
+// backend para agregar AGEB en alcaldía (`modelos.agregar_alcaldia`).
 // ---------------------------------------------------------------------------------------------
 
-const TOP_N_RANKING = 20;
+function promedioPonderado(items) {
+  let sumaValor = 0;
+  let sumaPeso = 0;
+  for (const { valor, peso } of items) {
+    if (Number.isNaN(valor)) continue;
+    const w = Math.max(peso, 0);
+    sumaValor += valor * w;
+    sumaPeso += w;
+  }
+  return sumaPeso > 0 ? sumaValor / sumaPeso : NaN;
+}
 
-function pintarVistaPrincipal(composicion, datos, nombresAlcaldia, estado) {
-  const filas = composicion.claves
-    .map((clave) => ({ clave, ...composicion.porClave.get(clave) }))
-    .filter((f) => !Number.isNaN(f.valor))
-    .sort((a, b) => b.valor - a.valor)
-    .slice(0, TOP_N_RANKING);
+/** Moda ponderada (categoría con mayor peso poblacional acumulado); si todos los pesos son 0, moda simple. */
+function modaPonderada(items) {
+  const totalPeso = items.reduce((s, { peso }) => s + Math.max(peso, 0), 0);
+  const acumulado = new Map();
+  for (const { valor, peso } of items) {
+    if (valor === null || valor === undefined || valor === "sin_datos") continue;
+    const w = totalPeso > 0 ? Math.max(peso, 0) : 1;
+    acumulado.set(valor, (acumulado.get(valor) ?? 0) + w);
+  }
+  let mejor = "sin_datos";
+  let mejorPeso = -1;
+  for (const [valor, peso] of acumulado) {
+    if (peso > mejorPeso) {
+      mejor = valor;
+      mejorPeso = peso;
+    }
+  }
+  return mejor;
+}
 
-  const lista = crear(
-    "ol",
-    { clase: "ranking-min__lista" },
-    filas.map((f) => {
-      const cveMun = datos.capas.demanda[f.clave]?.cve_mun;
-      const nombre = estado.vista === VISTA.CIUDAD ? (nombresAlcaldia.get(cveMun) ?? cveMun) : f.clave;
-      return crear("li", { clase: "ranking-min__fila" }, [
-        crear("span", { clase: "ranking-min__nombre" }, [String(nombre)]),
-        crear("span", { clase: `ranking-min__tercil ranking-min__tercil--${f.tercil}` }, [
-          textos.tercil.palabra[f.tercil] ?? "",
-        ]),
-        crear("span", { clase: "ranking-min__valor cifras" }, [formatoPorcentaje(f.valor * 100, { decimales: 0 })]),
-      ]);
-    }),
-  );
+/**
+ * Resumen agregado (§6.1 CDMX / §6.3 alcaldía) sobre un subconjunto de claves de `composicion`.
+ * @returns {{tercil: string, confianza: string, ramasIncidencia: string[], motivos: Array<{rama:string, tercil:string}>}}
+ */
+function agregarResumen(composicion, claves, pesos) {
+  const registros = claves.map((c) => composicion.porClave.get(c)).filter(Boolean);
+  const tercil = modaPonderada(registros.map((r) => ({ valor: r.tercil, peso: r.pesoPoblacion })));
+  const confianza = modaPonderada(registros.map((r) => ({ valor: r.confianza, peso: r.pesoPoblacion })));
 
-  const resumenTexto = estado.vista === VISTA.CIUDAD
-    ? textos.resumen.tituloGeneral({ poblacion: textos.poblacion.nombre[estado.poblacion], h: composicion.horizonteEntrada?.anios ?? "" })
-    : textos.resumen.tituloAlcaldia({
-        alcaldia: nombresAlcaldia.get(estado.cve_mun) ?? estado.cve_mun,
-        poblacion: textos.poblacion.nombre[estado.poblacion],
-        h: composicion.horizonteEntrada?.anios ?? "",
-      });
+  const promedioPorRama = {};
+  for (const rama of RAMAS) {
+    promedioPorRama[rama] = promedioPonderado(
+      registros.map((r) => ({ valor: r.oPorRama[rama], peso: r.pesoPoblacion })),
+    );
+  }
+  const ramasIncidencia = RAMAS
+    .filter((r) => !Number.isNaN(promedioPorRama[r]))
+    .sort((a, b) => pesos[b] * promedioPorRama[b] - pesos[a] * promedioPorRama[a])
+    .slice(0, 2);
+  const motivos = RAMAS
+    .filter((r) => !Number.isNaN(promedioPorRama[r]))
+    .map((r) => ({
+      rama: r,
+      tercil: modaPonderada(registros.map((reg) => ({ valor: reg.tercilPorRama[r], peso: reg.pesoPoblacion }))),
+    }));
 
-  reemplazarContenido(vistaPrincipal, [
-    crear("h2", { clase: "ranking-min__titulo" }, [resumenTexto]),
-    crear("p", { clase: "ranking-min__nota" }, [textos.ranking.topN(filas.length)]),
-    lista,
-  ]);
+  return { tercil, confianza, ramasIncidencia, motivos };
+}
+
+/** Rama con mayor incidencia de una sola fila (ranking.js, columna RAMA PRINCIPAL): mayor `w_r·O_{i,r}`. */
+function ramaPrincipalDeFila(oPorRama, pesos) {
+  let mejor = null;
+  let mejorValor = -Infinity;
+  for (const rama of RAMAS) {
+    const o = oPorRama[rama];
+    if (Number.isNaN(o)) continue;
+    const puntaje = pesos[rama] * o;
+    if (puntaje > mejorValor) {
+      mejorValor = puntaje;
+      mejor = rama;
+    }
+  }
+  return mejor;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Vista principal (F45/F50): resumen estructurado Nivel 1 + ranking, ambos alimentados por la
+// misma `composicion` (spec §7.1: "invariante resumen=ranking, misma fuente"). Vista de ficha de
+// AGEB (§7.4/F60) aún no existe: en `VISTA.AGEB` se sigue mostrando el resumen/ranking de la
+// alcaldía contenedora, degradación explícita hasta que `ficha.js` exista.
+// ---------------------------------------------------------------------------------------------
+
+function pintarVistaPrincipal(instancias, composicion, datos, nombresAlcaldia, estado) {
+  const enAlcaldia = estado.vista !== VISTA.CIUDAD;
+  const clavesAgregado = enAlcaldia
+    ? composicion.claves.filter((c) => datos.capas.demanda[c]?.cve_mun === estado.cve_mun)
+    : composicion.claves;
+
+  const agregado = agregarResumen(composicion, clavesAgregado, estado.pesos);
+  const etiquetaNivel = estado.busqueda === BUSQUEDA.DISPONIBILIDAD
+    ? textos.resumen.campo.disponibilidad
+    : textos.resumen.campo.oportunidad;
+  const poblacionTexto = textos.poblacion.nombre[estado.poblacion];
+  const anios = composicion.horizonteEntrada?.anios ?? "";
+
+  instancias.resumen.actualizar({
+    titulo: enAlcaldia
+      ? textos.resumen.tituloAlcaldia({ alcaldia: nombresAlcaldia.get(estado.cve_mun) ?? estado.cve_mun, poblacion: poblacionTexto, h: anios })
+      : textos.resumen.tituloGeneral({ poblacion: poblacionTexto, h: anios }),
+    poblacion: poblacionTexto,
+    horizonte: textos.horizonte.etiquetaAnios(anios),
+    etiquetaNivel,
+    tercil: agregado.tercil,
+    confianza: agregado.confianza,
+    ramasIncidencia: agregado.ramasIncidencia,
+    motivos: agregado.motivos,
+  });
+
+  const filasRanking = clavesAgregado.map((clave) => {
+    const registro = composicion.porClave.get(clave);
+    const cveMun = datos.capas.demanda[clave]?.cve_mun ?? null;
+    return {
+      clave,
+      nombreZona: enAlcaldia ? clave : (nombresAlcaldia.get(cveMun) ?? cveMun ?? clave),
+      nombreAlcaldia: nombresAlcaldia.get(cveMun) ?? cveMun ?? "",
+      valor: registro.valor,
+      tercil: registro.tercil,
+      confianza: registro.confianza,
+      ramaPrincipal: ramaPrincipalDeFila(registro.oPorRama, estado.pesos),
+      percentil: registro.percentil,
+      oPorRama: registro.oPorRama,
+    };
+  });
+
+  instancias.ranking.actualizar(filasRanking, {
+    enAlcaldia,
+    cveMun: estado.cve_mun,
+    busqueda: estado.busqueda,
+  });
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -301,6 +416,16 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
     instanciaLeyenda = montarLeyenda(leyendaHost, { registros: [], nombresAlcaldia });
   }
 
+  limpiar(vistaPrincipal);
+  const resumenHost = crear("div", { clase: "vista-principal__resumen" });
+  const rankingHost = crear("div", { clase: "vista-principal__ranking" });
+  vistaPrincipal.appendChild(resumenHost);
+  vistaPrincipal.appendChild(rankingHost);
+  const instanciasVistaPrincipal = {
+    resumen: montarResumen(resumenHost),
+    ranking: montarRanking(rankingHost, []),
+  };
+
   const controlHorizonte = horizonteHost
     ? montarControlHorizonte(horizonteHost, datosAlcaldia.horizontes, { claveActiva: obtenerEstado().horizonte })
     : null;
@@ -337,7 +462,7 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
       });
     }
 
-    pintarVistaPrincipal(composicion, datosVista, nombresAlcaldia, estado);
+    pintarVistaPrincipal(instanciasVistaPrincipal, composicion, datosVista, nombresAlcaldia, estado);
   }
 
   recalcularYPintar(obtenerEstado());

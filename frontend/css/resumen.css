@@ -1,0 +1,103 @@
+/*
+ * resumen.css — resumen estructurado Nivel 1 (plans/frontend_specs.md §6, plan F45).
+ * Solo variables de tokens.css (CLAUDE.md, spec §4). `<dl>` de campos fijos: sin frase
+ * autogenerada, sin altura reservada para crossfade (§6.1: "cada campo es un renglón fijo").
+ */
+
+.resumen-nivel1 {
+  margin: 0 0 var(--e-6);
+}
+
+.resumen__titulo {
+  margin: 0 0 var(--e-4);
+  font-size: calc(var(--t-h2-tam) * var(--escala));
+  line-height: var(--t-h2-alto);
+  font-weight: var(--t-h2-peso);
+  letter-spacing: var(--t-h2-tracking);
+  color: var(--tinta);
+}
+
+.resumen__campos {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: var(--e-4);
+  row-gap: var(--e-2);
+  margin: 0;
+}
+
+.resumen__etiqueta {
+  font-size: calc(var(--t-subtitulo-tam) * var(--escala));
+  line-height: var(--t-subtitulo-alto);
+  color: var(--tinta-2);
+}
+
+.resumen__valor {
+  margin: 0;
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  line-height: var(--t-cuerpo-alto);
+  color: var(--tinta);
+}
+
+.resumen__tercil {
+  font-weight: 500;
+}
+
+.resumen__tercil--alta { color: var(--prioridad-5); }
+.resumen__tercil--media { color: var(--prioridad-3); }
+.resumen__tercil--baja { color: var(--tinta-2); }
+.resumen__tercil--sin_datos { color: var(--tinta-3); }
+
+.resumen__confianza {
+  color: var(--tinta-2);
+}
+
+.resumen__sin-ramas {
+  color: var(--tinta-3);
+}
+
+/* §6.4: motivos principales del resultado, una línea por rama (nunca una frase autogenerada). */
+.resumen__motivos-seccion {
+  margin: var(--e-5) 0 0;
+}
+
+.resumen__motivos-titulo {
+  margin: 0 0 var(--e-2);
+  font-size: calc(var(--t-subtitulo-tam) * var(--escala));
+  line-height: var(--t-subtitulo-alto);
+  font-weight: var(--t-subtitulo-peso);
+  color: var(--tinta-2);
+}
+
+.resumen__motivos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+}
+
+.resumen__motivo {
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  color: var(--tinta);
+}
+
+.resumen__entender {
+  margin-top: var(--e-4);
+  padding: var(--e-2) var(--e-3);
+  background: var(--superficie);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--tinta);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  cursor: pointer;
+}
+
+.resumen__entender:hover {
+  background: var(--superficie-realzada);
+}
+
+.resumen__entender:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}

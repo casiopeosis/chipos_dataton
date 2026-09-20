@@ -307,6 +307,11 @@ const ranking = {
     disponibilidad: 'Disponibilidad',
     poblacion: 'Población objetivo',
     confianza: 'Confianza',
+    ramaPrincipal: 'Rama principal',
+  },
+  detalle: {
+    percentil: (v) => interpolar('percentil {percentil} entre las zonas de CDMX', v),
+    ramas: 'Ramas',
   },
   ordenarPor: {
     oportunidad: 'Ordenar por oportunidad',

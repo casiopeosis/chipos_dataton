@@ -1,67 +1,169 @@
 /*
- * ranking.css — ranking por AGEB (plans/frontend_specs.md §7, plan F50).
- *
- * Contiene por ahora solo el estilo del ranking MÍNIMO de main.js (placeholder documentado en su
- * propia cabecera: lista simple, sin FLIP ni acordeón) -- se amplía, no se reemplaza, cuando
- * ranking.js exista.
+ * ranking.css — ranking por AGEB/alcaldía (plans/frontend_specs.md §7, plan F50).
+ * Mismo patrón visual que tabla.css (fila de 36px, fila desplegada de 136px, FLIP), adaptado a
+ * las columnas de §7.1: ZONA · OPORTUNIDAD/DISPONIBILIDAD · RAMA PRINCIPAL · CONFIANZA.
+ * Solo variables de tokens.css (CLAUDE.md, spec §4).
  */
 
-.ranking-min__titulo {
-  margin: 0 0 var(--e-2);
-  font-size: calc(var(--t-h2-tam) * var(--escala));
-  line-height: var(--t-h2-alto);
-  font-weight: var(--t-h2-peso);
-  color: var(--tinta);
+.ranking-contenedor {
+  width: 100%;
+  overflow-x: auto;
 }
 
-.ranking-min__nota {
-  margin: 0 0 var(--e-3);
-  font-size: calc(var(--t-nota-tam) * var(--escala));
-  color: var(--tinta-3);
+.ranking {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
 }
 
-.ranking-min__lista {
-  list-style: none;
-  margin: 0;
+.ranking__th {
+  padding: var(--e-2) var(--e-2);
+  text-align: left;
+  font-size: calc(var(--t-etiqueta-tam) * var(--escala));
+  font-weight: var(--t-etiqueta-peso);
+  letter-spacing: var(--t-etiqueta-tracking);
+  text-transform: uppercase;
+  color: var(--tinta-2);
+  border-bottom: 1px solid var(--linea-fuerte);
+}
+
+.ranking__th--valor,
+.ranking__th--confianza {
+  text-align: center;
+}
+
+.ranking__th-boton {
+  background: none;
+  border: none;
   padding: 0;
-  display: flex;
-  flex-direction: column;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
 }
 
-.ranking-min__fila {
-  display: flex;
-  align-items: center;
-  gap: var(--e-3);
+.ranking__th-boton:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.ranking__fila {
   height: 36px;
-  padding: 0 var(--e-2);
+  cursor: pointer;
   border-bottom: 1px solid var(--linea);
 }
 
-.ranking-min__nombre {
-  flex: 1 1 auto;
-  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+.ranking__fila:hover,
+.ranking__fila--expandida {
+  background: var(--superficie-realzada);
+}
+
+.ranking__fila:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: -2px;
+}
+
+.ranking__celda {
+  padding: var(--e-1) var(--e-2);
   color: var(--tinta);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.ranking-min__tercil {
-  flex: 0 0 auto;
+.ranking__celda--valor,
+.ranking__celda--confianza {
+  text-align: center;
+}
+
+.ranking__nombre {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--tinta);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ranking__nombre:hover {
+  text-decoration: underline;
+}
+
+.ranking__nombre:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.ranking__celda--tercil-alta { color: var(--prioridad-5); font-weight: 500; }
+.ranking__celda--tercil-media { color: var(--prioridad-3); }
+.ranking__celda--tercil-baja { color: var(--tinta-2); }
+.ranking__celda--tercil-sin_datos { color: var(--tinta-3); }
+
+.ranking__celda-detalle {
+  padding: 0;
+  border-bottom: 1px solid var(--linea);
+}
+
+.ranking__detalle {
+  height: 136px;
+  box-sizing: border-box;
+  padding: var(--e-3) var(--e-4);
+  background: var(--superficie-realzada);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+  justify-content: center;
+}
+
+.ranking__detalle-linea {
+  margin: 0;
   font-size: calc(var(--t-nota-tam) * var(--escala));
-  padding: 2px var(--e-2);
-  border-radius: 2px;
-}
-
-.ranking-min__tercil--alta { background: var(--prioridad-4); color: var(--papel); }
-.ranking-min__tercil--media { background: var(--prioridad-3); color: var(--tinta); }
-.ranking-min__tercil--baja { background: var(--prioridad-1); color: var(--tinta); }
-.ranking-min__tercil--sin_datos { background: var(--sin-datos); color: var(--tinta-3); }
-
-.ranking-min__valor {
-  flex: 0 0 auto;
-  width: 4em;
-  text-align: right;
-  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
   color: var(--tinta-2);
 }
+
+.ranking__entender {
+  align-self: flex-start;
+  margin-top: var(--e-1);
+  padding: var(--e-1) var(--e-2);
+  background: var(--superficie);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--tinta);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  cursor: pointer;
+}
+
+.ranking__entender:hover {
+  background: var(--papel);
+}
+
+.ranking__entender:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.ranking__pie {
+  margin-top: var(--e-3);
+}
+
+.ranking__ver-mas {
+  padding: var(--e-2) var(--e-3);
+  background: var(--superficie);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--tinta);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  cursor: pointer;
+}
+
+.ranking__ver-mas:hover {
+  background: var(--superficie-realzada);
+}
+
+.ranking__ver-mas:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+/* prefers-reduced-motion: tokens.css ya lleva --d-s a 0ms (excepto crossfade dedicado); el FLIP
+   de ranking.js comprueba `matchMedia` y no anima si el usuario lo pidió, así que no hace falta
+   una regla adicional aquí. */
