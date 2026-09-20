@@ -19,6 +19,13 @@ import { crear, limpiar, fijarEstilo } from "./dom.js";
 import { texto as cadena, textos } from "./textos.js";
 import { ACCIONES, despachar, suscribir, obtenerEstado, VISTA } from "./estado.js";
 
+// Fase 7 (Habitancia): el mapa ya no colorea por veredicto binario (sube/se_mantiene/baja) de una
+// capa demanda/oferta -- colorea por TERCIL de un índice continuo (oportunidad o disponibilidad,
+// según `estado.busqueda`) de la vista de mapa activa (general = índice compuesto, o una rama),
+// ya calculado por `composicion.js` (plans/frontend_specs.md §9, §17.4). `main.js` recalcula ese
+// índice en cada cambio de peso/filtro/horizonte/población y llama `actualizarRegistros`/
+// `actualizarAgeb` con el resultado -- este módulo nunca vuelve a calcularlo.
+
 // ---------------------------------------------------------------------------------------------
 // Constantes de dibujo. Los valores de movimiento (duración/easing del hover) NO viven aquí:
 // se expresan en `mapa.css` con `var(--d-xs)`/`var(--ease-salida)` (tokens.css), tal como pide
@@ -67,38 +74,20 @@ const TRAZO_BASE_AGEB = 0.75;
 const TRAZO_BASE_CONFIANZA_BAJA = 1.2;
 const TRAZO_BASE_CONFIANZA_BAJA_GUION = [1.2, 5];
 
-// Umbrales de intensidad de la paleta de veredictos (spec §4.2: "la intensidad codifica la
-// magnitud de la tasa anual"). Los mismos cortes que la leyenda (2 %/año y 3.5 %/año, tope).
-function nivelIntensidad(tasaAnualPct) {
-  const magnitud = Math.abs(typeof tasaAnualPct === "number" ? tasaAnualPct : 0);
-  if (magnitud >= 3.5) return 3;
-  if (magnitud >= 2) return 2;
-  return 1;
-}
-
 /**
- * Clase CSS de relleno para un registro adaptado de una capa (`{veredicto, tasa_anual_pct, ...}`
- * o `null`). Nunca decide colores aquí: solo nombra la clase; `mapa.css` es la única fuente de
- * los valores de color (spec §4: "no se usan colores literales fuera de tokens.css").
+ * Clase CSS de relleno por QUINTIL de un índice continuo (spec §4.2: el mapa se pinta con los 5
+ * tonos de la escala de prioridad sequencial -- más granularidad que la leyenda, que agrupa en 3
+ * -- nunca la escala divergente de tendencia, reservada a la gráfica de población de Nivel 2).
+ * `registro` es `{valor: number, quintil: 1..5|"sin_datos", tercil: string}|null|undefined`, la
+ * forma que produce `composicion.js` (`clasificadorQuintiles`/`clasificadorTerciles`).
  */
-/**
- * Registro plano `{veredicto, tasa_anual_pct, ...}` de una capa resuelto al horizonte activo, o
- * `null`. `entradaCapa` es `datosAdaptados.indices...get(clave)[capa]`, que conserva su `.h`
- * completo (`{h3:{...}, ...}` o `{hU:{...}}` en v1.1) sin aplanar (api.js#construirIndices);
- * el aplanado se hace aquí, igual que en `main.js#registroPlano`/`leyenda.js#registroPlano`.
- */
-function registroDeHorizonte(entradaCapa, horizonte) {
-  return entradaCapa?.h?.[horizonte] ?? null;
+function claseTercil(registro) {
+  const quintil = registro?.quintil ?? "sin_datos";
+  if (quintil === "sin_datos") return "mapa__alcaldia--sin-datos";
+  return `mapa__alcaldia--prioridad-${quintil}`;
 }
 
-function claseVeredicto(registro) {
-  const veredicto = registro?.veredicto ?? "sin_datos";
-  if (veredicto === "sube") return `mapa__alcaldia--sube-${nivelIntensidad(registro.tasa_anual_pct)}`;
-  if (veredicto === "baja") return `mapa__alcaldia--baja-${nivelIntensidad(registro.tasa_anual_pct)}`;
-  if (veredicto === "se_mantiene") return "mapa__alcaldia--mantiene";
-  return "mapa__alcaldia--sin-datos";
-}
-
+/** Busca el registro `{valor, quintil, tercil}` de una clave en el índice (`Map` o objeto plano). */
 function obtenerRegistroCveMun(registrosPorCveMun, cveMun) {
   if (registrosPorCveMun instanceof Map) return registrosPorCveMun.get(cveMun) ?? null;
   if (registrosPorCveMun && typeof registrosPorCveMun === "object") {
@@ -174,19 +163,16 @@ function trazarSegmentosProyectados(segmentos, proyeccion) {
  *   `dom.js#limpiar` (nunca `innerHTML`) antes de montar.
  * @param {GeoJSON.FeatureCollection} alcaldiasGeoJSON - `data/reference/alcaldias.geojson`
  *   (propiedades `cve_alc`, `nombre`; ver `docs/perfil_datos.md`).
- * @param {Map<string, {demanda: object|null, oferta: object|null}>|Object} registrosPorCveMun -
- *   registros adaptados por alcaldía, indexados por `cve_alc`/`cve_mun` de 3 dígitos. Coincide
- *   exactamente con `datosAdaptados.indices.porCveMun` que produce `api.js#construirIndices`
- *   (vía `adaptarV11aV12` o `adaptarV12`) para el nivel "alcaldia": cada entrada es
- *   `{demanda: entradaCapa|null, oferta: entradaCapa|null}`, y cada `entradaCapa` conserva su
- *   `.h` completo (`{h3:{...}, h5:{...}, h7:{...}}`, o `{hU:{...}}` en el camino v1.1) SIN
- *   aplanar a un horizonte concreto: este módulo lo resuelve internamente con
- *   `registroDeHorizonte(entradaCapa, horizonteActivo)` según `estado.horizonte`.
+ * @param {Map<string, {valor: number, tercil: string}>|Object} registrosPorCveMun - índice ya
+ *   resuelto por `composicion.js` (vista de mapa, búsqueda, horizonte, filtros y pesos activos
+ *   YA aplicados) + `composicion.clasificadorTerciles`, indexado por `cve_alc`/`cve_mun` de 3
+ *   dígitos. `main.js` lo recalcula en cada cambio relevante y llama `actualizarRegistros`; este
+ *   módulo nunca vuelve a tocar el contrato crudo ni las fórmulas.
  * @param {object} [opciones]
  * @param {GeoJSON.FeatureCollection|null} [opciones.agebGeoJSON] -
  *   `data/reference/ageb_cdmx_simplificado.geojson` (propiedades `cvegeo`, `cve_mun`, `ambito`);
  *   puede llegar después con `actualizarAgeb` (carga diferida/prefetch, spec §10.2).
- * @param {Map<string, {demanda: object|null, oferta: object|null}>|Object} [opciones.registrosAgebPorCvegeo]
+ * @param {Map<string, {valor: number, tercil: string}>|Object} [opciones.registrosAgebPorCvegeo]
  *   mismo formato que `registrosPorCveMun` pero indexado por `CVEGEO` (13 dígitos).
  * @returns {{
  *   actualizarRegistros(nuevo: Map|Object): void,
@@ -201,8 +187,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   }
 
   let registros = registrosPorCveMun;
-  let capaActiva = obtenerEstado().capa;
-  let horizonteActivo = obtenerEstado().horizonte;
+  let vistaActiva = obtenerEstado().vistaMapa;
   let agebGeoJSON = opciones.agebGeoJSON ?? null;
   let registrosAgeb = opciones.registrosAgebPorCvegeo ?? new Map();
   let cveMunEnfocado = null;
@@ -265,19 +250,19 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
     };
   }
 
-  function claseFeature(feature, capa) {
+  function claseFeature(feature) {
     const entrada = obtenerRegistroCveMun(registros, feature.properties.cve_alc);
-    return claseVeredicto(registroDeHorizonte(entrada?.[capa], horizonteActivo));
+    return claseTercil(entrada);
   }
 
-  function actualizarClases(capa) {
+  function actualizarClases() {
     gAlcaldias
       .selectAll("path.mapa__alcaldia")
-      .attr("class", (feature) => `mapa__alcaldia ${claseFeature(feature, capa)}`)
+      .attr("class", (feature) => `mapa__alcaldia ${claseFeature(feature)}`)
       .classed("mapa__alcaldia--recesivo", (feature) => cveMunEnfocado !== null && feature.properties.cve_alc !== cveMunEnfocado);
     gAgebs
       .selectAll("path.mapa__ageb")
-      .attr("class", (feature) => `mapa__ageb ${claseFeatureAgeb(feature, capa)}`);
+      .attr("class", (feature) => `mapa__ageb ${claseFeatureAgeb(feature)}`);
   }
 
   function crearTooltip() {
@@ -306,15 +291,15 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   function mostrarTooltip(evento, feature) {
     if (!tooltipEl) crearTooltip();
     const entrada = obtenerRegistroCveMun(registros, feature.properties.cve_alc);
-    const veredicto = registroDeHorizonte(entrada?.[capaActiva], horizonteActivo)?.veredicto ?? "sin_datos";
+    const tercil = entrada?.tercil ?? "sin_datos";
     limpiar(tooltipEl);
     tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-nombre" }, [feature.properties.nombre]));
     tooltipEl.appendChild(
       crear("p", { clase: "mapa__tooltip-veredicto" }, [
-        cadena("tooltip.capaVeredicto", {
-          capa: textos.capa.nombre[capaActiva] ?? textos.capa.nombre.demanda,
-          simbolo: textos.veredicto.simbolo[veredicto],
-          veredicto: textos.veredicto.palabra[veredicto],
+        cadena("tooltip.vistaTercil", {
+          vista: textos.vista.nombre[vistaActiva] ?? textos.vista.nombre.general,
+          simbolo: textos.tercil.simbolo[tercil],
+          tercil: textos.tercil.palabra[tercil],
         }),
       ]),
     );
@@ -370,7 +355,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
       .selectAll("path.mapa__alcaldia")
       .data(alcaldiasGeoJSON.features, (feature) => feature.properties.cve_alc)
       .join("path")
-      .attr("class", (feature) => `mapa__alcaldia ${claseFeature(feature, capaActiva)}`)
+      .attr("class", (feature) => `mapa__alcaldia ${claseFeature(feature)}`)
       .attr("data-cve-mun", (feature) => feature.properties.cve_alc)
       .on("mouseenter", (evento, feature) => {
         mostrarRealce(feature);
@@ -442,23 +427,23 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
     }
   }
 
-  function claseFeatureAgeb(feature, capa) {
+  function claseFeatureAgeb(feature) {
     const entrada = obtenerRegistroCveMun(registrosAgeb, feature.properties.cvegeo);
-    return claseVeredicto(registroDeHorizonte(entrada?.[capa], horizonteActivo));
+    return claseTercil(entrada);
   }
 
   function crearTooltipAgeb(evento, feature) {
     if (!tooltipEl) crearTooltip();
     const entrada = obtenerRegistroCveMun(registrosAgeb, feature.properties.cvegeo);
-    const veredicto = registroDeHorizonte(entrada?.[capaActiva], horizonteActivo)?.veredicto ?? "sin_datos";
+    const tercil = entrada?.tercil ?? "sin_datos";
     limpiar(tooltipEl);
     tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-nombre cifras" }, [feature.properties.cvegeo]));
     tooltipEl.appendChild(
       crear("p", { clase: "mapa__tooltip-veredicto" }, [
-        cadena("tooltip.capaVeredicto", {
-          capa: textos.capa.nombre[capaActiva] ?? textos.capa.nombre.demanda,
-          simbolo: textos.veredicto.simbolo[veredicto],
-          veredicto: textos.veredicto.palabra[veredicto],
+        cadena("tooltip.vistaTercil", {
+          vista: textos.vista.nombre[vistaActiva] ?? textos.vista.nombre.general,
+          simbolo: textos.tercil.simbolo[tercil],
+          tercil: textos.tercil.palabra[tercil],
         }),
       ]),
     );
@@ -485,7 +470,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
     const entrando = seleccion
       .enter()
       .append("path")
-      .attr("class", (feature) => `mapa__ageb mapa__ageb--sin-transicion ${claseFeatureAgeb(feature, capaActiva)}`)
+      .attr("class", (feature) => `mapa__ageb mapa__ageb--sin-transicion ${claseFeatureAgeb(feature)}`)
       .attr("data-cvegeo", (feature) => feature.properties.cvegeo)
       .attr("d", generadorRuta)
       .on("mouseenter", (evento, feature) => {
@@ -502,7 +487,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
       });
 
     seleccion
-      .attr("class", (feature) => `mapa__ageb ${claseFeatureAgeb(feature, capaActiva)}`)
+      .attr("class", (feature) => `mapa__ageb ${claseFeatureAgeb(feature)}`)
       .attr("d", generadorRuta);
 
     if (!entrando.empty()) {
@@ -514,7 +499,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
       .data(
         features.filter((f) => {
           const r = obtenerRegistroCveMun(registrosAgeb, f.properties.cvegeo);
-          return (registroDeHorizonte(r?.[capaActiva], horizonteActivo)?.confianza ?? null) === "baja";
+          return r?.confianzaBaja === true;
         }),
         (feature) => feature.properties.cvegeo,
       )
@@ -657,24 +642,23 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
     window.addEventListener("resize", programarRecalculo);
   }
 
-  // --- Cambio de capa (§9) u horizonte (§8): solo recolorea (transición de `fill` por CSS),
-  // nunca recrea la geometría de los <path>. Con un solo horizonte (contrato v1.1 vía adaptador)
-  // `estado.horizonte` nunca cambia, así que esta rama nunca se ejercita hoy; con el contrato
-  // v1.2 (varios horizontes) mover el slider recolorea el mapa sin pedir datos nuevos (§8.3).
+  // --- Cambio de vista de mapa (§9), horizonte (§8), población, búsqueda, pesos o filtros: NINGUNO
+  // de esos recolorea por sí solo aquí -- `main.js` es quien escucha `estado.js`, vuelve a llamar a
+  // `composicion.js` y entrega el resultado ya resuelto vía `actualizarRegistros`/`actualizarAgeb`
+  // (spec §17.1: "el backend/el motor publican ingredientes, el cliente los combina", una sola vez,
+  // no en cada módulo). Este módulo solo seguía necesitando enterarse de `vistaMapa` (para el
+  // nombre en el tooltip) y de la navegación ciudad/alcaldía/AGEB (`sincronizarVista`), nunca
+  // recrea geometría por un cambio de coloreado (transición de `fill` por CSS).
   const cancelarSuscripcion = suscribir((estado) => {
-    if (estado.capa !== capaActiva || estado.horizonte !== horizonteActivo) {
-      capaActiva = estado.capa;
-      horizonteActivo = estado.horizonte;
-      actualizarClases(capaActiva);
-    }
+    vistaActiva = estado.vistaMapa;
     sincronizarVista(estado);
   });
 
   return {
-    /** Reemplaza los registros por alcaldía (p. ej. al cambiar de horizonte cuando exista) y recolorea. */
+    /** Reemplaza los registros por alcaldía (ya resueltos por `composicion.js`) y recolorea. */
     actualizarRegistros(nuevosRegistros) {
       registros = nuevosRegistros;
-      actualizarClases(capaActiva);
+      actualizarClases();
     },
     /** Entrega (o reemplaza) el GeoJSON de AGEB y sus registros; recolorea si hay una alcaldía enfocada. */
     actualizarAgeb(nuevoAgebGeoJSON, nuevosRegistrosAgeb) {

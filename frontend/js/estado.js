@@ -1,23 +1,25 @@
 // frontend/js/estado.js
 //
 // Almacén observable de la sesión (plans/frontend_plan.md §1, F20): "estado.js es la única
-// fuente de verdad de la sesión (vista, cve_mun, cvegeo, capa, horizonte activo, orden de tabla,
-// drawer abierto, filtro de leyenda). Los módulos se suscriben (suscribir(fn)) y emiten acciones
-// (despachar({tipo, ...})); sin variables globales."
+// fuente de verdad de la sesión". Los módulos se suscriben (suscribir(fn)) y emiten acciones
+// (despachar({tipo, ...})); sin variables globales.
 //
 // Este módulo NO dibuja nada ni gestiona la región viva de anuncios (spec §13): eso lo hacen
-// otros módulos (F95) suscritos a este almacén. Tampoco decide qué es válido para `orden` más
-// allá de su forma (eso lo define tabla.js/alcaldia.js); solo valida lo que puede validar sin
-// conocer esos módulos: vista, cve_mun, cvegeo, capa y filtro (veredictos del contrato).
+// otros módulos (F95) suscritos a este almacén. Tampoco decide qué celdas existen por rama más
+// allá de la forma de `filtros` (eso lo define filtros.js/config.js); solo valida lo que puede
+// validar sin conocer esos módulos: vista, cve_mun, cvegeo, vistaMapa, población, horizonte,
+// búsqueda, pesos, umbral de riesgo y comparar.
 //
-// Formato del hash (spec §1, §16.2): "#/alcaldia/007/ageb/0900700011234?capa=oferta&h=hU&
-// orden=cambio&info=1&filtro=baja". Se parsea al cargar el módulo (incluida una recarga directa
-// con cualquier hash) y se actualiza el hash cuando cambia el estado, con `history.replaceState`
-// para cambios dentro de la sesión y `history.pushState` solo al entrar/salir de una alcaldía (o
-// de un AGEB), que es lo que tiene sentido como "atrás" del navegador (§10.7, §10.8, checklist
-// §16.2: "el botón atrás del navegador reproduce la misma secuencia").
+// Formato del hash (plans/frontend_plan.md §1):
+// "#/alcaldia/007/ageb/0900700011234?vista=salud&h=h3&pob=primaria&busqueda=oportunidad&
+// pesos=4.5.3.2&filtros=educacion:guarderia__publico,preescolar__publico|salud:...&riesgo=0.8&
+// orden=oportunidad&info=1&comparar=007.010". Se parsea al cargar el módulo (incluida una recarga
+// directa con cualquier hash) y se actualiza el hash cuando cambia el estado, con
+// `history.replaceState` para cambios dentro de la sesión y `history.pushState` solo al
+// entrar/salir de una alcaldía (o de un AGEB), que es lo que tiene sentido como "atrás" del
+// navegador.
 
-import { CAPAS, VEREDICTOS_VALIDOS, CLAVE_HORIZONTE_UNICO } from "./config.js";
+import { RAMAS, SEGMENTOS_DEMANDA, SEGMENTO_POR_OMISION, ORDEN_HORIZONTES } from "./config.js";
 
 // ---------------------------------------------------------------------------------------------
 // Vistas y estado por defecto
@@ -29,19 +31,54 @@ export const VISTA = Object.freeze({
   AGEB: "ageb",
 });
 
-/** Orden por defecto de la tabla de vista general (spec §7.1: "por cambio ascendente"). */
-const ORDEN_POR_DEFECTO = "cambio";
+/** Vista de mapa: la general (índice compuesto) o una de las 4 ramas individuales (spec §9). */
+export const VISTA_MAPA = Object.freeze({
+  GENERAL: "general",
+  EDUCACION: "educacion",
+  SALUD: "salud",
+  COMERCIO: "comercio",
+  VERDE: "verde",
+});
+
+/** Tipo de búsqueda (spec §5.5): qué extremo del ranking se muestra primero. */
+export const BUSQUEDA = Object.freeze({
+  OPORTUNIDAD: "oportunidad",
+  DISPONIBILIDAD: "disponibilidad",
+});
+
+/** Orden por defecto del ranking de la vista general (spec §7.1). */
+const ORDEN_POR_DEFECTO = "oportunidad";
+
+const PESO_MINIMO = 1;
+const PESO_MAXIMO = 5;
+const PESO_POR_DEFECTO = 3;
+
+function pesosPorDefecto() {
+  return { educacion: PESO_POR_DEFECTO, salud: PESO_POR_DEFECTO, comercio: PESO_POR_DEFECTO, verde: PESO_POR_DEFECTO };
+}
+
+/** `[]` = "Todos" (sin filtro, todas las celdas de esa rama cuentan) -- nunca `null`/`undefined`,
+ * para que `composicion.js` pueda iterar directamente. */
+function filtrosPorDefecto() {
+  return { educacion: [], salud: [], comercio: [], verde: [] };
+}
 
 /** Estado con el que arranca la sesión si no hay hash, o si el hash es inválido/incompleto. */
 export const ESTADO_POR_DEFECTO = Object.freeze({
   vista: VISTA.CIUDAD,
   cve_mun: null,
   cvegeo: null,
-  capa: "demanda",
-  horizonte: CLAVE_HORIZONTE_UNICO,
+  vistaMapa: VISTA_MAPA.GENERAL,
+  poblacion: SEGMENTO_POR_OMISION,
+  horizonte: "h3",
+  busqueda: BUSQUEDA.OPORTUNIDAD,
+  pesos: Object.freeze(pesosPorDefecto()),
+  filtros: Object.freeze(filtrosPorDefecto()),
+  umbralRiesgo: null, // sin filtrar por nivel de riesgo (spec §10.12).
   orden: ORDEN_POR_DEFECTO,
   drawerAbierto: false,
-  filtroLeyenda: null,
+  filtroLeyenda: null, // tercil activo del realce de leyenda: "alta"|"media"|"baja"|"sin_datos".
+  comparando: null, // [cve_mun, cve_mun] | null (spec §10.13).
 });
 
 /** Tipos de acción reconocidos por `despachar` (evita cadenas mágicas sueltas en otros módulos). */
@@ -50,13 +87,22 @@ export const ACCIONES = Object.freeze({
   IR_A_ALCALDIA: "ir_a_alcaldia",
   IR_A_AGEB: "ir_a_ageb",
   VOLVER: "volver",
-  CAMBIAR_CAPA: "cambiar_capa",
+  CAMBIAR_VISTA_MAPA: "cambiar_vista_mapa",
+  CAMBIAR_POBLACION: "cambiar_poblacion",
   CAMBIAR_HORIZONTE: "cambiar_horizonte",
+  CAMBIAR_BUSQUEDA: "cambiar_busqueda",
+  CAMBIAR_PESO: "cambiar_peso",
+  RESTABLECER_PESOS: "restablecer_pesos",
+  CAMBIAR_FILTRO_RAMA: "cambiar_filtro_rama",
+  RESTABLECER_FILTROS: "restablecer_filtros",
+  CAMBIAR_UMBRAL_RIESGO: "cambiar_umbral_riesgo",
   CAMBIAR_ORDEN: "cambiar_orden",
   ABRIR_DRAWER: "abrir_drawer",
   CERRAR_DRAWER: "cerrar_drawer",
   ALTERNAR_DRAWER: "alternar_drawer",
   CAMBIAR_FILTRO: "cambiar_filtro",
+  COMPARAR: "comparar",
+  DEJAR_DE_COMPARAR: "dejar_de_comparar",
 });
 
 // ---------------------------------------------------------------------------------------------
@@ -73,24 +119,43 @@ function esCvegeoValida(valor) {
   return typeof valor === "string" && /^\d{13}$/.test(valor);
 }
 
-/** Hoy solo existe la clave "hU" (adaptador v1.1→v1.2), pero el resto del código admite h3/h5/h7. */
 function esHorizonteValido(valor) {
   return typeof valor === "string" && /^h[0-9A-Za-z]+$/.test(valor);
 }
 
-/** Forma de columna de orden: token corto en minúsculas; el significado lo definen tabla/alcaldia.js. */
+/** Forma de columna de orden: token corto en minúsculas; el significado lo define ranking.js/alcaldia.js. */
 function esOrdenValido(valor) {
   return typeof valor === "string" && valor.length > 0 && valor.length <= 40 && /^[a-z0-9_-]+$/.test(valor);
 }
 
-function esCapaValida(valor) {
-  return CAPAS.includes(valor);
+function esVistaMapaValida(valor) {
+  return Object.values(VISTA_MAPA).includes(valor);
 }
 
+function esPoblacionValida(valor) {
+  return SEGMENTOS_DEMANDA.includes(valor);
+}
+
+function esBusquedaValida(valor) {
+  return Object.values(BUSQUEDA).includes(valor);
+}
+
+function esPesoValido(valor) {
+  return Number.isInteger(valor) && valor >= PESO_MINIMO && valor <= PESO_MAXIMO;
+}
+
+function esUmbralRiesgoValido(valor) {
+  return typeof valor === "number" && Number.isFinite(valor) && valor >= 0 && valor <= 1;
+}
+
+const TERCILES_VALIDOS = Object.freeze(["alta", "media", "baja", "sin_datos"]);
 function esFiltroValido(valor) {
-  // El filtro de leyenda solo tiene sentido sobre veredictos, no sobre "sin_datos" (§10.4: filtra
-  // categorías con conteo); aun así se admite cualquier veredicto válido del contrato.
-  return VEREDICTOS_VALIDOS.includes(valor);
+  return TERCILES_VALIDOS.includes(valor);
+}
+
+/** Lista de claves de celda: cadenas no vacías, sin duplicados exigidos (se deduplican al leer). */
+function esListaCeldasValida(valor) {
+  return Array.isArray(valor) && valor.every((c) => typeof c === "string" && c.length > 0);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -114,7 +179,7 @@ export function analizarHash(hashCrudo) {
   const queryCruda = indiceInterrogacion === -1 ? "" : sinAlmohadilla.slice(indiceInterrogacion + 1);
   const segmentos = rutaCruda.split("/").filter((segmento) => segmento !== "");
 
-  const estado = { ...ESTADO_POR_DEFECTO };
+  const estado = { ...ESTADO_POR_DEFECTO, pesos: pesosPorDefecto(), filtros: filtrosPorDefecto() };
 
   if (segmentos[0] === "alcaldia" && esCveMunValida(segmentos[1])) {
     estado.vista = VISTA.ALCALDIA;
@@ -132,11 +197,48 @@ export function analizarHash(hashCrudo) {
     parametros = new URLSearchParams();
   }
 
-  const capa = parametros.get("capa");
-  if (esCapaValida(capa)) estado.capa = capa;
+  const vistaMapa = parametros.get("vista");
+  if (esVistaMapaValida(vistaMapa)) estado.vistaMapa = vistaMapa;
+
+  const poblacion = parametros.get("pob");
+  if (esPoblacionValida(poblacion)) estado.poblacion = poblacion;
 
   const horizonte = parametros.get("h");
   if (esHorizonteValido(horizonte)) estado.horizonte = horizonte;
+
+  const busqueda = parametros.get("busqueda");
+  if (esBusquedaValida(busqueda)) estado.busqueda = busqueda;
+
+  const pesosCrudo = parametros.get("pesos");
+  if (typeof pesosCrudo === "string") {
+    const partes = pesosCrudo.split(".").map((p) => Number(p));
+    if (partes.length === RAMAS.length && partes.every(esPesoValido)) {
+      RAMAS.forEach((rama, indice) => {
+        estado.pesos[rama] = partes[indice];
+      });
+    }
+  }
+
+  const filtrosCrudo = parametros.get("filtros");
+  if (typeof filtrosCrudo === "string" && filtrosCrudo.length > 0) {
+    for (const bloque of filtrosCrudo.split("|")) {
+      const separador = bloque.indexOf(":");
+      if (separador === -1) continue;
+      const rama = bloque.slice(0, separador);
+      if (!RAMAS.includes(rama)) continue;
+      const celdas = bloque
+        .slice(separador + 1)
+        .split(",")
+        .filter((c) => c.length > 0);
+      if (esListaCeldasValida(celdas)) estado.filtros[rama] = celdas;
+    }
+  }
+
+  const riesgo = parametros.get("riesgo");
+  if (riesgo !== null) {
+    const numero = Number(riesgo);
+    if (esUmbralRiesgoValido(numero)) estado.umbralRiesgo = numero;
+  }
 
   const orden = parametros.get("orden");
   if (esOrdenValido(orden)) estado.orden = orden;
@@ -146,13 +248,20 @@ export function analizarHash(hashCrudo) {
   const filtro = parametros.get("filtro");
   if (esFiltroValido(filtro)) estado.filtroLeyenda = filtro;
 
+  const comparar = parametros.get("comparar");
+  if (typeof comparar === "string") {
+    const [a, b] = comparar.split(".");
+    if (esCveMunValida(a) && esCveMunValida(b) && a !== b) estado.comparando = [a, b];
+  }
+
   return estado;
 }
 
 /**
- * Serializa un estado completo al formato de hash del spec. Siempre incluye `capa`, `h` y
- * `orden` (para que el enlace sea autodescriptivo y compartible, spec §1 "analistas... enlaces
- * compartibles"); `info` y `filtro` solo aparecen cuando están activos.
+ * Serializa un estado completo al formato de hash del spec. Siempre incluye `vista`, `h`, `pob`,
+ * `busqueda`, `pesos` y `orden` (para que el enlace sea autodescriptivo y compartible); `filtros`,
+ * `riesgo`, `info`, `filtro` y `comparar` solo aparecen cuando están activos (distintos de su
+ * valor por omisión).
  *
  * @param {typeof ESTADO_POR_DEFECTO} estado
  * @returns {string} incluye el "#" inicial.
@@ -167,11 +276,22 @@ export function serializarHash(estado) {
   }
 
   const parametros = new URLSearchParams();
-  parametros.set("capa", estado.capa);
+  parametros.set("vista", estado.vistaMapa);
   parametros.set("h", estado.horizonte);
+  parametros.set("pob", estado.poblacion);
+  parametros.set("busqueda", estado.busqueda);
+  parametros.set("pesos", RAMAS.map((r) => estado.pesos[r]).join("."));
+
+  const bloquesFiltros = RAMAS.filter((r) => estado.filtros[r]?.length > 0).map(
+    (r) => `${r}:${estado.filtros[r].join(",")}`,
+  );
+  if (bloquesFiltros.length > 0) parametros.set("filtros", bloquesFiltros.join("|"));
+
+  if (estado.umbralRiesgo !== null) parametros.set("riesgo", String(estado.umbralRiesgo));
   parametros.set("orden", estado.orden);
   if (estado.drawerAbierto) parametros.set("info", "1");
   if (estado.filtroLeyenda) parametros.set("filtro", estado.filtroLeyenda);
+  if (estado.comparando) parametros.set("comparar", estado.comparando.join("."));
 
   return `#${ruta}?${parametros.toString()}`;
 }
@@ -196,20 +316,52 @@ export function reducir(estado, accion) {
     }
 
     case ACCIONES.VOLVER: {
-      // Un nivel a la vez (spec §10.7-§10.8: Esc y "atrás" retroceden AGEB→alcaldía→general).
+      // Un nivel a la vez: Esc y "atrás" retroceden AGEB→alcaldía→general.
       if (estado.vista === VISTA.AGEB) return { ...estado, vista: VISTA.ALCALDIA, cvegeo: null };
       if (estado.vista === VISTA.ALCALDIA) return { ...estado, vista: VISTA.CIUDAD, cve_mun: null };
       return estado;
     }
 
-    case ACCIONES.CAMBIAR_CAPA: {
-      if (!esCapaValida(accion.capa)) return estado;
-      return { ...estado, capa: accion.capa };
+    case ACCIONES.CAMBIAR_VISTA_MAPA: {
+      if (!esVistaMapaValida(accion.vistaMapa)) return estado;
+      return { ...estado, vistaMapa: accion.vistaMapa };
+    }
+
+    case ACCIONES.CAMBIAR_POBLACION: {
+      if (!esPoblacionValida(accion.poblacion)) return estado;
+      return { ...estado, poblacion: accion.poblacion };
     }
 
     case ACCIONES.CAMBIAR_HORIZONTE: {
       if (!esHorizonteValido(accion.horizonte)) return estado;
       return { ...estado, horizonte: accion.horizonte };
+    }
+
+    case ACCIONES.CAMBIAR_BUSQUEDA: {
+      if (!esBusquedaValida(accion.busqueda)) return estado;
+      return { ...estado, busqueda: accion.busqueda };
+    }
+
+    case ACCIONES.CAMBIAR_PESO: {
+      if (!RAMAS.includes(accion.rama) || !esPesoValido(accion.peso)) return estado;
+      return { ...estado, pesos: { ...estado.pesos, [accion.rama]: accion.peso } };
+    }
+
+    case ACCIONES.RESTABLECER_PESOS:
+      return { ...estado, pesos: pesosPorDefecto() };
+
+    case ACCIONES.CAMBIAR_FILTRO_RAMA: {
+      if (!RAMAS.includes(accion.rama) || !esListaCeldasValida(accion.celdas)) return estado;
+      return { ...estado, filtros: { ...estado.filtros, [accion.rama]: accion.celdas } };
+    }
+
+    case ACCIONES.RESTABLECER_FILTROS:
+      return { ...estado, filtros: filtrosPorDefecto() };
+
+    case ACCIONES.CAMBIAR_UMBRAL_RIESGO: {
+      if (accion.umbral === null) return estado.umbralRiesgo === null ? estado : { ...estado, umbralRiesgo: null };
+      if (!esUmbralRiesgoValido(accion.umbral)) return estado;
+      return { ...estado, umbralRiesgo: accion.umbral };
     }
 
     case ACCIONES.CAMBIAR_ORDEN: {
@@ -235,6 +387,15 @@ export function reducir(estado, accion) {
       // Pulsar la misma categoría activa la desactiva (spec §10.4).
       return { ...estado, filtroLeyenda: estado.filtroLeyenda === filtro ? null : filtro };
     }
+
+    case ACCIONES.COMPARAR: {
+      if (!esCveMunValida(accion.cve_mun_a) || !esCveMunValida(accion.cve_mun_b)) return estado;
+      if (accion.cve_mun_a === accion.cve_mun_b) return estado;
+      return { ...estado, comparando: [accion.cve_mun_a, accion.cve_mun_b] };
+    }
+
+    case ACCIONES.DEJAR_DE_COMPARAR:
+      return estado.comparando === null ? estado : { ...estado, comparando: null };
 
     default:
       return estado;
@@ -273,8 +434,8 @@ function sincronizarHistorial(estadoAnterior, estadoNuevo) {
 
   const url = `${ubicacion.pathname}${ubicacion.search}${hashNuevo}`;
   // pushState solo al entrar/salir de una alcaldía o de un AGEB (cambia `vista`): es lo único
-  // que debe poder deshacerse con el botón "atrás" del navegador. Todo lo demás (capa,
-  // horizonte, orden, drawer, filtro) es replaceState para no inflar el historial.
+  // que debe poder deshacerse con el botón "atrás" del navegador. Todo lo demás es replaceState
+  // para no inflar el historial.
   if (estadoAnterior.vista !== estadoNuevo.vista) {
     historia.pushState(estadoNuevo, "", url);
   } else {

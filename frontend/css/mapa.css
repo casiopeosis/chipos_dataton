@@ -48,13 +48,13 @@
   transform: translateY(-1px);
 }
 
-.mapa__alcaldia--sube-1 { fill: var(--sube-1); }
-.mapa__alcaldia--sube-2 { fill: var(--sube-2); }
-.mapa__alcaldia--sube-3 { fill: var(--sube-3); }
-.mapa__alcaldia--baja-1 { fill: var(--baja-1); }
-.mapa__alcaldia--baja-2 { fill: var(--baja-2); }
-.mapa__alcaldia--baja-3 { fill: var(--baja-3); }
-.mapa__alcaldia--mantiene { fill: var(--mantiene); }
+/* Escala de prioridad (spec §4.2): quintiles de oportunidad/disponibilidad relativa, NUNCA la
+   escala divergente de tendencia (--sube-*/--baja-*, reservada a graficas.js de Nivel 2). */
+.mapa__alcaldia--prioridad-1 { fill: var(--prioridad-1); }
+.mapa__alcaldia--prioridad-2 { fill: var(--prioridad-2); }
+.mapa__alcaldia--prioridad-3 { fill: var(--prioridad-3); }
+.mapa__alcaldia--prioridad-4 { fill: var(--prioridad-4); }
+.mapa__alcaldia--prioridad-5 { fill: var(--prioridad-5); }
 .mapa__alcaldia--sin-datos { fill: url(#mapa-patron-sin-datos); }
 
 .mapa__hachura-fondo { fill: var(--sin-datos); }
