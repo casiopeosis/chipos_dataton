@@ -45,6 +45,9 @@ import { montarRiesgo, FACTOR_CONFIANZA_RIESGO } from "./riesgo.js";
 import { montarFiltros } from "./filtros.js";
 import { montarAlcaldia } from "./alcaldia.js";
 import { montarFicha } from "./ficha.js";
+import { graficaPoblacion, graficaServicios, graficaCobertura } from "./graficas.js";
+import { crearExplicacion } from "./explicacion.js";
+import { formatoEntero } from "./formato.js";
 
 // Rutas planas bajo frontend/data/, que `make frontend-datos` llena con copias de
 // data/reference/ y data/outputs/ (data/ es solo lectura, CLAUDE.md).
@@ -158,6 +161,7 @@ function calcularComposicion(datos, estado) {
   // --- Oferta: cobertura + O/F por rama, bajo el filtro activo. ---
   const oPorRama = {};
   const fPorRama = {};
+  const coberturaPorRama = {};
   for (const rama of RAMAS) {
     const esVerde = rama === "verde";
     const horizonteRama = esVerde ? null : horizonteOferta;
@@ -174,6 +178,7 @@ function calcularComposicion(datos, estado) {
 
     const coberturas = new Float64Array(nD);
     for (let i = 0; i < nD; i++) coberturas[i] = coberturaProyectada(nivelOferta[i], nivelDemandaH[i]);
+    coberturaPorRama[rama] = coberturas;
 
     oPorRama[rama] = indiceOportunidad(coberturas, tasaD, tasaS);
     fPorRama[rama] = indiceDisponibilidad(coberturas, tasaS, claves.map((clave) => demandaPorClave.get(clave)?.confianza ?? "baja"));
@@ -203,9 +208,11 @@ function calcularComposicion(datos, estado) {
   claves.forEach((clave, i) => {
     const oRama = {};
     const tercilPorRama = {};
+    const coberturaRama = {};
     for (const rama of RAMAS) {
       oRama[rama] = oPorRama[rama][i];
       tercilPorRama[rama] = clasificarTercilPorRama[rama](oPorRama[rama][i]);
+      coberturaRama[rama] = coberturaPorRama[rama][i];
     }
     const demanda = demandaPorClave.get(clave);
     porClave.set(clave, {
@@ -220,6 +227,7 @@ function calcularComposicion(datos, estado) {
       pesoPoblacion: Number.isNaN(nivelDemandaH[i]) ? 0 : nivelDemandaH[i],
       oPorRama: oRama,
       tercilPorRama,
+      coberturaPorRama: coberturaRama,
     });
   });
 
@@ -425,6 +433,154 @@ function pintarFicha(fichaInstancia, composicion, datos, nombresAlcaldia, estado
 }
 
 // ---------------------------------------------------------------------------------------------
+// Nivel 2 ("Entender esta zona", franja.js): gráficas de la zona activa + explicación por rama
+// (F86/F87, spec §10.5-§10.7). Solo se construye cuando hay una zona (AGEB) seleccionada -- sin
+// zona, el drawer muestra metodología (franja.js, sin cambios). `composicion` aquí ya cubre TODA
+// la CDMX (calcularComposicion no filtra por alcaldía, plans/frontend_plan.md §2), así que sirve
+// también para la referencia "CDMX" de la gráfica de cobertura (§10.5-C), sin un segundo cálculo.
+// ---------------------------------------------------------------------------------------------
+
+/** "2026-06" -> 2026.458 (mitad del mes), mismo eje que `serie.t` del contrato (años decimales). */
+function decimalDeFecha(fechaIso) {
+  if (typeof fechaIso !== "string") return NaN;
+  const [anioStr, mesStr] = fechaIso.split("-");
+  const anio = Number(anioStr);
+  const mes = mesStr ? Number(mesStr) : 6;
+  if (!Number.isFinite(anio) || !Number.isFinite(mes)) return NaN;
+  return anio + (mes - 0.5) / 12;
+}
+
+function construirDatosZona(datos, composicion, estado, nombresAlcaldia) {
+  const cvegeo = estado.cvegeo;
+  const registroDatos = datos.capas.demanda[cvegeo];
+  const registroComp = composicion.porClave.get(cvegeo);
+  if (!registroDatos || !registroComp) return null;
+
+  const nombreAlcaldia = nombresAlcaldia.get(registroDatos.cve_mun) ?? registroDatos.cve_mun ?? "";
+  const segmento = registroDatos.segmentos?.[estado.poblacion] ?? registroDatos.segmentos?.[SEGMENTO_POR_OMISION];
+  const bloqueH = segmento?.h?.[estado.horizonte];
+
+  // --- A/B) Población: histórico (censo) + proyección al horizonte activo, con banda IC95. ---
+  let poblacionGrafica = null;
+  if (segmento?.nivel_base != null && Array.isArray(segmento.serie?.t) && segmento.serie.t.length > 0 && bloqueH?.delta_pct != null) {
+    const historico = segmento.serie.t.map((t, i) => ({ t, valor: segmento.serie.valor[i] }));
+    const base = { t: decimalDeFecha(datos.fecha_base), valor: segmento.nivel_base };
+    const proyeccion = {
+      t: decimalDeFecha(composicion.horizonteEntrada?.fecha),
+      valor: segmento.nivel_base * (1 + bloqueH.delta_pct / 100),
+      ic95: Array.isArray(bloqueH.ic95)
+        ? [segmento.nivel_base * (1 + bloqueH.ic95[0] / 100), segmento.nivel_base * (1 + bloqueH.ic95[1] / 100)]
+        : null,
+      veredicto: bloqueH.veredicto ?? "se_mantiene",
+      tasaAnualPct: bloqueH.tasa_anual_pct ?? 0,
+    };
+    const primero = historico[0];
+    const ultimo = historico[historico.length - 1];
+    poblacionGrafica = graficaPoblacion({
+      historico,
+      base,
+      proyeccion,
+      figcaptionValores: {
+        anioA: primero ? String(Math.round(primero.t)) : "—",
+        anioB: ultimo ? String(Math.round(ultimo.t)) : "—",
+        valorA: primero ? formatoEntero(primero.valor) : "—",
+        valorB: ultimo ? formatoEntero(ultimo.valor) : "—",
+        anioH: String(Math.round(proyeccion.t)),
+        valorH: formatoEntero(proyeccion.valor),
+        lo: proyeccion.ic95 ? formatoEntero(proyeccion.ic95[0]) : "—",
+        hi: proyeccion.ic95 ? formatoEntero(proyeccion.ic95[1]) : "—",
+      },
+    });
+  }
+
+  // --- Cobertura CDMX de referencia por rama (§10.5-C): promedio ponderado por población sobre
+  //     TODAS las AGEB de `composicion` (ya es el universo completo, ver nota de cabecera). ---
+  const coberturaCdmxPorRama = {};
+  for (const rama of RAMAS) {
+    coberturaCdmxPorRama[rama] = promedioPonderado(
+      composicion.claves.map((c) => {
+        const r = composicion.porClave.get(c);
+        return { valor: r.coberturaPorRama[rama], peso: r.pesoPoblacion };
+      }),
+    );
+  }
+
+  const sumaPesoO = RAMAS.reduce((suma, rama) => {
+    const o = registroComp.oPorRama[rama];
+    return Number.isNaN(o) ? suma : suma + estado.pesos[rama] * o;
+  }, 0);
+
+  const serviciosPorRama = [];
+  const coberturaPorRama = [];
+  const explicacionFilas = [];
+
+  for (const rama of RAMAS) {
+    const esVerde = rama === "verde";
+    const capaRama = datos.capas.ramas[rama]?.[cvegeo];
+    const filtroRama = estado.filtros[rama];
+    const celdasSel = Array.isArray(filtroRama) && filtroRama.length > 0 ? filtroRama : Object.keys(capaRama?.celdas ?? {});
+
+    // Histórico combinado solo con exactamente 1 celda activa (ver nota de graficas.js): con
+    // "todas" o varias celdas, cada una puede traer levantamientos en fechas distintas y sumarlas
+    // sin alinear por fecha sería una serie inventada.
+    let historico = null;
+    if (celdasSel.length === 1) {
+      const serieUnica = capaRama?.celdas?.[celdasSel[0]]?.serie;
+      if (Array.isArray(serieUnica?.t) && serieUnica.t.length > 0) {
+        historico = serieUnica.t.map((t, i) => ({ t, valor: serieUnica.valor[i] }));
+      }
+    }
+
+    const horizonteOfertaClave = esVerde ? null : (HORIZONTES_OFERTA.includes(estado.horizonte) ? estado.horizonte : HORIZONTES_OFERTA[HORIZONTES_OFERTA.length - 1]);
+    const horizonteOfertaEntrada = horizonteOfertaClave ? datos.horizontes.find((h) => h.clave === horizonteOfertaClave) : null;
+    const { nivelBase, nivelHorizonte } = sumaCeldas(capaRama?.celdas ?? {}, celdasSel, horizonteOfertaClave);
+    const base = { t: decimalDeFecha(datos.fecha_base), valor: nivelBase };
+
+    let proyeccion = null;
+    if (!esVerde && horizonteOfertaEntrada) {
+      const tasaAnual = tasaAnualImplicita(nivelBase, nivelHorizonte, horizonteOfertaEntrada.anios);
+      // Veredicto local aproximado (banda muerta ±1%/año, CLAUDE.md): el contrato no publica un
+      // veredicto de OFERTA por horizonte (solo de demanda) -- es solo para el color de la línea
+      // en esta mini-gráfica, nunca se presenta como el veredicto oficial de la zona.
+      const veredicto = tasaAnual > 1 ? "sube" : tasaAnual < -1 ? "baja" : "se_mantiene";
+      proyeccion = { t: decimalDeFecha(horizonteOfertaEntrada.fecha), valor: nivelHorizonte, veredicto, tasaAnualPct: tasaAnual };
+    }
+
+    serviciosPorRama.push({
+      rama,
+      etiqueta: textos.graficas.servicios.titulo(textos.rama.nombre[rama] ?? rama),
+      grafica: graficaServicios({ rama, historico, base, proyeccion }),
+    });
+
+    const coberturaZona = registroComp.coberturaPorRama[rama];
+    coberturaPorRama.push({
+      rama,
+      etiqueta: textos.rama.nombre[rama] ?? rama,
+      grafica: graficaCobertura({
+        coberturaZona: Number.isNaN(coberturaZona) ? 0 : coberturaZona,
+        coberturaCdmx: Number.isNaN(coberturaCdmxPorRama[rama]) ? 0 : coberturaCdmxPorRama[rama],
+      }),
+    });
+
+    const oRama = registroComp.oPorRama[rama];
+    explicacionFilas.push({
+      rama,
+      valor: oRama,
+      peso: estado.pesos[rama],
+      contribucionPct: !Number.isNaN(oRama) && sumaPesoO > 0 ? (estado.pesos[rama] * oRama * 100) / sumaPesoO : null,
+    });
+  }
+
+  return {
+    titulo: `${textos.metodologia.tituloEntenderZona}: ${nombreAlcaldia} · AGEB ${cvegeo}`,
+    poblacionGrafica,
+    serviciosPorRama,
+    coberturaPorRama,
+    explicacionNodo: crearExplicacion(explicacionFilas),
+  };
+}
+
+// ---------------------------------------------------------------------------------------------
 // Arranque
 // ---------------------------------------------------------------------------------------------
 
@@ -529,12 +685,19 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
     ]);
   }
 
-  if (franjaEl && dialogoEl) montarFranja(franjaEl, dialogoEl, { generado: datosAlcaldia.generado ?? null });
+  const instanciaFranja = franjaEl && dialogoEl
+    ? montarFranja(franjaEl, dialogoEl, { generado: datosAlcaldia.generado ?? null })
+    : null;
 
   function recalcularYPintar(estado) {
     const enAlcaldia = estado.vista !== VISTA.CIUDAD;
     const datosVista = enAlcaldia ? datosAgeb : datosAlcaldia;
     const composicion = calcularComposicion(datosVista, estado);
+
+    if (instanciaFranja) {
+      const esFicha = estado.vista === VISTA.AGEB && Boolean(estado.cvegeo);
+      instanciaFranja.actualizarZona(esFicha ? construirDatosZona(datosVista, composicion, estado, nombresAlcaldia) : null);
+    }
 
     if (enAlcaldia) {
       const clavesAlcaldia = composicion.claves.filter((c) => datosAgeb.capas.demanda[c]?.cve_mun === estado.cve_mun);

@@ -302,6 +302,8 @@ const explicacion = {
   circuloAriaLabel: (v) => interpolar('{rama}: señal {valor} de 5', v),
   ayuda: 'Estos círculos no se editan: muestran, para cada rama, qué tan fuerte es la señal de '
     + 'oportunidad o disponibilidad detrás del resultado combinado.',
+  peso: (peso) => interpolar('Peso {peso}/5', { peso }),
+  contribucion: (pct) => interpolar('{pct}% del resultado combinado', { pct }),
 };
 
 // ---------------------------------------------------------------------------------------------

@@ -1,0 +1,117 @@
+/*
+ * graficas.css — gráficas de Nivel 2 (plans/frontend_specs.md §10.5, plan F86) y bloque de
+ * explicación por rama (§10.7, plan F87). Viven dentro del drawer (franja.css define el
+ * contenedor `.franja__seccion`). Solo variables de tokens.css (CLAUDE.md, spec §4).
+ */
+
+.grafica__bloque {
+  margin-bottom: var(--e-3);
+}
+
+.grafica__etiqueta {
+  margin: 0 0 var(--e-1);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-2);
+}
+
+.grafica__lienzo {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 280px;
+}
+
+.grafica__linea {
+  fill: none;
+  stroke: var(--tinta-2);
+  stroke-width: 1.5;
+}
+
+.grafica__linea--proyeccion {
+  stroke-dasharray: 3 3;
+}
+
+.grafica__punto {
+  fill: var(--tinta-2);
+}
+
+.grafica__banda {
+  stroke: var(--linea-fuerte);
+  stroke-width: 3;
+  opacity: 0.5;
+}
+
+.grafica__eje {
+  stroke: var(--linea);
+  stroke-width: 1;
+}
+
+.grafica__barra {
+  fill: var(--prioridad-3);
+}
+
+.grafica__referencia {
+  stroke: var(--tinta-3);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.grafica__referencia-texto {
+  fill: var(--tinta-3);
+  font-family: var(--f-familia);
+  font-size: 9px;
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Explicación por rama (§10.7): círculos NO editables, distintos de los de prioridades.css       */
+/* (--tinta-2, sin borde interactivo, aria-readonly) -- la distinción es obligatoria (spec).      */
+/* -------------------------------------------------------------------------------------------- */
+
+.explicacion__titulo {
+  margin: 0 0 var(--e-2);
+  font-size: calc(var(--t-subtitulo-tam) * var(--escala));
+  font-weight: var(--t-subtitulo-peso);
+  color: var(--tinta-2);
+}
+
+.explicacion__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e-3);
+  padding-top: var(--e-2);
+}
+
+.explicacion__nombre {
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  color: var(--tinta);
+}
+
+.explicacion__circulos {
+  display: flex;
+  gap: var(--e-1);
+}
+
+.explicacion__circulo {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--tinta-2);
+}
+
+.explicacion__circulo--lleno {
+  background: var(--tinta-2);
+}
+
+.explicacion__detalle {
+  margin: 0 0 var(--e-1);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}
+
+.explicacion__ayuda {
+  margin: var(--e-2) 0 0;
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}

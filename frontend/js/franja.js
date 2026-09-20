@@ -81,6 +81,62 @@ function pintarContenidoDrawer(dialogo, generado) {
   return titulo;
 }
 
+/**
+ * Arma el contenido del drawer para "Entender esta zona" (§10.5-§10.7, Nivel 2): gráficas de
+ * población/servicios/cobertura ya renderizadas por `main.js` (vía `graficas.js`/`explicacion.js`,
+ * este módulo no conoce `composicion.js`) más el bloque de explicación por rama. Mismo patrón que
+ * `pintarContenidoDrawer`: devuelve el `<h2>` para enfocarlo al abrir.
+ *
+ * @param {HTMLDialogElement} dialogo
+ * @param {ReturnType<typeof import("./main.js").construirDatosZona>} datosZona
+ */
+function pintarContenidoZona(dialogo, datosZona) {
+  const titulo = crear("h2", { id: ID_TITULO_DRAWER, tabindex: "-1", clase: "franja__titulo" }, [datosZona.titulo]);
+
+  const botonCerrar = crear(
+    "button",
+    { type: "button", clase: "franja__cerrar", onclick: () => despachar({ tipo: ACCIONES.CERRAR_DRAWER }) },
+    [textos.metodologia.cerrar, " ", crear("span", { "aria-hidden": "true" }, ["✕"])],
+  );
+  const cabeceraDrawer = crear("div", { clase: "franja__cabecera-drawer" }, [titulo, botonCerrar]);
+
+  const seccionPoblacion = crear("section", { clase: "franja__seccion" }, [
+    crear("h3", { clase: "franja__seccion-titulo" }, [textos.graficas.poblacion.titulo]),
+    datosZona.poblacionGrafica ?? crear("p", { clase: "franja__parrafo" }, [textos.graficas.sinDatos]),
+  ]);
+
+  const seccionServicios = crear(
+    "section",
+    { clase: "franja__seccion" },
+    datosZona.serviciosPorRama.map((s) =>
+      crear("div", { clase: "grafica__bloque" }, [
+        crear("p", { clase: "grafica__etiqueta" }, [s.etiqueta]),
+        s.grafica,
+      ])),
+  );
+
+  const seccionCobertura = crear("section", { clase: "franja__seccion" }, [
+    crear("h3", { clase: "franja__seccion-titulo" }, [textos.graficas.cobertura.titulo]),
+    ...datosZona.coberturaPorRama.map((c) =>
+      crear("div", { clase: "grafica__bloque" }, [
+        crear("p", { clase: "grafica__etiqueta" }, [c.etiqueta]),
+        c.grafica,
+      ])),
+  ]);
+
+  reemplazarContenido(dialogo, [
+    cabeceraDrawer,
+    crear("div", { clase: "franja__cuerpo" }, [
+      seccionPoblacion,
+      seccionServicios,
+      seccionCobertura,
+      datosZona.explicacionNodo,
+    ]),
+  ]);
+
+  return titulo;
+}
+
 /** Pinta el botón de la franja lateral (spec §10.5: "toda la franja es un `<button>`"). */
 function pintarBotonFranja(contenedor, idDialogo) {
   const boton = crear(
@@ -143,21 +199,30 @@ function cerrarDialogo(dialogo, disparador) {
 }
 
 /**
- * Monta la franja lateral y el drawer de metodología. Es el único disparador del drawer (el
- * botón "Metodología ↗" que antes vivía en la cabecera se eliminó, ver `js/cabecera.js`).
+ * Monta la franja lateral y el drawer, que sirve dos contenidos distintos según haya o no una
+ * zona (AGEB) activa (§10.6: "mismo drawer, dos entradas"): metodología (sin zona) o "Entender
+ * esta zona" (Nivel 2: gráficas + explicación por rama, vía `actualizarZona`). Es el único
+ * disparador del drawer (el botón "Metodología ↗" que antes vivía en la cabecera se eliminó, ver
+ * `js/cabecera.js`).
  *
  * @param {HTMLElement} elementoFranja - contenedor de la franja (`#franja-metodologia`).
  * @param {HTMLDialogElement} elementoDialogo - `<dialog>` de metodología (`#drawer-metodologia`).
  * @param {{generado?: string|null}} [opciones]
- * @returns {() => void} función para desmontar la suscripción (uso en pruebas).
+ * @returns {{cancelarSuscripcion: () => void, actualizarZona: (datosZona: object|null) => void}}
  */
 export function montarFranja(elementoFranja, elementoDialogo, opciones = {}) {
   if (!elementoDialogo.id) elementoDialogo.id = "drawer-metodologia";
   elementoDialogo.classList.add("franja__drawer");
   elementoDialogo.setAttribute("aria-labelledby", ID_TITULO_DRAWER);
 
-  const tituloEl = pintarContenidoDrawer(elementoDialogo, opciones.generado ?? null);
+  let tituloEl = pintarContenidoDrawer(elementoDialogo, opciones.generado ?? null);
   const botonFranja = pintarBotonFranja(elementoFranja, elementoDialogo.id);
+
+  let zonaActual = null;
+  /** Llamado por `main.js` en cada recálculo: `datosZona` (de `construirDatosZona`) o `null`. */
+  function actualizarZona(datosZona) {
+    zonaActual = datosZona;
+  }
 
   let disparadorActivo = botonFranja;
 
@@ -189,6 +254,13 @@ export function montarFranja(elementoFranja, elementoDialogo, opciones = {}) {
     botonFranja.setAttribute("aria-expanded", abierto ? "true" : "false");
 
     if (abierto && !abiertoAnterior) {
+      // Repinta el contenido justo antes de abrir, con la zona activa en ese momento (§10.6): el
+      // drawer no se mantiene "vivo" mientras está cerrado, así que no hace falta reaccionar a
+      // cada cambio de zona, solo al abrir.
+      tituloEl = zonaActual
+        ? pintarContenidoZona(elementoDialogo, zonaActual)
+        : pintarContenidoDrawer(elementoDialogo, opciones.generado ?? null);
+
       // Si el disparador no viene de un clic propio (p. ej. carga inicial con `&info=1` en el
       // hash), se usa lo que tenga el foco en ese momento o, en su defecto, el botón de la
       // franja, como disparador al que volver al cerrar.
@@ -206,5 +278,5 @@ export function montarFranja(elementoFranja, elementoDialogo, opciones = {}) {
   const cancelarSuscripcion = suscribir(reaccionar);
   reaccionar(obtenerEstado());
 
-  return cancelarSuscripcion;
+  return { cancelarSuscripcion, actualizarZona };
 }
