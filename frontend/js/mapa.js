@@ -43,6 +43,30 @@ const DURACION_ENFOQUE_MS = 820;
 const ZOOM_ESCALA_MINIMA = 1;
 const ZOOM_ESCALA_MAXIMA = 6;
 
+// correccion/action_plan.md §8.2 punto 45: `--d-xs` (tokens.css) ya respeta
+// `prefers-reduced-motion` vía CSS, pero `DURACION_ENFOQUE_MS` es un literal de JS que no pasa
+// por esa media query. Se consulta en vivo (no se cachea) porque el sistema operativo puede
+// cambiar la preferencia mientras la página está abierta, igual que la propia media query CSS.
+function duracionEfectiva(ms) {
+  const reducido =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  return reducido ? 0 : ms;
+}
+
+// correccion/action_plan.md §8.2 punto 44: con `vector-effect: non-scaling-stroke` retirado de
+// mapa.css (recomputarlo en cada fotograma de la transición de foco costaba ~2 290 ms medidos),
+// el trazo de estas capas se recalcula a mano, UNA SOLA VEZ al terminar la animación (o de
+// inmediato en cambios sin animar, p. ej. el zoom con rueda/gesto), para que no engorde ni
+// adelgace con la escala. Los valores base son los `stroke-width`/`stroke-dasharray` que antes
+// fijaba mapa.css sin escalar.
+const TRAZO_BASE_ALCALDIA = 1;
+const TRAZO_BASE_CONTORNO_EXTERIOR = 1;
+const TRAZO_BASE_AGEB = 0.75;
+const TRAZO_BASE_CONFIANZA_BAJA = 1.2;
+const TRAZO_BASE_CONFIANZA_BAJA_GUION = [1.2, 5];
+
 // Umbrales de intensidad de la paleta de veredictos (spec §4.2: "la intensidad codifica la
 // magnitud de la tasa anual"). Los mismos cortes que la leyenda (2 %/año y 3.5 %/año, tope).
 function nivelIntensidad(tasaAnualPct) {
@@ -216,10 +240,15 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   patron.append("line").attr("class", "mapa__hachura-linea").attr("x1", 0).attr("y1", 0).attr("x2", 0).attr("y2", 6);
 
   // --- Capas SVG, de abajo arriba, en el orden exacto de la spec §3. ---
-  const gFondo = svg.append("g").attr("class", "alcaldias-fondo"); // F70: silueta de vecinas
-  const gAgebs = svg.append("g").attr("class", "agebs"); // F70: polígonos AGEB en foco
-  const gConfianzaBaja = svg.append("g").attr("class", "confianza-baja"); // F70: punteado sobre AGEB
-  const gAlcaldias = svg.append("g").attr("class", "alcaldias"); // esta tarea: 16 alcaldías
+  // Las 4 capas que se paneo/zoomean juntas viven dentro de un único `<g class="escenario">`
+  // (correccion/action_plan.md §8.2 punto 43): `aplicarTransform` escribía el atributo
+  // `transform` en 4 grupos por fotograma; con un solo grupo envolvente es una escritura por
+  // fotograma, punto de anclaje también del mapa multi-vista (Fase 7).
+  const gEscenario = svg.append("g").attr("class", "escenario");
+  const gFondo = gEscenario.append("g").attr("class", "alcaldias-fondo"); // F70: silueta de vecinas
+  const gAgebs = gEscenario.append("g").attr("class", "agebs"); // F70: polígonos AGEB en foco
+  const gConfianzaBaja = gEscenario.append("g").attr("class", "confianza-baja"); // F70: punteado sobre AGEB
+  const gAlcaldias = gEscenario.append("g").attr("class", "alcaldias"); // esta tarea: 16 alcaldías
   const gRealce = svg.append("g").attr("class", "realce"); // hover/foco
 
   let rutaContornoExterior = null;
@@ -384,15 +413,32 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   // fotograma y hace que el zoom del usuario (d3-zoom) se componga con el mismo mecanismo.
   // -----------------------------------------------------------------------------------------
 
-  function gruposEscenario() {
-    return [gFondo, gAlcaldias, gAgebs, gConfianzaBaja];
+  // Punto 44: recalcula el trazo de las 4 capas escaladas para que se vea igual de fino
+  // (en pantalla) a cualquier escala, sin depender de `vector-effect: non-scaling-stroke`.
+  function ajustarTrazoEscena(escala) {
+    const k = escala > 0 ? escala : 1;
+    gAlcaldias.selectAll("path.mapa__alcaldia").attr("stroke-width", TRAZO_BASE_ALCALDIA / k);
+    rutaContornoExterior?.attr("stroke-width", TRAZO_BASE_CONTORNO_EXTERIOR / k);
+    gAgebs.selectAll("path.mapa__ageb").attr("stroke-width", TRAZO_BASE_AGEB / k);
+    gConfianzaBaja
+      .selectAll("path.mapa__ageb-confianza-baja")
+      .attr("stroke-width", TRAZO_BASE_CONFIANZA_BAJA / k)
+      .attr("stroke-dasharray", TRAZO_BASE_CONFIANZA_BAJA_GUION.map((v) => v / k).join(" "));
   }
 
   function aplicarTransform(t, { animar = false, duracion = DURACION_ENFOQUE_MS } = {}) {
     const cadenaTransform = `translate(${t.tx},${t.ty}) scale(${t.escala})`;
-    for (const g of gruposEscenario()) {
-      if (animar) g.transition().duration(duracion).attr("transform", cadenaTransform);
-      else g.attr("transform", cadenaTransform);
+    if (animar) {
+      gEscenario
+        .transition()
+        .duration(duracionEfectiva(duracion))
+        .attr("transform", cadenaTransform)
+        .on("end", () => ajustarTrazoEscena(t.escala));
+    } else {
+      // Ramal SOLO del gesto de zoom del usuario (rueda/pellizco/arrastre o `reencuadrar()`):
+      // aquí NO se recalcula el trazo en cada tick (sería "por fotograma", justo lo que el punto
+      // 44 evita); `activarZoomUsuario` lo hace una sola vez con el evento `end` del propio gesto.
+      gEscenario.attr("transform", cadenaTransform);
     }
   }
 
@@ -422,11 +468,24 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
 
   function pintarAgebs() {
     const features = agebGeoJSON?.features?.filter((f) => f.properties.cve_mun === cveMunEnfocado) ?? [];
-    gAgebs
+    const seleccion = gAgebs
       .selectAll("path.mapa__ageb")
-      .data(features, (feature) => feature.properties.cvegeo)
-      .join("path")
-      .attr("class", (feature) => `mapa__ageb ${claseFeatureAgeb(feature, capaActiva)}`)
+      .data(features, (feature) => feature.properties.cvegeo);
+
+    seleccion.exit().remove();
+
+    // Medido en Iztapalapa (458 AGEB, la alcaldía más grande): dejar que `mapa.css`
+    // (`transition: fill`) anime los ~458 `<path>` que se CREAN de golpe al enfocar añadía una
+    // tarea larga de sí sola (256 ms -> 0 ms al desactivarla solo para los nuevos). No es el
+    // bug de la Fase 8 original (§8.1: transición de `transform`), pero el mismo síntoma con la
+    // misma causa raíz: cientos de transiciones CSS arrancando en el mismo fotograma. Los
+    // recién creados se pintan YA con su color final, con un modificador que anula la
+    // transición un solo fotograma; los que ya existían (actualización por cambio de horizonte/
+    // población) sí deben poder transicionar de color con normalidad.
+    const entrando = seleccion
+      .enter()
+      .append("path")
+      .attr("class", (feature) => `mapa__ageb mapa__ageb--sin-transicion ${claseFeatureAgeb(feature, capaActiva)}`)
       .attr("data-cvegeo", (feature) => feature.properties.cvegeo)
       .attr("d", generadorRuta)
       .on("mouseenter", (evento, feature) => {
@@ -441,6 +500,14 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
       .on("click", (_evento, feature) => {
         despachar({ tipo: ACCIONES.IR_A_AGEB, cve_mun: cveMunEnfocado, cvegeo: feature.properties.cvegeo });
       });
+
+    seleccion
+      .attr("class", (feature) => `mapa__ageb ${claseFeatureAgeb(feature, capaActiva)}`)
+      .attr("d", generadorRuta);
+
+    if (!entrando.empty()) {
+      requestAnimationFrame(() => entrando.classed("mapa__ageb--sin-transicion", false));
+    }
 
     gConfianzaBaja
       .selectAll("path.mapa__ageb-confianza-baja")
@@ -494,7 +561,10 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
         // Solo gestos con `sourceEvent` (rueda/pellizco/arrastre real) cuentan como paneo manual;
         // el reencuadre programático (`zoom.transform`) no debe volver a mostrar el botón.
         if (evento.sourceEvent) mostrarBotonReencuadrar(true);
-      });
+      })
+      // Punto 44: el trazo se recalcula UNA SOLA VEZ cuando el gesto de zoom termina (rueda,
+      // pellizco, arrastre o el propio `reencuadrar()`), no en cada tick de `on("zoom")`.
+      .on("end", (evento) => ajustarTrazoEscena(transformEnfoque.escala * evento.transform.k));
     svg.call(comportamientoZoom);
   }
 
@@ -507,7 +577,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
 
   function reencuadrar() {
     if (!comportamientoZoom) return;
-    svg.transition().duration(DURACION_ENFOQUE_MS / 2).call(comportamientoZoom.transform, zoomIdentity);
+    svg.transition().duration(duracionEfectiva(DURACION_ENFOQUE_MS / 2)).call(comportamientoZoom.transform, zoomIdentity);
     mostrarBotonReencuadrar(false);
   }
 
@@ -553,7 +623,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
     // terminar para no competir con el siguiente `enfocarAlcaldia` si el usuario navega rápido.
     window.setTimeout(() => {
       if (cveMunEnfocado === null) limpiarAgebs();
-    }, DURACION_ENFOQUE_MS);
+    }, duracionEfectiva(DURACION_ENFOQUE_MS));
   }
 
   function sincronizarVista(estado) {

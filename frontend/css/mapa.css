@@ -37,8 +37,7 @@
  * -------------------------------------------------------------------- */
 .mapa__alcaldia {
   stroke: var(--papel);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
+  stroke-width: 1; /* recalculado en JS con la escala activa (mapa.js#ajustarTrazoEscena, punto 44) */
   cursor: pointer;
   /* Cambio de capa (§9): recolor por transición de fill, sin recrear el <path>. */
   transition: fill var(--d-m) var(--ease-salida), transform var(--d-xs) var(--ease-salida);
@@ -65,8 +64,7 @@
 .mapa__contorno-exterior {
   fill: none;
   stroke: var(--linea-fuerte);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
+  stroke-width: 1; /* recalculado en JS con la escala activa (mapa.js#ajustarTrazoEscena, punto 44) */
   pointer-events: none;
 }
 
@@ -155,32 +153,42 @@
 .mapa__alcaldia--recesivo {
   fill: var(--recesivo-relleno);
   stroke: var(--recesivo-contorno);
-  filter: var(--recesivo-filtro);
+  /* Sin `filter` (correccion/action_plan.md §8.2 punto 42): rasterizar una
+     superficie fuera de pantalla por cada vecina, a la escala del zoom,
+     bloqueaba el hilo principal (~8 951 ms medidos). El mismo efecto visual
+     ya lo dan `--recesivo-relleno`/`--recesivo-contorno`. */
 }
 
 .mapa__ageb {
   stroke: var(--papel);
-  stroke-width: 0.75;
-  vector-effect: non-scaling-stroke;
+  stroke-width: 0.75; /* recalculado en JS con la escala activa (mapa.js#ajustarTrazoEscena, punto 44) */
   cursor: pointer;
   transition: fill var(--d-m) var(--ease-salida);
+}
+
+/* Declarada después de `.mapa__ageb` para ganar por orden de cascada, misma especificidad, sin
+   `!important` (mismo patrón que `.mapa__alcaldia--recesivo` arriba). mapa.js#pintarAgebs la
+   aplica solo al crear un AGEB (cientos de golpe al enfocar una alcaldía) y la quita un fotograma
+   después: sin esto, el navegador arma una transición de `fill` por cada `<path>` nuevo aunque no
+   haya color previo que animar (medido: 256 ms -> 0 ms de tarea larga en Iztapalapa, la alcaldía
+   con más AGEB). Los AGEB que ya existían (cambio de horizonte/población) sí transicionan. */
+.mapa__ageb--sin-transicion {
+  transition: none;
 }
 
 .mapa__ageb-confianza-baja {
   fill: none;
   stroke: var(--confianza-baja-punto);
-  stroke-width: 1.2;
+  stroke-width: 1.2; /* recalculado en JS, igual que `stroke-dasharray` (punto 44) */
   stroke-dasharray: 1.2 5;
-  vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
 
-.alcaldias-fondo,
-.agebs,
-.confianza-baja,
-.alcaldias {
-  transition: transform var(--d-xs) var(--ease-salida);
-}
+/* Sin `transition: transform` (correccion/action_plan.md §8.2 punto 41): D3
+   ya anima el atributo `transform`; esta regla hacía que cada escritura por
+   fotograma arrancara una transición CSS nueva de 120 ms sobre grupos con
+   cientos de `<path>`, encabalgando rasterizados hasta bloquear el hilo
+   principal (8 790 ms -> 412 ms medidos al quitarla). */
 
 /* --------------------------------------------------------------------
  * Botón "Reencuadrar" (spec §10.3): aparece solo tras paneo/zoom manual.
