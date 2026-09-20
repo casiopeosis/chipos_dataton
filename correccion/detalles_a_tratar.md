@@ -428,3 +428,5 @@ Yo avanzaría en este orden:
 10. Cambiar el mensaje de “dónde conviene vivir” por uno que realmente puedan demostrar.
 
 En resumen: **no cambiaría completamente el modelo de demanda**. Primero corregiría horizontes, validación, incertidumbre y la combinación oferta-demanda. Esos cambios mejorarían mucho más la propuesta que sustituirla por un algoritmo sofisticado pero difícil de justificar.
+
+# ADICIONAL, AL HACER CLICK EN UNA DELEGACIÓN EL NAVEGADOR SE HACE IRRESPONSIVO Y CRASHEA, POSIBLEMENTE DEBIDO A LA CANTIDAD DE POLÍGONOS DE LA GEOMETRÍA DE LOS AGEB.
