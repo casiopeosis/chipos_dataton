@@ -25,8 +25,9 @@ fases está en **`correccion/action_plan.md`**; este documento es la fuente de v
 
 ## 1. Variables y fuentes
 
-**Demanda potencial (capa principal). ✅ (panel por segmento ✅ fase 4 `panel.construir_panel_demanda`;
-contrato v1.4 con los 6 segmentos 🔄 fase 6, frontend 🔄 fase 7/9)** `D_it = P_0A2 + P_3A5 +
+**Demanda potencial (capa principal). ✅ (panel por segmento ✅ `panel.construir_panel_demanda`;
+contrato v1.4 con los 6 segmentos ✅ `exportar.construir_capa_demanda_v14`; frontend 🔄 fase 7/9)**
+`D_it = P_0A2 + P_3A5 +
 P_6A11 + P_12A14` (0–14, suma simple), AGEB urbana *i*, censo *t* ∈ {2010.44, 2020.20} (fechas de
 referencia 12-jun-2010 y 15-mar-2020; Δt = 9.76). Fuente: INEGI RESAGEBURB 2010 y 2020
 (`data/interim/censo_ageb_panel.parquet`). El panel censal **ya trae** `p_15a17` (verificado en
@@ -50,7 +51,7 @@ solo en el icono "?" (`correccion/frontend_requisitos.md` §20).
 (`conapo_mun_0a14.parquet`, 0–14 = 00_04 + 05_09 + 10_14; `conapo_mun_quinq.parquet` conserva el
 detalle quinquenal, incluido 15–19 — que **no** coincide exactamente con 15–17; ver §1.1).
 
-**Cuatro ramas de oferta/disponibilidad (datos y modelo ✅ fase 5; contrato v1.4 🔄 fase 6,
+**Cuatro ramas de oferta/disponibilidad (datos y modelo ✅ fase 5; contrato v1.4 ✅ fase 6,
 generaliza lo que antes era una sola capa "oferta").** Habitancia no expone una sola capa de
 oferta: expone cuatro ramas
 (`correccion/frontend_requisitos.md` §2), cada una con su propia fuente y su propio tratamiento
@@ -84,38 +85,46 @@ situación actual y NO inventar una línea futura").
 | Secundaria · 12–14 | `p_12a14` | Secundaria |
 | Adolescencia · 15–17 | `p_15a17` | Solo `Complementario`; confianza tope `media` obligatorio |
 
-**Brecha y oportunidad (§10). 🔄 fase 5.** Cobertura proyectada `Ŝ/D̂ × 1000` por horizonte e índice
-de oportunidad de expansión. Hoy el contrato solo publica la razón **histórica** `S_2024 / D_2020 ×
-1000`, que mezcla dos momentos distintos y no es proyectiva.
+**Brecha y oportunidad (§10). ✅ fase 6.** Cobertura proyectada `Ŝ/D̂ × 1000` por horizonte e índice
+de oportunidad de expansión, implementados en `features.py` y publicados en el contrato v1.4 (§10).
+**`capas.brecha` se retiró del contrato**: la razón histórica `S_2024 / D_2020 × 1000` que mezclaba
+dos momentos distintos ya no se publica; el cálculo equivalente pasa al motor de composición del
+frontend (Fase 7).
 
-### 1.2 Segmentos de servicio y población objetivo — mapeo SCIAN de la oferta (🔄 fase 5)
+### 1.2 Segmentos de servicio y población objetivo — mapeo SCIAN de la oferta ✅ fase 5
 
-> **Nota de consistencia (Fase 4).** Esta tabla mapea SCIAN → columna censal para el lado de
-> **oferta** (qué establecimientos cuentan en cada segmento); es insumo de la Fase 5 (celdas de
-> filtro por rama), no de la Fase 4. Todavía usa los nombres `total`/`mixto` de la revisión anterior
-> a la ampliación a 0–17: **no coincide 1:1** con los 6 segmentos de **demanda** vigentes de §1.1
-> (`todas, primera_infancia, preescolar, primaria, secundaria, adolescencia`, ya implementados en
-> `panel.construir_panel_demanda`). En particular, esta tabla no tiene fila para `adolescencia`
-> (15–17) — su mapeo SCIAN sí está en §1.1 (`Complementario`, media superior/recreación juvenil).
-> Pendiente reconciliar nombres al implementar B22 (Fase 5): la fila `mixto` (SCIAN sin segmentar)
-> no tiene un segmento de demanda 1:1 y necesitará una decisión de diseño propia en esa fase.
+> **Nota de consistencia — resuelta en Fase 5 (B22).** La tabla que traía esta sección (nombres
+> `total`/`mixto`, anterior a la ampliación a 0–17) se reemplazó por las **celdas de filtro reales**
+> por rama (`panel.CELDAS_EDUCACION`/`CELDAS_SALUD`/`CELDAS_COMERCIO`, §10.6), que no coinciden 1:1
+> con los 6 segmentos de **demanda** de §1.1 — cada celda de oferta es su propio ajuste Poisson+EB,
+> independiente del segmento de demanda activo en el cliente (el cliente combina ambos lados solo al
+> calcular cobertura, §10.1). La fila `mixto` (SCIAN sin segmentar) se resolvió **dividiéndola en dos
+> celdas propias** en vez de mantenerla fusionada: `varios_niveles` (611171, 611172) y
+> `educacion_especial` (611181, 611182); además se agregaron dos celdas `Complementario` nuevas que
+> esta tabla no tenía, `media_superior_tecnica` y `recreacion_cultura` (cubren, entre otras cosas, la
+> oferta relevante para el segmento de demanda `adolescencia`, 15–17, que tampoco tenía celda propia
+> aquí).
 
 Sumar todas las edades 0–14 contra todos los establecimientos oculta desajustes reales: una
 guardería y una secundaria no atienden a la misma población. Los datos **ya están desagregados en
 disco** — el censo trae las cuatro bandas por AGEB y el DENUE trae `Subcategoría` + `Código SCIAN`—,
 así que la segmentación no requiere fuentes nuevas.
 
-| Segmento | SCIAN (`Principal`) | Establecimientos 2024-11 | Población objetivo (censo) |
-|---|---|---:|---|
-| Guardería o estancia infantil | 624411, 624412 | 592 | `p_0a2` |
-| Preescolar | 611111, 611112 | 2 262 | `p_3a5` |
-| Primaria | 611121, 611122 | 2 289 | `p_6a11` |
-| Secundaria (general y técnica) | 611131, 611132, 611141, 611142 | 895 | `p_12a14` |
-| Varios niveles / educación especial | 611171, 611172, 611181, 611182 | 1 271 | 0–14 (no segmentable) |
-| **Total** | | **7 309** | `pob_0a14` |
+| Celda (`panel.CELDAS_EDUCACION`) | Alcance | SCIAN | Establecimientos 2024-11 | AGEB con presencia |
+|---|---|---|---:|---:|
+| `guarderia` | Principal | 624411, 624412 | 591 | 490 |
+| `preescolar` | Principal | 611111, 611112 | 2 261 | 1 302 |
+| `primaria` | Principal | 611121, 611122 | 2 286 | 1 132 |
+| `secundaria` | Principal | 611131, 611132, 611141, 611142 | 894 | 515 |
+| `varios_niveles` | Principal | 611171, 611172 | 885 | 615 |
+| `educacion_especial` | Principal | 611181, 611182 | 386 | 285 |
+| `media_superior_tecnica` | Complementario | 611151, 611152, 611161, 611162, 611512 | 364 | 270 |
+| `recreacion_cultura` | Complementario | 611611, 611612, 611621, 611622, 611631, 611632, 611691, 611698, 611699 | 1 588 | 898 |
 
-El segmento `total` (0–14) sigue siendo el valor por omisión del mapa y del veredicto principal; los
-demás son vistas adicionales seleccionables.
+No hay una celda "total" publicada: cada celda es su propio registro en el contrato
+(`capas.ramas.educacion[cvegeo].celdas.<celda>`); el segmento de demanda por omisión (`todas`, 0–17)
+sigue siendo el valor por omisión del mapa y del veredicto principal, pero eso es un eje aparte del
+de las celdas de oferta.
 
 **Aproximación documentada:** CONAPO publica grupos quinquenales (00_04, 05_09, 10_14) que **no**
 coinciden con las bandas censales 0–2 / 3–5 / 6–11 / 12–14. El ancla municipal (§2.3, §2.5) se
@@ -146,14 +155,17 @@ no se publica a ese nivel. Esa es exactamente la razón de ser de la contracció
 información temporal que el AGEB no tiene. El backtest temporal (§4) se corre sobre las dos series
 que sí tienen tres o más momentos: CONAPO municipal y DENUE por AGEB.
 
-### 1.4 Capas de contexto de la CDMX (🔄 fase 7)
+### 1.4 Capas de contexto de la CDMX ✅ fase 5
 
 `data/processed/areas_verdes/` y `data/processed/espacios_publicos/` (Datos Abiertos de la CDMX) se
-incorporan como **contexto descriptivo por AGEB** (conteo y superficie de equipamiento comunitario,
-join espacial en WGS84). No entran al modelo de tendencia: son covariables estáticas de un solo
-corte y §9 ya descarta usarlas como modelo principal. Su función es de interpretación y de
-diversidad de fuentes (`correccion/rubrica.md` §3, que pide integrar Datos Abiertos de la CDMX junto
-a INEGI).
+incorporan vía `io.leer_contexto_cdmx()` (conteo y superficie de equipamiento comunitario, join
+espacial en WGS84, `gpd.sjoin` con punto representativo). No entran al modelo de tendencia: son
+covariables estáticas de un solo corte y §9 ya descarta usarlas como modelo principal — pero, a
+diferencia de lo que preveía esta sección originalmente, **no se quedan como contexto descriptivo de
+fondo**: alimentan directamente la rama "verde" del contrato v1.4 (`capas.ramas.verde`, §10.1), con
+sus propias 3 celdas de filtro (`panel.CELDAS_VERDE`: cobertura verde, áreas recreativas, espacios
+públicos). Diversidad de fuentes (`correccion/rubrica.md` §3, que pide integrar Datos Abiertos de la
+CDMX junto a INEGI).
 
 ## 2. Método principal de demanda: tasa log-lineal + contracción EB + control CONAPO ✅
 
@@ -520,8 +532,8 @@ sobreajusta y pierde interpretabilidad sin ganar precisión verificable; la rúb
 "coherencia, interpretación y reproducibilidad" por encima de la sofisticación técnica aislada
 (`correccion/rubrica.md` §4).
 
-## 10. Cobertura proyectada, índice de oportunidad e índice de disponibilidad (fórmulas ✅ fase 6
-`features.py`; publicación en el contrato v1.4 🔄 fase 6, integración final)
+## 10. Cobertura proyectada, índice de oportunidad e índice de disponibilidad (✅ fase 6:
+fórmulas en `features.py` y publicación en el contrato v1.4)
 
 La rúbrica pide que la aplicación diga **dónde hay oportunidades de expansión y cómo rankearlas**
 (`correccion/rubrica.md` §2), y su caso de prueba es "zonas donde la demanda aumentará en tres años,
@@ -664,7 +676,7 @@ mezcla con `O_{i,h,r}`** (`correccion/frontend_requisitos.md` §7: "una zona con
 representar una oportunidad de expansión, pero al mismo tiempo tener baja disponibilidad actual
 para las familias").
 
-### 10.6 Ramas, filtros y el contrato de datos (celdas ✅ fase 5 `panel.py`; contrato 🔄 fase 6)
+### 10.6 Ramas, filtros y el contrato de datos ✅ fase 6 (celdas fase 5 `panel.py`; contrato fase 6)
 
 Los filtros de `correccion/frontend_requisitos.md` §10 (nivel/tipo × sector dentro de cada rama)
 cambian **qué establecimientos cuentan** como `S` de esa rama — es decir, cambian el subconjunto de
@@ -685,7 +697,8 @@ porque `correccion/frontend_requisitos.md` §10.3 la deja como opcional, no excl
 (`cobertura_verde, areas_recreativas, espacios_publicos`, agregado espacial, sin componente
 temporal). `modelos.ajustar_oferta`/`simular_oferta` se reutilizan sin ningún cambio de código por
 celda (verificado extremo a extremo con la celda `salud/clinicas`, metodología §6.2 incluida). La
-publicación de estas celdas en el contrato v1.4 (`construir_capa_rama`, `exportar.py`) es Fase 6.
+publicación de estas celdas en el contrato v1.4 (`construir_capa_rama_v14`/`construir_capa_verde`,
+`exportar.py`) es Fase 6, entregada: `capas.ramas.<rama>[cvegeo].celdas.<celda>`.
 
 ```
 Ŝ_{i,h,r}(filtro) = Σ_{c ∈ celdas(filtro)} Ŝ_{i,h,c}

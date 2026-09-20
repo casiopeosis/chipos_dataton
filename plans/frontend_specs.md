@@ -1006,11 +1006,19 @@ estados nuevos:
 Igual que la versión anterior en la parte estática (HTML+CSS+JS propios ≤ 45 kB gzip, d3 vendor
 ≤ 40 kB, Inter ≤ 110 kB, `alcaldias.geojson` ≤ 60 kB, `ageb_cdmx_simplificado.geojson` ~420 kB
 gzip, diferido). **Nuevo**: `prediccion_ageb.json` con capas por rama y celda de filtro pesa más
-que la versión de dos capas — presupuesto ampliado a **≤ 600 kB gzip**, diferido igual que el
-GeoJSON de AGEB (primer hover con intención o reposo). El **motor de composición cliente** (§17.4)
-debe recalcular oportunidad/disponibilidad e índice compuesto para las 2 453 AGEB en **< 80 ms** al
-mover un peso o un filtro (medido con `performance.now()`), para que el recoloreado del mapa se
-sienta instantáneo.
+que la versión de dos capas — presupuesto revisado a **≤ 1.1 MB gzip** (medido con datos reales
+tras Fase 6 de `correccion/action_plan.md`: 21.4 MB sin comprimir / ~1.02 MB gzip, 2 453 AGEB × 6
+segmentos de demanda + 17 celdas de oferta con proyección + 3 celdas de verde). El objetivo
+original de ≤ 600 kB (línea de base de la versión de dos capas) no es alcanzable sin sacrificar
+granularidad de celda o partir el archivo por rama; se decidió (equipo, Fase 6) mantener un solo
+archivo con la granularidad completa y documentar el presupuesto real en vez de fusionar celdas
+(el ahorro de fusionar 1-2 celdas marginales, p. ej. `media_superior_tecnica` +
+`educacion_especial` en educación, es de solo ~4 % — gzip ya comprime la estructura repetida entre
+celdas, así que fusionar no cierra la brecha). Sigue diferido igual que el GeoJSON de AGEB (primer
+hover con intención o reposo), así que no bloquea el render inicial ni el presupuesto estático de
+arriba. El **motor de composición cliente** (§17.4) debe recalcular oportunidad/disponibilidad e
+índice compuesto para las 2 453 AGEB en **< 80 ms** al mover un peso o un filtro (medido con
+`performance.now()`), para que el recoloreado del mapa se sienta instantáneo.
 
 ### 16.2 Checklist de aceptación (añade a la lista heredada de la versión anterior)
 

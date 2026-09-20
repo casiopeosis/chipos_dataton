@@ -290,13 +290,15 @@ solo con estos parámetros de URL, sin tocar DevTools.
 
 ## 8. Riesgos y supuestos
 
-- **Riesgo principal, nuevo en esta revisión: el tamaño del contrato v1.4.** Publicar celdas de
-  filtro por rama (§17.3 del spec) multiplica el tamaño de `prediccion_ageb.json` frente a la
-  versión de dos capas. El presupuesto se amplía a 600 kB gzip diferido (§16.1 del spec); si al
-  medir con datos reales se supera con margen, la mitigación es **agregar celdas poco usadas antes
-  de exportar** (p. ej. fusionar "media_superior" y "educacion_especial" en una sola celda
-  "otros_niveles" si su conteo es marginal en la mayoría de AGEB) — decisión de backend, no de
-  frontend; este plan solo documenta el síntoma.
+- **Riesgo principal, nuevo en esta revisión: el tamaño del contrato v1.4 — resuelto (Fase 6).**
+  Publicar celdas de filtro por rama (§17.3 del spec) multiplica el tamaño de
+  `prediccion_ageb.json` frente a la versión de dos capas. Medido con datos reales: 21.4 MB sin
+  comprimir / ~1.02 MB gzip, muy por encima del presupuesto original de 600 kB. La mitigación que
+  proponía esta sección (fusionar 1-2 celdas marginales) se descartó tras medir su ahorro real
+  (~4 %, insuficiente — gzip ya comprime la estructura repetida entre celdas). Decisión del equipo:
+  mantener la granularidad completa de celdas y el archivo único, y subir el presupuesto documentado
+  a ≤ 1.1 MB gzip (`plans/frontend_specs.md` §16.1). Sigue con carga diferida, así que no afecta el
+  render inicial ni el presupuesto estático.
 - **Riesgo: el motor de composición se ejecuta en cada movimiento de un slider de peso.** Si el
   usuario arrastra rápido, se debe *debounce*ar el recálculo pesado (percentiles, paso 3 de §17.4
   del spec) a un máximo de una vez por `requestAnimationFrame`, igual que ya hacía el slider de

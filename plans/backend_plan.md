@@ -36,19 +36,19 @@ Los seis cambios de fondo respecto de la versión anterior de este plan:
 |---|---|---|---|
 | — | **Bloqueantes: ninguno abierto.** Censo 2010/2020, CONAPO y geometría AGEB resueltos (C1, C4, C5). | — | Tarea B1 solo re-verifica. ✅ |
 | Importante | DENUE con 2 re-levantamientos; 11 cortes no independientes (C2) | Tratar 11 cortes como serie = pseudo-réplica | Solo 3 cortes de oferta: 2016-10, 2019-11, 2024-11 (fechas 2016.79, 2019.87, 2024.87) ✅ |
-| Importante | Caída infancias 2024-11 −11.2 %, concentrada en privado (C3) | Sesgo de tasa si se fecha en 2024 | Eje = fechas de levantamiento ✅; tope `media` ✅; **dos escenarios A/B**, no una certeza 🔄 fase 3 |
+| Importante | Caída infancias 2024-11 −11.2 %, concentrada en privado (C3) | Sesgo de tasa si se fecha en 2024 | Eje = fechas de levantamiento ✅; tope `media` ✅; **dos escenarios A/B**, no una certeza ✅ |
 | Importante | CONAPO > censo urbano en nivel (+5.9 %, hasta +29.7 % en 009) (N1) | Control por nivel inflaría AGEB | Control por **razón** 2031.5/2020.20, nunca por nivel ✅ |
-| Importante | CONAPO proyecta caídas fuertes (−1.45 a −4.19 %/año) (N2) | Casi todo AGEB sale `baja` (2 181 de 2 453 en `h3`) | Resultado sustantivo; se reporta reparto y sensibilidad δ ∈ {0.5, 1, 2} ✅. El producto decisorio deja de ser el veredicto y pasa a ser el ranking de oportunidad (§8bis) 🔄 fase 5 |
+| Importante | CONAPO proyecta caídas fuertes (−1.45 a −4.19 %/año) (N2) | Casi todo AGEB sale `baja` (2 181 de 2 453 en `h3`) | Resultado sustantivo; se reporta reparto y sensibilidad δ ∈ {0.5, 1, 2} ✅. El producto decisorio deja de ser el veredicto y pasa a ser el ranking de oportunidad (§8bis) ✅ |
 | Importante | `λ` no identificable con 2 censos (metodología §3) | IC dominados por supuesto | Previa `U(0.25, 1)`; veredicto con λ ∈ {0.25, 0.6, 1}; si cambia, confianza −1 nivel ✅ |
 | Importante | 100 AGEB con geometría 2010→2020 no idéntica (N5) | Denominador 2010 de otra superficie | Reglas de `relacion` (§4.2); confianza máx. `media` ✅ |
-| **Importante** | **IC de oferta degenerados** (`agregado_cdmx.oferta.h3.ic95 = [-6.9, -6.9]`) | El modelo se publica más seguro de lo que está | Quasi-Poisson `φ_m` por alcaldía + piso `SIGMA_MIN_TASA` **calibrado con la cobertura empírica del backtest** (§6, metodología §2.7), no con un ancho mínimo elegido a ojo 🔄 fase 3 (depende de fase 2) |
-| **Importante** | **El backtest de CONAPO original usaba una proyección como "futuro real"** | Circular: `pobproy_quinq1.csv` es una sola vintage reconciliada contra el Censo 2020, así que ningún año de ese archivo representa "lo que se sabía entonces" | Se retira el backtest de origen móvil sobre ese archivo; se documenta la limitación; vía honesta si se consigue una vintage CONAPO anterior a 2020 (metodología §4.1, tarea B23, opcional) 🔄 fase 2 |
-| **Importante** | **Solo 2 momentos censales por AGEB** | La rúbrica pide ≥ 3 momentos comparables | No se inventa un tercero: se documenta por capa (metodología §1.3) y el backtest se corre sobre oferta por AGEB (3 momentos, único backtest temporal genuino disponible hoy) 🔄 fase 2 |
-| **Menor** | **CONAPO es quinquenal (00_04/05_09/10_14)** y no parte en 0–2/3–5/6–11/12–14 | Los segmentos no tienen ancla municipal propia | Los segmentos heredan el factor de control `k_m^s` de 0–14; aproximación declarada en metodología §1.2 y en `diagnostico.json` 🔄 fase 4 |
+| **Importante** | **IC de oferta degenerados** (`agregado_cdmx.oferta.h3.ic95 = [-6.9, -6.9]`) | El modelo se publica más seguro de lo que está | Quasi-Poisson `φ_m` por alcaldía + piso `SIGMA_MIN_TASA` **calibrado con la cobertura empírica del backtest** (§6, metodología §2.7), no con un ancho mínimo elegido a ojo ✅ |
+| **Importante** | **El backtest de CONAPO original usaba una proyección como "futuro real"** | Circular: `pobproy_quinq1.csv` es una sola vintage reconciliada contra el Censo 2020, así que ningún año de ese archivo representa "lo que se sabía entonces" | Se retira el backtest de origen móvil sobre ese archivo; se documenta la limitación; vía honesta si se consigue una vintage CONAPO anterior a 2020 (metodología §4.1, tarea B23, opcional) ✅ |
+| **Importante** | **Solo 2 momentos censales por AGEB** | La rúbrica pide ≥ 3 momentos comparables | No se inventa un tercero: se documenta por capa (metodología §1.3) y el backtest se corre sobre oferta por AGEB (3 momentos, único backtest temporal genuino disponible hoy) ✅ |
+| **Menor** | **CONAPO es quinquenal (00_04/05_09/10_14)** y no parte en 0–2/3–5/6–11/12–14 | Los segmentos no tienen ancla municipal propia | Los segmentos heredan el factor de control `k_m^s` de 0–14; aproximación declarada en metodología §1.2 y en `diagnostico.json` ✅ |
 | Menor | Mojibake en nombres de alcaldía 2016–2018 (A1) | Grupos duplicados | Agrupar siempre por `CVE_MUN` de la clave AGEB ✅ |
 | Menor | Tipos inestables (`Mes de corte`, `Año de alta DENUE`) (M3) | Errores de unión entre años | `read_csv(all_varchar=true)` y casteo explícito ✅ |
 | Menor | Puntos fuera de CDMX con `Coordenadas válidas = 1` (M2) | Asignación errónea | Territorio por clave AGEB, no por coordenadas; filtro de clave (13 car., `09`, MUN 002–017) ✅ |
-| Menor | Cambio SCIAN 2013→2018 (M1) | Altas/bajas artificiales por código | B4 verifica códigos `Principal` ausentes en algún corte ✅; los mismos códigos alimentan los segmentos (§4.4) 🔄 fase 4 |
+| Menor | Cambio SCIAN 2013→2018 (M1) | Altas/bajas artificiales por código | B4 verifica códigos `Principal` ausentes en algún corte ✅; los mismos códigos alimentan los segmentos (§4.4) ✅ |
 | Menor | Claves sin polígono: 2 censales, 5 DENUE rurales (N3) | Filas huérfanas | `sin_datos`; contadas en el reporte de cobertura ✅ |
 | Menor | 0–14 suprimido por INEGI (41 AGEB 2020), `D_2020 < 20` (23) | — | `sin_datos`, nunca imputar ✅ |
 
@@ -62,7 +62,7 @@ No se re-descarga. Pasos del plan:
    dentro de [−99.37, 19.04, −98.94, 19.60]; mismo conjunto de claves en completo y simplificado. ✅
 2. Versión del marco: afirmar join censo 2020 → polígono ≥ 99.9 % y claves DENUE `Principal` 2026-05 →
    polígono ≥ 99.7 % (valores de `perfil_datos.md`); registrar "MG 2020 censal, UPC 889463807469" en
-   el bloque `metadatos` del reporte de backtest. 🔄 fase 2 (el reporte aún no existe)
+   el bloque `metadatos` del reporte de backtest. ✅
 3. Ningún archivo de `data/reference/` se reescribe; si hiciera falta TopoJSON lo genera el frontend
    en su propia carpeta. ✅
 
@@ -71,7 +71,7 @@ No se re-descarga. Pasos del plan:
 > `frontend/css/mapa.css` (ver `correccion/action_plan.md` §6.1). No simplificar más el GeoJSON:
 > sería perder detalle sin ganar nada.
 
-## 3. Capa de lectura `io.py` (DuckDB) ✅ (+ 🔄 fase 4)
+## 3. Capa de lectura `io.py` (DuckDB) ✅
 
 - Una conexión DuckDB en memoria por ejecución; consultas con proyección de columnas (nunca `SELECT *`). ✅
 - DENUE infancias: `read_csv(ruta, all_varchar=true, header=true)`; columnas: `ID`, `Clave geográfica AGEB`,
@@ -82,12 +82,17 @@ No se re-descarga. Pasos del plan:
   (`{"2016-10": 2016.79, "2019-11": 2019.87, "2024-11": 2024.87}`); `EDICIONES_TODAS` para diagnóstico. ✅
 - Censo: lee `data/interim/censo_ageb_panel.parquet` (ya limpio por `tools/build_censo.py`). ✅
   Trae `p_0a2, p_3a5, p_6a11, p_12a14` además de `pob_0a14`: los segmentos (§4.4) no requieren datos nuevos.
-- CONAPO: `data/interim/conapo_mun_0a14.parquet`. ✅ · `conapo_mun_quinq.parquet` (quinquenal) para
-  el diagnóstico de segmentos. 🔄 fase 4
+- CONAPO: `data/interim/conapo_mun_0a14.parquet`. ✅ · `leer_conapo_quinq()`/`conapo_mun_quinq.parquet`
+  (diagnóstico quinquenal por segmento) — **descoped**: el criterio real de Fase 4
+  (`correccion/action_plan.md` #25) solo pedía documentar la aproximación de CONAPO quinquenal en
+  `docs/metodologia.md` §1.2, no una función de lectura nueva; se documentó sin implementar el
+  diagnóstico adicional.
 - Equivalencia: `data/interim/equivalencia_ageb_2010_2020.parquet`. ✅
 - Geometría: solo propiedades (`cvegeo, cve_mun, ambito`) vía `pyogrio.read_dataframe(..., read_geometry=False)`. ✅
 - Contexto CDMX: `areas_verdes/` y `espacios_publicos/` por join espacial WGS84 → conteo y superficie
-  por AGEB, **solo descriptivo** (metodología §1.4). 🔄 fase 7
+  por AGEB, categorías de la rama "verde" (metodología §1.4/§10.1). ✅ — deja de ser "solo
+  descriptivo": alimenta directamente `capas.ramas.verde` del contrato (Fase 5/6), no solo un
+  diagnóstico de fondo como preveía esta sección originalmente.
 - Si falta un parquet de `data/interim/`, error claro: "ejecuta `make datos`". ✅
 
 Firmas:
@@ -96,10 +101,13 @@ conectar() -> duckdb.DuckDBPyConnection                                   # ✅
 leer_denue_infancias(con, ediciones: Iterable[str]) -> pd.DataFrame       # ✅ id, cvegeo, cve_mun, alcance, sector, scian, subcategoria, edicion, t
 leer_censo_panel() -> pd.DataFrame                                        # ✅ cvegeo, anio, t, cve_mun, p_0a2, p_3a5, p_6a11, p_12a14, pob_0a14, ...
 leer_conapo_0a14() -> pd.DataFrame                                        # ✅ cve_mun, anio, pob_0a14
-leer_conapo_quinq() -> pd.DataFrame                                       # 🔄 fase 4  cve_mun, anio, sexo, edad, poblacion
+leer_conapo_quinq() -> pd.DataFrame                                       # descoped, ver nota arriba
 leer_equivalencia() -> pd.DataFrame                                       # ✅
 leer_universo_ageb() -> pd.DataFrame                                      # ✅ cvegeo, cve_mun, ambito (2,453 filas)
-leer_contexto_cdmx() -> pd.DataFrame                                      # 🔄 fase 7  cvegeo, n_areas_verdes, sup_areas_verdes_m2, n_espacios_publicos
+leer_contexto_cdmx() -> pd.DataFrame                                      # ✅ cvegeo, cve_mun, n_cobertura_verde,
+    # area_cobertura_verde_m2, n_areas_recreativas, area_areas_recreativas_m2, n_espacios_publicos,
+    # area_espacios_publicos_m2 (nombres reales de columna, distintos de los propuestos aquí en la
+    # versión anterior del plan)
 ```
 
 ## 4. Panel AGEB × corte (`panel.py`)
@@ -132,29 +140,27 @@ Conteos reales: `misma` 2 331, `fusion_o_expansion` 62, `cambio_limites` 37, `di
 - Completar el panel con ceros explícitos para AGEB urbanas sin establecimientos en un corte.
 - Salida: `cvegeo, cve_mun, t, s` (formato largo) + `s_2024` para brecha.
 
-### 4.4 Segmentos de servicio y población objetivo 🔄 fase 4
+### 4.4 Segmentos de servicio y población objetivo ✅ — entregado distinto de esta sección (ver nota)
 
-Mismo panel, una columna `segmento` más; `modelos.py` **no cambia** (se le pasa cada segmento por
-separado y devuelve la misma estructura). Mapeo SCIAN → población objetivo, verificado sobre la
-edición 2024-11 `Principal` (metodología §1.2):
-
-| `segmento` | SCIAN | Estab. 2024-11 | Columna censal |
-|---|---|---:|---|
-| `guarderia` | 624411, 624412 | 592 | `p_0a2` |
-| `preescolar` | 611111, 611112 | 2 262 | `p_3a5` |
-| `primaria` | 611121, 611122 | 2 289 | `p_6a11` |
-| `secundaria` | 611131, 611132, 611141, 611142 | 895 | `p_12a14` |
-| `mixto` | 611171, 611172, 611181, 611182 | 1 271 | `pob_0a14` |
-| `total` (por omisión) | todos | 7 309 | `pob_0a14` |
-
-Invariantes verificables: Σ segmentos (excluyendo `total` y `mixto`) ≤ `total` por AGEB y corte;
-Σ `p_0a2 + p_3a5 + p_6a11 + p_12a14` = `pob_0a14` exactamente. El segmento `total` conserva el
-comportamiento actual bit a bit: es el que alimenta el veredicto principal y el mapa por omisión.
+**Esta sección quedó superseded por el diseño real (B16 + B22, metodología §1.1 y §10.6): describe
+un único `segmento` mezclando demanda y oferta (SCIAN → columna censal) que nunca se implementó
+así.** Lo que se entregó separa las dos capas, cada una con su propio nombre de tarea:
+- **Demanda (B16, `panel.SEGMENTOS_DEMANDA`)**: 6 segmentos por banda de edad censal —
+  `todas` (0–17, por omisión), `primera_infancia` (`p_0a2`), `preescolar` (`p_3a5`), `primaria`
+  (`p_6a11`), `secundaria` (`p_12a14`), `adolescencia` (`p_15a17`). Invariante real: Σ de los 5
+  segmentos con dato = `todas`, exacto (`test_panel_demanda_suma_de_segmentos_igual_a_todas`).
+- **Oferta (B22, `panel.CELDAS_EDUCACION`)**: 8 celdas por SCIAN dentro de la rama educación
+  (`guarderia, preescolar, primaria, secundaria, educacion_especial, varios_niveles,
+  media_superior_tecnica, recreacion_cultura`) — más las celdas de las ramas salud (4) y comercio
+  (5), que no existían en esta sección del plan. Las celdas de oferta no se combinan con `pob_0a14`
+  aquí: cada rama tiene su propio ajuste Poisson+EB, independiente del segmento de demanda activo.
 
 Firmas:
 ```
-construir_panel_demanda(censo, equivalencia, universo, segmento="total") -> pd.DataFrame   # ✅ (arg 🔄 fase 4)
-construir_panel_oferta(denue, universo, cortes=CORTES_OFERTA, segmento="total") -> pd.DataFrame  # ✅ (arg 🔄 fase 4)
+construir_panel_demanda(censo, equivalencia, universo, segmento="todas") -> pd.DataFrame   # ✅
+construir_panel_oferta(denue, universo, cortes=CORTES_OFERTA) -> pd.DataFrame  # ✅ sin `segmento`:
+    # la generalización por celda de la rama educación (y las nuevas salud/comercio) es una función
+    # aparte, `construir_panel_oferta_celda(denue, universo, filtro_celda, cortes=CORTES_OFERTA)` (B22)
 reporte_cobertura(panel_d, panel_o, universo) -> dict   # ✅ conteos por motivo, para el log y el backtest
 ```
 
@@ -165,14 +171,15 @@ Constantes (único lugar: `config.py`, reflejadas en `docs/metodologia.md` §7):
 `P_ALTA=0.95`, `P_MANTIENE=0.50`, `N_SIM=4000`, `LAMBDA_PREVIA=(0.25, 1.0)`,
 `LAMBDAS_SENS=(0.25, 0.6, 1.0)`, `DELTAS_SENS=(0.005, 0.01, 0.02)`, `D_MIN_CONF=100`. ✅
 
-Cambian en fase 1 (🔄):
+Entregado ✅ (Fase 1):
 ```
 HORIZONTES        = {"h1": T_BASE + 1, "h3": T_BASE + 3, "h5": T_BASE + 5}   # 2027.5 / 2029.5 / 2031.5
 T_HOR             = HORIZONTES["h5"]        # 2031.5 — ancla única del control CONAPO
 HORIZONTES_OFERTA = ("h1", "h3")            # la oferta no reporta h5 (metodología §6.3)
 ```
-Se añade en fase 3 (🔄): `SIGMA_MIN_TASA` (piso de la desviación de la tasa, ambas capas) y
-`PHI_MINIMO = 1.0` (el factor quasi-Poisson nunca reduce la varianza).
+Entregado ✅ (Fase 3), con nombres reales distintos a los propuestos aquí: `SIGMA_MIN_DEMANDA` y
+`SIGMA_MIN_OFERTA` (piso separado por capa, no un único `SIGMA_MIN_TASA` — cada capa se calibró con
+su propio backtest) y `PHI_MINIMO = 1.0` (el factor quasi-Poisson nunca reduce la varianza).
 
 ### 5.1 Demanda
 1. Tasa directa `r̂_i = ln[(D_i,20+0.5)/(D_i,10+0.5)]/Δt`, `Δt = 9.76`;
@@ -181,8 +188,8 @@ Se añade en fase 3 (🔄): `SIGMA_MIN_TASA` (piso de la desviación de la tasa,
 3. `τ²` por momentos, agrupado en toda la CDMX: `τ² = max(0, mean((r̂_i − ρ_m)²) − mean(ψ_i))`
    (se reporta también por alcaldía como diagnóstico). ✅
 4. `B_i = ψ_i/(ψ_i+τ²)`; `r̃_i = B_i ρ_m + (1−B_i) r̂_i`; var. posterior `(1−B_i)ψ_i`,
-   **acotada por abajo en `SIGMA_MIN_TASA²`** 🔄 fase 3. ✅ lo demás
-5. `ρ_m,CONAPO = ln(C_m,2031.5 / C_m,2020.5)/11.0` (cifras de mitad de año). 🔄 fase 1 (hoy 2033.5/13.0)
+   **acotada por abajo en `SIGMA_MIN_DEMANDA²`** ✅
+5. `ρ_m,CONAPO = ln(C_m,2031.5 / C_m,2020.5)/11.0` (cifras de mitad de año). ✅
 6. `C_m,2020.20` = interpolación log-lineal entre 2019 (2019.5) y 2020 (2020.5). ✅
 7. Por réplica s = 1..4000: `r_i^s ~ N(r̃_i, var_post_i)`, `λ^s ~ U(0.25,1)`,
    `ε_m^s ~ N(0, σ_C,m²)` con `σ_C,m = |ρ_m,censo 2010–20 − ρ_m,CONAPO 2010–20|`;
@@ -192,7 +199,7 @@ Se añade en fase 3 (🔄): `SIGMA_MIN_TASA` (piso de la desviación de la tasa,
    `ε_m^s` se aplica **después** del control, sobre la razón de CONAPO, para que el choque compartido
    sobreviva al reescalado. ✅
    Un solo control, contra el horizonte más lejano; `h1`/`h3` se leen sobre la misma trayectoria
-   (metodología §2.5). 🔄 fase 1 cambia `T_HOR` de 2033.5 a 2031.5.
+   (metodología §2.5). ✅ `T_HOR` = 2031.5 (Fase 1, antes 2033.5).
 9. Salidas **por horizonte** `h ∈ HORIZONTES` (`resumir()` devuelve un `DataFrame` por clave):
    `tasa_anual_pct = 100·mediana(r_i,fut^s)` — idéntica en los 3 horizontes (pregunta B5 resuelta:
    tasa logarítmica ×100, coherente con la banda δ);
@@ -204,13 +211,13 @@ Se añade en fase 3 (🔄): `SIGMA_MIN_TASA` (piso de la desviación de la tasa,
 - Por AGEB: Poisson log-lineal `log E[S_it] = a_i + b_i (t − 2019.87)` sobre 3 cortes, ajuste por
   Newton-Raphson vectorizado (sin bucle `statsmodels` por AGEB; `statsmodels` solo en el test de
   paridad). `var(b_i)` = inversa de la información de Fisher. ✅
-- **Sobredispersión** 🔄 fase 3: `φ_m = χ²(Pearson)/gl` estimado **agrupado por alcaldía** (1 gl por
+- **Sobredispersión** ✅: `φ_m = χ²(Pearson)/gl` estimado **agrupado por alcaldía** (1 gl por
   AGEB es puro ruido), `φ_m ← max(φ_m, PHI_MINIMO)`, y `var(b_i) ← φ_m · var(b_i)` antes del EB.
 - EB: igual que 5.1 pasos 3–4 hacia `b_m` (pendiente Poisson de la suma de la alcaldía). Sin control externo. ✅
-- Simulación `b_i^s ~ N(b̃_i, var_post)`, con el mismo piso `SIGMA_MIN_TASA` 🔄 fase 3;
-  `delta_pct` desde `T_BASE` a `h1` y `h3`. ✅ (horizontes 🔄 fase 1)
+- Simulación `b_i^s ~ N(b̃_i, var_post)`, con el piso `SIGMA_MIN_OFERTA` ✅;
+  `delta_pct` desde `T_BASE` a `h1` y `h3`. ✅
 - `sin_datos` si `S = 0` en los 3 cortes o AGEB rural. Confianza con tope `media`. `n_obs = 3`. ✅
-- **Escenarios de la caída 2024-11** 🔄 fase 3: A (cierres reales, principal, es el que se publica)
+- **Escenarios de la caída 2024-11** ✅: A (cierres reales, principal, es el que se publica)
   y B (depuración parcial del padrón, sensibilidad). Ambos a `diagnostico.json`; el contrato no se
   duplica (metodología §6.1).
 
@@ -260,7 +267,7 @@ agregar_alcaldia(sim) -> Simulacion                                             
 `Simulacion` (dataclass congelada, compartida por ambas capas y ambos niveles):
 `clave, cve_mun, n_obs, base, d2020_conf, tope, r_fut (n, n_sim), r_fut_lambdas, horizonte_control`.
 
-## 6. Validación y backtesting (`backtest.py`) 🔄 fase 2
+## 6. Validación y backtesting (`backtest.py`) ✅
 
 > **Esta es la única tarea del plan original que nunca se entregó (B9), y la que
 > `correccion/rubrica.md` §5-6 exige explícitamente.** `config.py:44-45` ya declara
@@ -348,15 +355,14 @@ cobertura lograda.
 ## 7. Exportación (`exportar.py`, punto de entrada de `make pipeline`)
 
 - `main()`: io → panel → modelos → **backtest** (incluye calibración del piso, §6.1) → features →
-  exportar; log en español con conteos. ✅ salvo el paso `backtest` 🔄 fase 2.
-- Contrato `version` **1.4** 🔄 fases 1/2/4/5/9 (hoy `1.2`). `fecha_base = "2026-06"`;
-  `horizontes = [{h1, 1, "2027-06"}, {h3, 3, "2029-06"}, {h5, 5, "2031-06"}]`.
+  exportar; log en español con conteos. ✅
+- Contrato `version` **1.4** ✅ (Fase 6 de `correccion/action_plan.md`; ver también fases 1/4/5, que
+  entregaron horizontes, segmentos y ramas por separado antes del salto de contrato único). `fecha_base
+  = "2026-06"`; `horizontes = [{h1, 1, "2027-06"}, {h3, 3, "2029-06"}, {h5, 5, "2031-06"}]`.
 - Esquema por unidad de la capa `demanda`: `cve_mun, n_obs, motivo_sin_datos, serie, nivel_base,
   h{...}`, **una entrada por segmento de población objetivo** (metodología §1.1:
   `todas, primera_infancia, preescolar, primaria, secundaria, adolescencia`); cada `h` con
-  `veredicto, delta_pct, tasa_anual_pct, ic95[2], confianza`. ✅ la forma de hoy (segmento único
-  `total`/0–14); 🔄 fase 4 la desagrega por segmento sin romper `total` (se conserva como alias de
-  `todas` menos 15–17, documentado como diferencia).
+  `veredicto, delta_pct, tasa_anual_pct, ic95[2], confianza`. ✅
 - **Las cuatro ramas reemplazan a la capa `oferta`** (metodología §1, tabla de ramas):
   `capas.ramas.{educacion, salud, comercio, verde}`. Educación, salud y comercio comparten forma
   (proyección Poisson, `horizontes_disponibles: ["h1","h3"]`, tope de confianza `media`); verde no
@@ -368,14 +374,14 @@ cobertura lograda.
   decide qué filtro está activo.
 - `sin_datos`: campos numéricos `null`, `confianza: "baja"`, `n_obs` real (0, 1 o 2) — nunca se omite. ✅
 - **Todas** las 2,453 claves del universo aparecen en `capas.demanda` (rurales como `sin_datos`); en
-  cada rama igual. Redondeo a 1 decimal. `generado` = ISO-8601 con zona. ✅ estructura, 🔄 fase 9 alcance.
+  cada rama igual. Redondeo a 1 decimal. `generado` = ISO-8601 con zona. ✅
 - `prediccion_alcaldia.json`: mismo esquema por `CVE_MUN`, más `distribucion_ageb` por horizonte y
   `agregado_cdmx` en la raíz. ✅
 - **`capas.brecha` se retira del contrato.** La sustituye el cálculo client-side de §10.1-10.3 de
   metodología (cobertura + índice de oportunidad por rama), porque depende de pesos y filtros que
   solo existen en el cliente; publicar una "brecha" fija en el backend ya no tiene sentido con
   cuatro ramas filtrables. `diagnostico.json` conserva un resumen agregado por CDMX/alcaldía como
-  contexto de depuración, fuera del contrato. 🔄 fase 5/9
+  contexto de depuración, fuera del contrato. ✅
 - JSON determinista: claves ordenadas, `ensure_ascii=False`, `separators` compactos; misma semilla →
   mismo archivo byte a byte salvo `generado`. ✅
 
@@ -384,21 +390,31 @@ Validaciones antes de escribir (fallan el pipeline):
 - Todo registro tiene `confianza` y `n_obs`; `ic95[0] ≤ delta_pct ≤ ic95[1]` cuando no es null. ✅
 - **Cobertura del IC95 dentro de `[0.90, 0.97]` en el backtest** (§6.1; sustituye al invariante de
   ancho mínimo `ic95[1]−ic95[0] ≥ 0.2` de la versión anterior de este plan, que era un criterio
-  equivocado — ver metodología §6.2). 🔄 fase 3
+  equivocado — ver metodología §6.2). ✅
 - `cvegeo` único, 13 o 9 caracteres, `cve_mun` coherente con `cvegeo[2:5]`. ✅
 - Alcaldía: 16 claves 002–017; Σ nivel AGEB = nivel alcaldía por horizonte (`verificar_suma_ageb_alcaldia`). ✅
-- Ramas educación/salud/comercio: ningún `confianza == "alta"`. Verde: sin `h`, solo `nivel_base`. ✅ patrón, 🔄 fase 9 alcance
+- Ramas educación/salud/comercio: ningún `confianza == "alta"`. Verde: sin `h`, solo `nivel_base`. ✅
 - Horizontes declarados en la raíz = horizontes presentes en cada registro (o subconjunto declarado
   en `horizontes_disponibles`). ✅
-- Σ `Ŝ_celda` de una rama en una AGEB coherente con el total sin filtrar (`test_exportar`, invariante
-  nuevo de la fase 9). 🔄 fase 9
+- **Σ `Ŝ_celda` de una rama en una AGEB coherente con el total sin filtrar — no implementado,
+  desviación del plan.** El contrato v1.4 (Fase 6) nunca publica un "total sin filtrar" por rama:
+  cada celda es su propio ajuste Poisson+EB independiente (no una partición de un total ya
+  simulado), así que no hay una cifra de referencia contra la que comparar la suma sin volver a
+  correr el modelo sobre el panel sin filtrar de cada rama (costo ≈ duplicar el paso más caro del
+  pipeline). Pendiente de decisión del equipo: publicar igual un total de referencia por rama
+  (nuevo costo de cómputo) o retirar este invariante del plan.
 
-Firmas (estado real del módulo; `_rama` marca lo que generaliza lo que hoy es "oferta"):
+Firmas (estado real del módulo; nombres reales del código, no los propuestos en la versión anterior
+de este plan — `construir_capa_rama` se entregó como `construir_capa_demanda_v14`/
+`construir_capa_rama_v14`/`construir_capa_verde`, tres funciones en vez de una sola, porque demanda
+[segmentos] y ramas con proyección [celdas] anidan distinto y verde no pasa por `modelos.resumir`):
 ```
 construir_capa(res, universo, series, nivel_base, horizontes, motivos, incluir_horizontes_disponibles=False) -> dict  # ✅
-construir_capa_rama(res_por_celda, universo, series, nivel_base, horizontes, motivos) -> dict   # 🔄 fase 9, generaliza construir_capa
+construir_capa_demanda_v14(capas_por_segmento) -> dict                   # ✅
+construir_capa_rama_v14(capas_por_celda, horizontes_disponibles) -> dict # ✅
+construir_capa_verde(contexto, universo, celdas) -> dict                 # ✅
 construir_distribucion_ageb(capa, horizontes) -> dict                    # ✅
-construir_agregado_cdmx(res_d, res_ramas) -> dict                        # ✅ forma, 🔄 fase 9 alcance (una entrada por rama)
+construir_agregado_cdmx(res_d_por_segmento, res_ramas_por_celda, capa_verde_cdmx) -> dict  # ✅
 construir_salida_ageb(...) -> dict · construir_salida_alcaldia(...) -> dict   # ✅
 validar_contrato(salida, nivel: Literal['ageb','alcaldia']) -> None       # ✅ lanza ErrorContrato
 verificar_suma_ageb_alcaldia(ageb, alcaldia) -> None                      # ✅
@@ -412,11 +428,11 @@ backend/src/chipos/
   __init__.py
   config.py      rutas, constantes del modelo, SEMILLA (único lugar de parámetros)   ✅
   io.py · panel.py · features.py · modelos.py · exportar.py                          ✅
-  backtest.py                                                                        🔄 fase 2
+  backtest.py                                                                        ✅
 backend/tests/
   conftest.py            fixtures sintéticas pequeñas (no leen data/ salvo marca @datos)  ✅
   test_geo.py test_io.py test_panel.py test_modelos.py test_exportar.py test_features.py  ✅
-  test_backtest.py                                                                   🔄 fase 2
+  test_backtest.py                                                                   ✅
 ```
 
 ### 8bis. `features.py`: de la brecha histórica al índice de oportunidad por rama
@@ -425,7 +441,7 @@ backend/tests/
 Mezcla dos momentos distintos, es histórica y no responde la pregunta de la rúbrica. Se retira del
 contrato (§7).
 
-**Acordado 🔄 fase 5** (fórmula exacta y completa en metodología §10; aquí solo las firmas y el
+**Entregado ✅ (Fase 6)** (fórmula exacta y completa en metodología §10; aquí solo las firmas y el
 orden de cómputo — **no** se reescribe la fórmula en dos lugares):
 
 ```
@@ -455,22 +471,22 @@ Tests clave:
 - `test_modelos` ✅: EB con τ²→∞ ⇒ `r̃ = r̂`; ψ→∞ ⇒ `r̃ = ρ_m`; control por razón reproduce
   `C_T_HOR/C_2020.20` por alcaldía (1e-9); regla de veredicto en bordes (0.7999/0.80/0.95);
   topes de confianza; determinismo con semilla; Newton-Raphson = `statsmodels` GLM Poisson (1e-6).
-  🔄 fase 3 añade: `var_post ≥ SIGMA_MIN_TASA²`; `φ_m ≥ 1`.
-- `test_panel` ✅: sin `cvegeo` duplicados; ceros explícitos; filtro de claves; motivo de `sin_datos`.
-  🔄 fase 4 añade: Σ segmentos (incl. 15–17) = total 0–17 por AGEB.
+  Incluye: `var_post ≥ SIGMA_MIN_TASA²`; `φ_m ≥ 1`.
+- `test_panel` ✅: sin `cvegeo` duplicados; ceros explícitos; filtro de claves; motivo de `sin_datos`;
+  Σ segmentos (incl. 15–17) = total 0–17 por AGEB.
 - `test_exportar` ✅: esquema válido; 2,453 claves; suma AGEB = alcaldía; ningún `alta` en ramas
-  proyectables. 🔄 fase 1: `version == "1.4"`, 3 horizontes. 🔄 fase 9: Σ celdas de filtro = total
-  sin filtrar, por rama y AGEB.
-- `test_backtest` 🔄 fase 2: sin fuga de futuro; determinismo; baseline sobre el mismo universo;
+  proyectables; `version == "1.4"`, 3 horizontes. Pendiente (no implementado, ver §7): Σ celdas de
+  filtro = total sin filtrar, por rama y AGEB.
+- `test_backtest` ✅: sin fuga de futuro; determinismo; baseline sobre el mismo universo;
   ninguna métrica usa `pobproy_quinq1.csv` como si fuera observación independiente (test explícito
   que falla si `backtest_conapo` reaparece).
-- `test_features` (existente, ✅ para brecha histórica) 🔄 fase 5 añade: `indice_oportunidad` con
+- `test_features` ✅: brecha histórica (superseded) + `indice_oportunidad` con
   `Ŝ=0, D̂>0` produce el percentil máximo (no `sin_datos`); `D̂=0` produce `sin_datos`; sensibilidad
   con `K∈{3,5,8}` no cambia el signo del ajuste (`|ajuste| ≤ 0.15` siempre).
 - Marca `@pytest.mark.datos` para tests sobre datos reales (se saltan si falta `data/interim/`). ✅
 
 Makefile: `pipeline`, `test`, `validar`, `datos`, `perfil`, `serve`, `frontend-datos`, `vendor-d3`
-ya existen ✅. Falta añadir `backtest` (`python -m chipos.backtest`, solo reporte) 🔄 fase 2.
+ya existen ✅, incluido el target `backtest` (`python -m chipos.backtest`, solo reporte).
 `data/outputs/` está versionado (salidas pequeñas) ✅.
 
 ## 9. Tareas
@@ -480,7 +496,7 @@ ya existen ✅. Falta añadir `backtest` (`python -m chipos.backtest`, solo repo
 | id | objetivo | archivos | estado |
 |---|---|---|---|
 | B0 | Andamiaje del paquete y constantes | `__init__.py`, `config.py`, `tests/conftest.py` | ✅ |
-| B1 | Verificar geometría y versión del marco | `tests/test_geo.py` | ✅ (falta solo el bloque `metadatos` del backtest) |
+| B1 | Verificar geometría y versión del marco | `tests/test_geo.py` | ✅ |
 | B2 | Capa de lectura | `io.py`, `tests/test_io.py` | ✅ |
 | B3 | Panel de demanda + reglas 2010→2020 | `panel.py`, `tests/test_panel.py` | ✅ |
 | B4 | Panel de oferta + verificación SCIAN | `panel.py`, `tests/test_panel.py` | ✅ |
@@ -488,28 +504,27 @@ ya existen ✅. Falta añadir `backtest` (`python -m chipos.backtest`, solo repo
 | B6 | Modelo de demanda (EB + CONAPO + simulación) | `modelos.py`, `tests/test_modelos.py` | ✅ |
 | B7a | Modelo de oferta | `modelos.py`, `tests/test_modelos.py` | ✅ |
 | B8 | Agregación a alcaldía | `modelos.py` | ✅ |
-| B10 | Brecha (features mínimas) | `features.py` | ✅ (histórica; la sustituye B17) |
+| B10 | Brecha (features mínimas) | `features.py` | ✅ (histórica; la sustituye B17, retirada del contrato en Fase 6) |
 | B11 | Exportación + validación de contrato | `exportar.py`, `tests/test_exportar.py` | ✅ |
-| B12 | Makefile y docs | `Makefile`, `docs/` | ✅ parcial (falta target `backtest`) |
+| B12 | Makefile y docs | `Makefile`, `docs/` | ✅ |
+| B13 | Horizontes 1/3/5 (infraestructura) | `config.py`, `exportar.py`, `frontend/js/config.js`, `frontend/mock/generar_mock.py` | ✅ |
+| B9 | Validación y backtest (sin CONAPO circular) | `backtest.py`, `tests/test_backtest.py`, `docs/backtest.md`, `Makefile` | ✅ |
+| B14 | Piso de incertidumbre calibrado + sobredispersión | `config.py`, `backtest.py`, `modelos.py`, `tests/test_modelos.py` | ✅ |
+| B15 | Escenarios A/B de la caída DENUE 2024 | `modelos.py`, `features.py`, `diagnostico.json` | ✅ |
+| B16 | Segmentos de población objetivo (6 segmentos Habitancia) | `io.py`, `panel.py`, `exportar.py`, `tests/test_panel.py` | ✅ |
+| B21 | Contexto CDMX (áreas verdes, espacios públicos) → datos crudos de la rama verde | `io.py`, `tools/` | ✅ |
+| B22 | Generalizar oferta a 4 ramas + celdas de filtro | `io.py`, `panel.py`, `modelos.py`, `exportar.py`, `tests/test_panel.py`, `tests/test_modelos.py` | ✅ |
+| B17 | Cobertura proyectada e índice de oportunidad (fórmula exacta) | `features.py`, `exportar.py`, `tests/test_features.py` | ✅ |
+| B18 | Índice de disponibilidad (vista familias) | `features.py`, `exportar.py` | ✅ |
 
 ### 9.2 Pendientes
 
-Orden de dependencia real (distinto del orden de la tabla anterior): **B14 ahora depende de B9**,
-no al revés — el piso de incertidumbre se calibra con los resultados del backtest (§6.1), así que no
-puede ir en paralelo con él como proponía la versión anterior de este plan.
+Todas las tareas de modelado (B9, B13–B18, B21, B22) están entregadas (tabla 9.1); solo queda
+reconciliación de documentación y el backtest opcional de CONAPO.
 
 | id | objetivo | archivos | acepta cuando | tam. | fase | depende | paralelo con |
 |---|---|---|---|---|---|---|---|
-| B13 | Horizontes 1/3/5 (infraestructura) | `config.py`, `exportar.py` (parcial), `frontend/js/config.js`, `frontend/mock/generar_mock.py` | `HORIZONTES`/`T_HOR` actualizados; `resumir()` produce 3 tablas; slider con 3 paradas 2027/2029/2031 | S | 1 | — | B19, B21 |
-| **B9** | **Validación y backtest (sin CONAPO circular)** | `backtest.py`, `tests/test_backtest.py`, `docs/backtest.md`, `Makefile` | 1 backtest temporal (oferta) + 2 sustitutos (adelgazamiento, LOAO) + comparación censo-CONAPO reclasificada como no-backtest; `backtest.json`/`backtest.md` con cifras modelo-vs-baseline; test que falla si reaparece `backtest_conapo` con orígenes móviles sobre el archivo reconciliado; determinista | L | 2 | B13 | B19, B21 |
-| B14 | Piso de incertidumbre calibrado + sobredispersión | `config.py`, `backtest.py` (`calibrar_piso_incertidumbre`), `modelos.py`, `tests/test_modelos.py` | piso elegido por cobertura empírica `[0.90,0.97]`, no por ancho mínimo; `φ_m ≥ 1`; cobertura lograda documentada en `docs/backtest.md` | M | 3 | **B9** | B15 |
-| B15 | Escenarios A/B de la caída DENUE 2024 | `modelos.py`, `features.py`, `diagnostico.json` | ambos escenarios en `diagnostico.json`; rango publicado como sensibilidad | S | 3 | B14 | B16 |
-| B16 | Segmentos de población objetivo (incl. 0–17 y 15–17) | `io.py`, `panel.py`, `exportar.py`, `tests/test_panel.py` | Σ de los 5 segmentos con dato = `todas` (0–17) por AGEB; segmento 15–17 con tope de confianza `media` explícito (§1.1) | L | 4 | B13 | B21 |
-| B21 | Contexto CDMX (áreas verdes, espacios públicos) → datos crudos de la rama verde | `io.py`, `tools/` (join espacial) | conteo y superficie por AGEB disponibles; join WGS84; sin proyección (metodología §10.1) | S | 7 | — | B13, B9, B16 |
-| **B22** | **Generalizar oferta a 4 ramas + celdas de filtro** (salud, comercio se suman a educación; verde entra sin proyección) | `io.py`, `panel.py`, `modelos.py`, `exportar.py`, `tests/test_panel.py`, `tests/test_modelos.py` | mismo tratamiento Poisson+EB que hoy tiene "oferta", corrido por celda (nivel/tipo × sector) para las 3 ramas proyectables; Σ celdas = total sin filtrar; verde publica solo `nivel_base` | XL | 9 | B15, B16, B21 | — |
-| B17 | Cobertura proyectada e índice de oportunidad (fórmula exacta) | `features.py`, `exportar.py`, `tests/test_features.py` | fórmula de metodología §10.1-10.2 implementada literal (percentil + ajuste de tendencia ±0.15 + `K=5`); `Ŝ=0, D̂>0` produce percentil máximo, nunca `sin_datos`; sensibilidad `K∈{3,5,8}` en `diagnostico.json`; **`capas.brecha` se retira del contrato** (§7) | L | 5 | B22, B16 | — |
-| B18 | Índice de disponibilidad (vista familias) | `features.py`, `exportar.py` | índice separado del de oportunidad, documentado en metodología §10.5 | M | 5 | B17 | — |
-| B20 | Reconciliar docs y CLAUDE.md | `CLAUDE.md`, `docs/metodologia.md`, `docs/estado_datos.md` | ninguna marca 🔄 sin entregar; contrato v1.4 descrito en un solo lugar; sin restos de `capas.oferta`/`capas.brecha` en la documentación | S | 8 | B9, B14, B17, B22 | — |
+| B20 | Reconciliar docs y CLAUDE.md | `CLAUDE.md`, `docs/metodologia.md`, `docs/estado_datos.md` | ninguna marca 🔄 sin entregar; contrato v1.4 descrito en un solo lugar; sin restos de `capas.oferta`/`capas.brecha` en la documentación | S | 9 | B9, B14, B17, B22 | — |
 
 **Opcional, no bloqueante (mencionada en §6, metodología §4.1):**
 
