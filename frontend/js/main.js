@@ -7,9 +7,9 @@
 // NOTA DE ALCANCE (Fase 7, en progreso): este archivo ya conecta el pipeline completo de datos ->
 // composicion.js -> mapa.js/leyenda.js (la parte más difícil de acertar, spec §17), la cabecera,
 // la franja/drawer de metodología, el modo presentación, el manejador global de Esc, el resumen
-// Nivel 1 + ranking (F45/F50) y el flujo de configuración del escenario (población, búsqueda,
-// prioridades, riesgo -- F31/F35). `filtros.js`/`comparar.js`/`ayuda.js`/`ficha.js`/`alcaldia.js`/
-// `graficas.js` aún no están conectados aquí.
+// Nivel 1 + ranking (F45/F50) y el flujo de configuración del escenario completo (población,
+// búsqueda, prioridades, filtros por rama, riesgo -- F31/F35/F40). `comparar.js`/`ayuda.js`/
+// `ficha.js`/`alcaldia.js`/`graficas.js` aún no están conectados aquí.
 
 import { NIVEL, RAMAS, RAMAS_CON_PROYECCION, HORIZONTES_OFERTA, SEGMENTO_POR_OMISION } from "./config.js";
 import { cargarPrediccion, ErrorDatos } from "./api.js";
@@ -42,6 +42,7 @@ import { montarPoblacion } from "./poblacion.js";
 import { montarBusqueda } from "./busqueda.js";
 import { montarPrioridades } from "./prioridades.js";
 import { montarRiesgo, FACTOR_CONFIANZA_RIESGO } from "./riesgo.js";
+import { montarFiltros } from "./filtros.js";
 
 // Rutas planas bajo frontend/data/, que `make frontend-datos` llena con copias de
 // data/reference/ y data/outputs/ (data/ es solo lectura, CLAUDE.md).
@@ -443,14 +444,17 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
     const poblacionHost = crear("div", { clase: "panel-configuracion__poblacion" });
     const busquedaHost = crear("div", { clase: "panel-configuracion__busqueda" });
     const prioridadesHost = crear("div", { clase: "panel-configuracion__prioridades" });
+    const filtrosHost = crear("div", { clase: "panel-configuracion__filtros" });
     const riesgoHost = crear("div", { clase: "panel-configuracion__riesgo" });
     panelConfiguracion.appendChild(poblacionHost);
     panelConfiguracion.appendChild(busquedaHost);
     panelConfiguracion.appendChild(prioridadesHost);
+    panelConfiguracion.appendChild(filtrosHost);
     panelConfiguracion.appendChild(riesgoHost);
     montarPoblacion(poblacionHost);
     montarBusqueda(busquedaHost);
     montarPrioridades(prioridadesHost);
+    montarFiltros(filtrosHost);
     montarRiesgo(riesgoHost);
   }
 

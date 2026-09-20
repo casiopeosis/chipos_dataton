@@ -234,6 +234,7 @@ const filtros = {
   },
   comercio: {
     pregunta: '¿Qué comercios quieres considerar?',
+    primeraNecesidad: 'Comercios de primera necesidad',
     nivel: {
       supermercados_minisupers: 'Supermercados y minisúpers',
       abarrotes: 'Abarrotes',
@@ -256,6 +257,7 @@ const filtros = {
       + 'convivencia o recreación.',
   },
   sector: { todos: 'Todos', publico: 'Público', privado: 'Privado' },
+  sectorEtiqueta: 'Sector',
 };
 
 const riesgo = {
