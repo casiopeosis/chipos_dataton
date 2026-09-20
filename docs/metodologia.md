@@ -228,11 +228,21 @@ incertidumbre §2.7) y la UI lo dice. Lo que no se hace es fingir precisión que
 > aunque sí lo supera en F1 macro (0.67 vs 0.20): el modelo acierta mejor la *dirección* del
 > cambio pero se equivoca más en la *magnitud*, consistente con que el objetivo 2024 contiene la
 > caída C3 (§6.1) — una extrapolación de 2016→2019 no puede anticipar un ajuste de padrón que
-> ocurre después. Con el criterio de adopción sin escapatoria de §4.3, `modelo_se_adopta = False`.
-> Esta es exactamente la pregunta abierta B1 de `plans/backend_plan.md` §9.2 ("ramas sin ventaja
-> sobre el baseline"), ahora con cifras — la resolución (publicar oferta como descriptiva vs.
-> mantenerla con el tratamiento actual) es una decisión del equipo, pendiente al cierre de esta
-> revisión.
+> ocurre después. Con el criterio de adopción sin escapatoria de §4.3, `modelo_se_adopta = False`
+> (el campo `adopcion` de `backtest.json` reporta esto tal cual, sin forzarlo a `True`).
+>
+> **Decisión del equipo (2026-09-20), pregunta abierta B1 de `plans/backend_plan.md` §9.2
+> resuelta:** se mantiene el modelo Poisson+EB actual para educación/salud/comercio (Fase 5), con
+> su tope de confianza `media` ya existente, y se documenta la limitación explícitamente en vez de
+> ocultarla u omitir la rama: *"este modelo acierta la dirección del cambio (F1 mejor que el
+> baseline) mejor de lo que acierta su magnitud exacta (MAE peor que el baseline), sobre todo
+> alrededor de la caída de cobertura DENUE de 2024"*. Esta nota va al drawer de metodología del
+> frontend (Fase 7, §10.6 "Lo que la oferta NO mide") y no cambia el diseño de las Fases 5-6: la
+> rama conserva veredicto, `tasa_anual_pct` e IC95 igual que hoy. La cobertura IC95 de LOAO
+> (1.00, sobrecubierta, fuera de `[0.90, 0.97]`) tampoco bloquea la Fase 3: el sobrecubrimiento
+> no es peligroso (el modelo es conservador, no *overconfident*) y `calibrar_piso_incertidumbre`
+> ya contempla este caso por diseño (§2.7 punto 4: si el candidato `0.000` ya sobrecubre, no se
+> añade piso, se documenta la cobertura lograda tal cual).
 
 ### 4.1 El backtest de CONAPO original estaba mal planteado — corregido aquí
 

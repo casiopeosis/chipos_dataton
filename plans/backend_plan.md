@@ -557,14 +557,15 @@ Criterios añadidos por `correccion/action_plan.md`:
   (CONAPO no publica 0–2/3–5/6–11/12–14 ni 15–17 exacto); documentado en metodología §1.2.
   Aproximación declarada, no una identidad.
 
+**Resueltas (2026-09-20, con cifras reales del backtest):**
+- ~~B1 · Ramas sin ventaja sobre el baseline~~ → el modelo de oferta (educación) NO supera a "S
+  constante" en MAE (5.45 vs 3.61 en log-razón), aunque sí en F1 macro (0.67 vs 0.20)
+  (`docs/metodologia.md` §4). **Decisión del equipo: se mantiene** el tratamiento Poisson+EB
+  actual para educación/salud/comercio (Fase 5), con la limitación documentada explícitamente en
+  el drawer de metodología (Fase 7) en vez de omitir la rama o quitarle el veredicto. No cambia el
+  diseño de B17/B22.
+
 **Abiertas:**
-1. **B1 · Ramas sin ventaja sobre el baseline.** `B9` ya corrió sobre datos reales
-   (`docs/metodologia.md` §4): el modelo de oferta (educación) NO supera a "S constante" en MAE
-   (5.45 vs 3.61 en log-razón), aunque sí en F1 macro (0.67 vs 0.20). La pregunta sigue abierta con
-   cifras concretas: ¿se publica la rama como descriptiva (cambio observado, sin veredicto), o se
-   mantiene con el tratamiento actual y el hallazgo se documenta como limitación? No se resuelve
-   por cuenta propia — decisión del equipo. Bloquea B17 (índice de oportunidad) para la rama
-   afectada, no a las demás.
 2. **B7 · Umbral del índice de oportunidad.** El percentil de `indice_oportunidad` (metodología
    §10.2) ¿se calcula sobre todas las AGEB con dato, o solo sobre las urbanas del mismo segmento y
    rama? Afecta el ranking, no el modelo. Recomendación: solo sobre las urbanas del mismo
