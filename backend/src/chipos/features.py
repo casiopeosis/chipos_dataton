@@ -1,14 +1,17 @@
-"""Brecha demanda/oferta (`plans/backend_plan.md` §8, tarea B10).
+"""Brecha histórica (B10, retirada del contrato en Fase 6) e índice de oportunidad (Fase 6,
+`plans/backend_plan.md` §8bis, fórmulas exactas en `docs/metodologia.md` §10).
 
-Alcance mínimo, tal como lo fija el plan: `brecha = S_2024 / D_2020 * 1000`
-por AGEB y por alcaldía, escrita en `data/outputs/diagnostico.json` (fuera
-del contrato v1.1 versionado de `CLAUDE.md`; es solo diagnóstico interno,
-no lo consume el frontend).
-
-Deliberadamente **no** se implementan covariables estáticas (áreas verdes,
-espacios públicos): el plan dice que por defecto no se implementan salvo que
-mejoren el backtest de la contracción EB (§6.1), y esa decisión no se ha
-tomado (ver plan §8 y pregunta abierta B2).
+Contenido:
+- `calcular_brecha_ageb`/`calcular_brecha_alcaldia`: `S_2024 / D_2020 * 1000`, la brecha
+  histórica original (B10). Ya NO se publica en el contrato v1.4
+  (`correccion/action_plan.md` #34: "capas.brecha se retira"); se conserva aquí, fuera del
+  contrato, como resumen de `diagnostico.json` (metodología §10, "diagnostico.json conserva
+  un resumen agregado fuera del contrato").
+- `cobertura_proyectada`, `indice_oportunidad`, `sensibilidad_indice_oportunidad`,
+  `indice_disponibilidad`: el índice de oportunidad por rama (metodología §10.1-§10.2) y el
+  índice de disponibilidad para familias (§10.5), sobre las mismas réplicas Monte Carlo de
+  `modelos.py`. El backend **nunca** calcula el índice compuesto entre ramas (eso es del
+  motor de composición del frontend, metodología §10.3): solo publica `O_{i,h,r}` por rama.
 
 Regla de agregación (irrenunciable, CLAUDE.md "no inventar datos" + plan
 §5.4 "Δ% desde sumas, nunca promedio de %"): la brecha de alcaldía se
@@ -25,9 +28,11 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy.stats import rankdata
 
 from chipos.config import RUTA_DIAGNOSTICO
 from chipos.io import CORTES_OFERTA
+from chipos.modelos import Simulacion
 
 # Escala de la brecha (plan §8): establecimientos "Principal" por cada 1,000
 # niñas y niños de 0-14 años (censo 2020).
@@ -85,6 +90,189 @@ def calcular_brecha_alcaldia(brecha_ageb: pd.DataFrame) -> pd.DataFrame:
     )
     agregado["brecha_por_mil"] = _brecha_por_mil(agregado["s_2024"], agregado["d_2020"])
     return agregado.reset_index().sort_values("cve_mun").reset_index(drop=True)
+
+
+# ---------------------------------------------------------------------------
+# Índice de oportunidad e índice de disponibilidad (Fase 6, metodología §10)
+# ---------------------------------------------------------------------------
+
+# K de normalización del ajuste de tendencia (metodología §10.2): "una brecha de 5 pp/año
+# entre demanda y oferta ya satura el ajuste". Constante interna, no expuesta al usuario
+# (correccion/frontend_requisitos.md: "no mostrar fórmulas ni parámetros internos").
+K_OPORTUNIDAD_DEFECTO: float = 5.0
+K_SENSIBILIDAD: tuple[float, float, float] = (3.0, 5.0, 8.0)
+# Límite del ajuste de tendencia (metodología §10.2, paso 2): el nivel de cobertura (paso 1)
+# domina el índice; la tendencia solo puede mover el resultado 15 pp del rango [0,1].
+AJUSTE_TENDENCIA_MAX: float = 0.15
+
+# Umbral de "cambio sustancial de orden" entre K=3 y K=8 para la sensibilidad obligatoria
+# (metodología §10.2: "si el orden relativo... cambia sustancialmente"). El plan no fija un
+# número exacto; se elige 0.10 (10 puntos porcentuales de rango percentil) como umbral
+# razonable y documentado -- una AGEB que se mueve más de una décima parte del ranking según
+# qué tan sensible se calibre K merece la bandera; es una elección de ingeniería, no una cifra
+# del plan.
+_UMBRAL_CAMBIO_SUSTANCIAL_RANGO: float = 0.10
+
+
+def _rango_percentil_promediado(valores: np.ndarray) -> np.ndarray:
+    """Rango percentil fraccionario ∈ [0,1], empates promediados (metodología §10.2, paso 1:
+    "rango fraccionario con empates promediados... `average`"). `NaN` se propaga (AGEB sin
+    cobertura válida quedan fuera del ranking, ver `cobertura_proyectada`). Con un solo valor
+    válido, el rango es 0.5 (ni el más alto ni el más bajo posible)."""
+    valores = np.asarray(valores, dtype=float)
+    resultado = np.full(valores.shape, np.nan)
+    validos = ~np.isnan(valores)
+    n_validos = int(validos.sum())
+    if n_validos == 0:
+        return resultado
+    if n_validos == 1:
+        resultado[validos] = 0.5
+        return resultado
+    rangos = rankdata(valores[validos], method="average")  # 1..n_validos, empates promediados
+    resultado[validos] = (rangos - 1.0) / (n_validos - 1.0)
+    return resultado
+
+
+def nivel_proyectado_por_replica(sim: Simulacion, t0: float, t_horizonte: float) -> np.ndarray:
+    """Nivel proyectado `(n_unidades, n_sim)` en `t_horizonte`, partiendo de `sim.base` en `t0`.
+
+    Mismo cálculo que `exportar.nivel_en` pero sobre TODAS las réplicas (no la mediana): es el
+    ingrediente que pide metodología §10.1 ("sobre las mismas réplicas Monte Carlo... no sobre
+    las medianas, así el intervalo de la cobertura sale de la propia simulación").
+    """
+    return sim.base[:, None] * np.exp(sim.r_fut * (t_horizonte - t0))
+
+
+def nivel_rama_por_celda(
+    simulaciones_celda: dict[str, Simulacion],
+    t0: float,
+    t_horizonte: float,
+    claves_universo: pd.Index,
+) -> np.ndarray:
+    """Ŝ_{i,h,r} `(len(claves_universo), n_sim)`: suma el nivel proyectado de TODAS las celdas
+    de una rama, alineado por AGEB (metodología §10.6: `Ŝ_rama(filtro) = Σ_celdas Ŝ_celda`).
+
+    Una AGEB ausente de la simulación de una celda (ajuste no confiable o sin ningún
+    establecimiento en los 3 cortes) aporta 0 a esa celda -- **válido**, no se excluye
+    (metodología §10.1: "Ŝ=0 con D̂>0 es un valor válido"). Todas las celdas deben compartir
+    `n_sim` (mismo `N_SIM` global).
+    """
+    n_sim = next(iter(simulaciones_celda.values())).r_fut.shape[1]
+    total = np.zeros((len(claves_universo), n_sim))
+    for sim in simulaciones_celda.values():
+        nivel = nivel_proyectado_por_replica(sim, t0, t_horizonte)
+        tabla = pd.DataFrame(nivel, index=pd.Index(sim.clave, name="cvegeo"))
+        alineado = tabla.reindex(claves_universo, fill_value=0.0)
+        total += alineado.to_numpy()
+    return total
+
+
+def cobertura_proyectada(nivel_oferta: np.ndarray, nivel_demanda: np.ndarray) -> np.ndarray:
+    """`cobertura_{i,h,r}^s = Ŝ_{i,h,r}^s / D̂_{i,h,seg}^s × 1000` (metodología §10.1).
+
+    `nivel_oferta`/`nivel_demanda`: `(n, n_sim)`, ya alineados por AGEB (misma fila = misma
+    AGEB en ambos). `D̂ <= 0` (AGEB inválida en demanda, p. ej. `sin_datos`) produce `NaN` --
+    **nunca** se imputa un denominador. `Ŝ = 0` con `D̂ > 0` produce `0.0`, un valor válido, no
+    `NaN` (metodología §10.1, "la señal de mayor oportunidad posible").
+    """
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.where(nivel_demanda > 0, nivel_oferta / nivel_demanda * 1000.0, np.nan)
+
+
+def indice_oportunidad(
+    cobertura_mediana: np.ndarray,
+    tasa_d: np.ndarray,
+    tasa_s: np.ndarray,
+    k_normalizacion: float = K_OPORTUNIDAD_DEFECTO,
+) -> np.ndarray:
+    """`O_{i,h,r}` (metodología §10.2, fórmula exacta).
+
+    Paso 1 (nivel): `N = 1 - rango_percentil(cobertura_mediana)` -- las AGEB con `cobertura=0`
+    comparten el rango más bajo y por tanto el mismo `N=1` (máxima oportunidad), sin tratar
+    `Ŝ=0` como caso especial: cae ahí por construcción de la fórmula.
+    Paso 2 (tendencia, acotada): `ajuste = clip((tasa_d - tasa_s)/K, -0.15, +0.15)`.
+    Paso 3: `O = clip(N + ajuste, 0, 1)`.
+
+    `cobertura_mediana`: la MEDIANA de `cobertura_proyectada` a través de las réplicas (no las
+    réplicas mismas: el percentil se calcula sobre un punto por AGEB, metodología §10.1 "nivel
+    de disponibilidad proyectada"). `tasa_d`/`tasa_s`: `tasa_anual_pct` de demanda/oferta
+    (idénticas en todos los horizontes, `modelos.resumir`), en las mismas unidades (pp/año o
+    fracción -- ambas deben usar la MISMA escala, ya que se restan directamente).
+    `NaN` en `cobertura_mediana` (D̂ inválido) se propaga a `O=NaN` (`sin_datos`).
+    """
+    n = 1.0 - _rango_percentil_promediado(cobertura_mediana)
+    ajuste = np.clip(
+        (np.asarray(tasa_d, dtype=float) - np.asarray(tasa_s, dtype=float)) / k_normalizacion,
+        -AJUSTE_TENDENCIA_MAX,
+        AJUSTE_TENDENCIA_MAX,
+    )
+    o = np.clip(n + ajuste, 0.0, 1.0)
+    o[np.isnan(cobertura_mediana)] = np.nan
+    return o
+
+
+def sensibilidad_indice_oportunidad(
+    cobertura_mediana: np.ndarray,
+    tasa_d: np.ndarray,
+    tasa_s: np.ndarray,
+    claves: pd.Index,
+    ks: tuple[float, ...] = K_SENSIBILIDAD,
+) -> dict:
+    """Sensibilidad obligatoria del índice de oportunidad a `K` (metodología §10.2).
+
+    Recalcula `O` con cada candidato de `ks` y marca las AGEB cuyo **rango percentil de `O`**
+    (no `O` mismo, que ya está acotado por diseño) cambia más de
+    `_UMBRAL_CAMBIO_SUSTANCIAL_RANGO` entre el `K` más chico y el más grande. Va a
+    `diagnostico.json`, nunca al contrato (metodología §10.2: "no se expone como parámetro de
+    usuario").
+    """
+    resultados = {k: indice_oportunidad(cobertura_mediana, tasa_d, tasa_s, k) for k in ks}
+    rango_min_k = _rango_percentil_promediado(resultados[min(ks)])
+    rango_max_k = _rango_percentil_promediado(resultados[max(ks)])
+
+    valido = ~np.isnan(rango_min_k) & ~np.isnan(rango_max_k)
+    cambia = valido & (np.abs(rango_min_k - rango_max_k) > _UMBRAL_CAMBIO_SUSTANCIAL_RANGO)
+
+    return {
+        "k_candidatos": list(ks),
+        "umbral_cambio_rango": _UMBRAL_CAMBIO_SUSTANCIAL_RANGO,
+        "claves_con_cambio_sustancial": sorted(pd.Index(claves)[cambia].tolist()),
+        "n_con_cambio": int(cambia.sum()),
+        "n_evaluado": int(valido.sum()),
+    }
+
+
+def indice_disponibilidad(
+    cobertura_mediana: np.ndarray,
+    tasa_s: np.ndarray,
+    confianza: np.ndarray,
+    k_normalizacion: float = K_OPORTUNIDAD_DEFECTO,
+) -> np.ndarray:
+    """`F_{i,h,r}`, índice de disponibilidad para familias (metodología §10.5, vista separada).
+
+    `F = clip(rango_percentil(cobertura) + ajuste_estabilidad, 0, 1)` -- **sin invertir** el
+    signo del rango (a diferencia de `indice_oportunidad`, que usa `1 - rango`): cobertura alta
+    ya significa disponibilidad alta, así que el rango se usa directo.
+
+    `ajuste_estabilidad` (metodología §10.5: "premiando confianza alta y tendencia de oferta no
+    decreciente, mismo mecanismo de recorte ±0.15 que §10.2, sobre la SOLA tasa de oferta, no
+    la comparativa"): el plan no fija una fórmula exacta para combinar ambas señales -- se
+    implementa como `clip(tasa_s/K, -0.15, 0.15)` escalado por un factor de confianza
+    (`alta=1.0, media=0.5, baja=0.0`), de modo que una tendencia de oferta positiva SOLO premia
+    si la confianza respalda esa tendencia (confianza baja no debe premiar estabilidad que no
+    está bien fundamentada). Elección de ingeniería documentada, no una cifra del plan.
+
+    **Nunca se combina con `indice_oportunidad`** en el mismo campo (metodología §10.5).
+    """
+    factor_confianza = pd.Series(confianza).map({"alta": 1.0, "media": 0.5, "baja": 0.0}).to_numpy()
+    ajuste_tendencia = np.clip(
+        np.asarray(tasa_s, dtype=float) / k_normalizacion, -AJUSTE_TENDENCIA_MAX, AJUSTE_TENDENCIA_MAX
+    )
+    ajuste_estabilidad = ajuste_tendencia * factor_confianza
+    rango = _rango_percentil_promediado(cobertura_mediana)
+    f = np.clip(rango + ajuste_estabilidad, 0.0, 1.0)
+    f[np.isnan(cobertura_mediana)] = np.nan
+    return f
 
 
 def _tabla_a_dict_ageb(tabla: pd.DataFrame) -> dict:

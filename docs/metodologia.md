@@ -520,7 +520,8 @@ sobreajusta y pierde interpretabilidad sin ganar precisión verificable; la rúb
 "coherencia, interpretación y reproducibilidad" por encima de la sofisticación técnica aislada
 (`correccion/rubrica.md` §4).
 
-## 10. Cobertura proyectada, índice de oportunidad e índice de disponibilidad (🔄 fase 5, depende de fase 4)
+## 10. Cobertura proyectada, índice de oportunidad e índice de disponibilidad (fórmulas ✅ fase 6
+`features.py`; publicación en el contrato v1.4 🔄 fase 6, integración final)
 
 La rúbrica pide que la aplicación diga **dónde hay oportunidades de expansión y cómo rankearlas**
 (`correccion/rubrica.md` §2), y su caso de prueba es "zonas donde la demanda aumentará en tres años,
@@ -535,7 +536,8 @@ no expone una sola capa de oferta; expone cuatro **ramas** — educación y cult
 al backend (§10.5). El backend nunca decide el peso de cada rama: eso es una preferencia del usuario,
 aplicada en el cliente (`correccion/frontend_requisitos.md` §9, "los pesos NO alteran los datos").
 
-### 10.1 Cobertura proyectada por rama
+### 10.1 Cobertura proyectada por rama ✅ fase 6 (`features.cobertura_proyectada`,
+`nivel_rama_por_celda`)
 
 Por AGEB *i*, horizonte *h*, segmento de población objetivo (§1.1) y rama *r* ∈
 {educación, salud, comercio, verde}, calculada **sobre las mismas réplicas Monte Carlo** de §2.6 y
@@ -561,7 +563,8 @@ el umbral mínimo de conteo (an análogo a `D_MIN_CONF`, ver plan §5 `S_MIN_CON
 genuino nunca se sustituye, no se suma `+0.5` fuera del ajuste Poisson interno (que ya lo maneja),
 y no se excluye del ranking.
 
-### 10.2 Índice de oportunidad por rama — fórmula exacta
+### 10.2 Índice de oportunidad por rama — fórmula exacta ✅ fase 6 (`features.indice_oportunidad`,
+`sensibilidad_indice_oportunidad`)
 
 **Variables de entrada**, todas ya definidas arriba o en modelos.py:
 - `cobertura_{i,h,r}` (mediana de §10.1): nivel de disponibilidad proyectada.
@@ -641,7 +644,9 @@ ajustable: el ranking solo lista unidades que lo superan. Esto también resuelve
 importar que casi todo sea `baja`, porque el orden lo da `O_{i,h,r}` / `IC_{i,h}`, no el signo del
 veredicto.
 
-### 10.5 Índice de disponibilidad para familias (vista separada)
+### 10.5 Índice de disponibilidad para familias (vista separada) ✅ fase 6 (`features.indice_disponibilidad`;
+`ajuste_estabilidad` es una elección de ingeniería documentada en el docstring, el plan no fija
+la fórmula exacta de combinar confianza y tendencia)
 
 `correccion/frontend_requisitos.md` §7 pide una segunda lectura, "Disponibilidad para familias":
 ordena primero las zonas con **mayor** disponibilidad relativa de los servicios seleccionados —

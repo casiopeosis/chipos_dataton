@@ -11,17 +11,27 @@ from __future__ import annotations
 import json
 import math
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from chipos.features import (
+    K_OPORTUNIDAD_DEFECTO,
     calcular_brecha_ageb,
     calcular_brecha_alcaldia,
     calcular_escenario_b_oferta,
+    cobertura_proyectada,
     construir_diagnostico,
     construir_escenarios_oferta,
     escribir_diagnostico,
+    indice_disponibilidad,
+    indice_oportunidad,
+    nivel_proyectado_por_replica,
+    nivel_rama_por_celda,
+    sensibilidad_indice_oportunidad,
+    _rango_percentil_promediado,
 )
+from chipos.modelos import Simulacion
 
 # ---------------------------------------------------------------------------
 # Fixtures sintéticas locales
@@ -276,6 +286,228 @@ def test_construir_escenarios_oferta_nunca_cambia_el_veredicto_publicado(
     for registro in diagnostico["ageb"].values():
         assert "veredicto" not in registro
     assert "descripcion" in diagnostico
+
+
+# ---------------------------------------------------------------------------
+# Fase 6: índice de oportunidad e índice de disponibilidad (metodología §10)
+# ---------------------------------------------------------------------------
+
+
+def _sim(clave: list[str], base: list[float], r_fut: np.ndarray) -> Simulacion:
+    n = len(clave)
+    return Simulacion(
+        clave=np.array(clave),
+        cve_mun=np.array(["002"] * n),
+        n_obs=np.full(n, 3),
+        base=np.array(base, dtype=float),
+        d2020_conf=None,
+        tope=np.full(n, "media", dtype=object),
+        r_fut=r_fut,
+        r_fut_lambdas={},
+        horizonte_control=1.0,
+    )
+
+
+class TestRangoPercentilPromediado:
+    def test_orden_simple_sin_empates(self) -> None:
+        rango = _rango_percentil_promediado(np.array([30.0, 10.0, 20.0]))
+        # 10 -> rango 0 (más bajo); 30 -> rango 1 (más alto); 20 -> 0.5 (medio)
+        np.testing.assert_allclose(rango, [1.0, 0.0, 0.5])
+
+    def test_empates_se_promedian(self) -> None:
+        rango = _rango_percentil_promediado(np.array([5.0, 5.0, 10.0]))
+        # dos valores empatados en el mínimo comparten el rango promedio (0+1)/2=0.5 -> 0.25
+        np.testing.assert_allclose(rango, [0.25, 0.25, 1.0])
+
+    def test_nan_se_propaga_y_se_excluye_del_ranking(self) -> None:
+        rango = _rango_percentil_promediado(np.array([10.0, np.nan, 20.0]))
+        assert np.isnan(rango[1])
+        np.testing.assert_allclose(rango[[0, 2]], [0.0, 1.0])
+
+    def test_un_solo_valor_valido_da_0_5(self) -> None:
+        rango = _rango_percentil_promediado(np.array([10.0, np.nan, np.nan]))
+        assert rango[0] == 0.5
+
+    def test_todos_nan(self) -> None:
+        rango = _rango_percentil_promediado(np.array([np.nan, np.nan]))
+        assert np.isnan(rango).all()
+
+
+class TestNivelProyectadoYRama:
+    def test_nivel_proyectado_por_replica_formula(self) -> None:
+        r_fut = np.array([[0.0, np.log(2.0)]])  # tasa 0 y tasa ln(2) para la única AGEB
+        sim = _sim(["A"], [100.0], r_fut)
+        nivel = nivel_proyectado_por_replica(sim, t0=2020.0, t_horizonte=2021.0)
+        # replica 0: 100*exp(0*1)=100; replica 1: 100*exp(ln(2)*1)=200
+        np.testing.assert_allclose(nivel, [[100.0, 200.0]])
+
+    def test_nivel_rama_por_celda_suma_y_alinea_por_ageb(self) -> None:
+        # Celda 1: solo AGEB A y B. Celda 2: solo AGEB B y C (A falta -> aporta 0 a la celda 2).
+        celda1 = _sim(["A", "B"], [10.0, 20.0], np.zeros((2, 3)))
+        celda2 = _sim(["B", "C"], [5.0, 8.0], np.zeros((2, 3)))
+        universo = pd.Index(["A", "B", "C"], name="cvegeo")
+
+        nivel = nivel_rama_por_celda({"c1": celda1, "c2": celda2}, t0=2020.0, t_horizonte=2020.0, claves_universo=universo)
+
+        # t_horizonte == t0 -> exp(0)=1, nivel = base tal cual.
+        np.testing.assert_allclose(nivel[0], [10.0, 10.0, 10.0])  # A: solo celda1 (10), celda2 no la tiene -> 0
+        np.testing.assert_allclose(nivel[1], [25.0, 25.0, 25.0])  # B: 20 (celda1) + 5 (celda2) = 25
+        np.testing.assert_allclose(nivel[2], [8.0, 8.0, 8.0])  # C: solo celda2 (8)
+
+
+class TestCoberturaProyectada:
+    def test_oferta_cero_con_demanda_valida_es_cero_no_nan(self) -> None:
+        cobertura = cobertura_proyectada(np.array([0.0]), np.array([100.0]))
+        assert cobertura[0] == 0.0
+        assert not np.isnan(cobertura[0])
+
+    def test_demanda_invalida_es_nan(self) -> None:
+        cobertura = cobertura_proyectada(np.array([5.0, 5.0]), np.array([0.0, -1.0]))
+        assert np.isnan(cobertura).all()
+
+    def test_formula_por_mil(self) -> None:
+        cobertura = cobertura_proyectada(np.array([2.0]), np.array([1000.0]))
+        assert cobertura[0] == pytest.approx(2.0)  # 2/1000*1000 = 2
+
+
+class TestIndiceOportunidad:
+    def test_cobertura_cero_da_oportunidad_maxima(self) -> None:
+        """Metodología §10.2: las AGEB con cobertura=0 comparten el rango más bajo -> N=1,
+        máxima oportunidad -- sin tratar Ŝ=0 como caso especial."""
+        cobertura = np.array([0.0, 5.0, 10.0])
+        tasa_d = np.zeros(3)
+        tasa_s = np.zeros(3)
+        o = indice_oportunidad(cobertura, tasa_d, tasa_s)
+        assert o[0] == pytest.approx(1.0)  # N=1, ajuste=0 (tasas iguales)
+        assert o[0] > o[1] > o[2]
+
+    def test_ajuste_de_tendencia_se_acota_a_0_15(self) -> None:
+        cobertura = np.array([5.0, 5.0])
+        tasa_d = np.array([100.0, -100.0])  # brecha enorme, positiva y negativa
+        tasa_s = np.zeros(2)
+        o = indice_oportunidad(cobertura, tasa_d, tasa_s, k_normalizacion=K_OPORTUNIDAD_DEFECTO)
+        # con cobertura empatada, N=0.5 para ambas; el ajuste satura en +-0.15.
+        assert o[0] == pytest.approx(0.5 + 0.15)
+        assert o[1] == pytest.approx(0.5 - 0.15)
+
+    def test_resultado_siempre_en_0_1(self) -> None:
+        rng = np.random.default_rng(1)
+        cobertura = rng.uniform(0, 50, 200)
+        tasa_d = rng.uniform(-10, 10, 200)
+        tasa_s = rng.uniform(-10, 10, 200)
+        o = indice_oportunidad(cobertura, tasa_d, tasa_s)
+        assert np.all((o >= 0.0) & (o <= 1.0))
+
+    def test_cobertura_nan_produce_oportunidad_nan(self) -> None:
+        cobertura = np.array([np.nan, 5.0])
+        o = indice_oportunidad(cobertura, np.zeros(2), np.zeros(2))
+        assert np.isnan(o[0])
+        assert not np.isnan(o[1])
+
+
+class TestSensibilidadIndiceOportunidad:
+    def test_estructura_del_resultado(self) -> None:
+        rng = np.random.default_rng(2)
+        n = 50
+        cobertura = rng.uniform(0, 50, n)
+        tasa_d = rng.uniform(-5, 5, n)
+        tasa_s = rng.uniform(-5, 5, n)
+        claves = pd.Index([f"AGEB{i}" for i in range(n)])
+        resultado = sensibilidad_indice_oportunidad(cobertura, tasa_d, tasa_s, claves)
+        assert resultado["k_candidatos"] == [3.0, 5.0, 8.0]
+        assert isinstance(resultado["claves_con_cambio_sustancial"], list)
+        assert resultado["n_con_cambio"] == len(resultado["claves_con_cambio_sustancial"])
+
+    def test_sin_dispersion_de_tendencia_no_hay_cambios(self) -> None:
+        """Si tasa_d == tasa_s en todos lados, el ajuste es 0 para cualquier K -> ningún
+        cambio de orden entre K=3 y K=8."""
+        n = 30
+        cobertura = np.linspace(0, 100, n)
+        tasa_d = np.zeros(n)
+        tasa_s = np.zeros(n)
+        claves = pd.Index([f"AGEB{i}" for i in range(n)])
+        resultado = sensibilidad_indice_oportunidad(cobertura, tasa_d, tasa_s, claves)
+        assert resultado["n_con_cambio"] == 0
+
+
+class TestIndiceDisponibilidad:
+    def test_cobertura_alta_da_disponibilidad_alta(self) -> None:
+        """A diferencia de indice_oportunidad, NO se invierte el rango: cobertura alta =
+        disponibilidad alta."""
+        cobertura = np.array([0.0, 5.0, 10.0])
+        confianza = np.array(["baja", "baja", "baja"])
+        f = indice_disponibilidad(cobertura, np.zeros(3), confianza)
+        assert f[0] < f[1] < f[2]
+
+    def test_confianza_baja_no_premia_tendencia_positiva(self) -> None:
+        cobertura = np.array([5.0, 5.0])
+        tasa_s = np.array([100.0, 100.0])
+        f_baja = indice_disponibilidad(cobertura, tasa_s, np.array(["baja", "baja"]))
+        f_alta = indice_disponibilidad(cobertura, tasa_s, np.array(["alta", "alta"]))
+        assert f_baja[0] == pytest.approx(0.5)  # sin premio: factor_confianza=0
+        assert f_alta[0] == pytest.approx(0.5 + 0.15)  # premio máximo
+
+    def test_resultado_siempre_en_0_1(self) -> None:
+        rng = np.random.default_rng(3)
+        n = 100
+        cobertura = rng.uniform(0, 50, n)
+        tasa_s = rng.uniform(-20, 20, n)
+        confianza = rng.choice(["alta", "media", "baja"], n)
+        f = indice_disponibilidad(cobertura, tasa_s, confianza)
+        assert np.all((f >= 0.0) & (f <= 1.0))
+
+
+@pytest.mark.datos
+class TestIndiceOportunidadConDatosReales:
+    def test_educacion_primaria_de_punta_a_punta(self) -> None:
+        """Extremo a extremo con datos reales: simula demanda (segmento 'primaria') y oferta
+        (celda 'primaria' de educación), calcula cobertura e índice de oportunidad, y verifica
+        que ninguna AGEB con oferta cero y demanda válida quede sin_datos."""
+        from chipos.config import HORIZONTES, SEMILLA, T_2020
+        from chipos.io import (
+            CORTES_OFERTA,
+            conectar,
+            leer_censo_panel,
+            leer_conapo_0a14,
+            leer_denue_infancias,
+            leer_equivalencia,
+            leer_universo_ageb,
+        )
+        from chipos.modelos import ajustar_oferta, simular_demanda, simular_oferta
+        from chipos.panel import construir_panel_demanda, construir_panel_oferta_celda, filtro_celda_educacion
+
+        universo = leer_universo_ageb()
+        censo = leer_censo_panel()
+        equivalencia = leer_equivalencia()
+        conapo = leer_conapo_0a14()
+        con = conectar()
+        infancias = leer_denue_infancias(con, list(CORTES_OFERTA.keys()))
+
+        panel_d = construir_panel_demanda(censo, equivalencia, universo, segmento="primaria")
+        panel_o_celda = construir_panel_oferta_celda(
+            infancias, universo, filtro_celda_educacion(infancias, "primaria")
+        )
+
+        rng = np.random.default_rng(SEMILLA)
+        sim_d = simular_demanda(panel_d, conapo, rng)
+        sim_o = simular_oferta(ajustar_oferta(panel_o_celda), rng)
+
+        claves = pd.Index(sorted(set(sim_d.clave) | set(sim_o.clave)), name="cvegeo")
+        t_h3 = HORIZONTES["h3"]
+
+        nivel_d = nivel_rama_por_celda({"todas": sim_d}, T_2020, t_h3, claves)
+        nivel_o = nivel_rama_por_celda({"primaria": sim_o}, max(CORTES_OFERTA.values()), t_h3, claves)
+
+        mediana_d = np.median(nivel_d, axis=1)
+        mediana_o = np.median(nivel_o, axis=1)
+        cobertura = cobertura_proyectada(mediana_o, mediana_d)
+
+        # Al menos una AGEB con demanda válida y oferta cero debe existir y dar cobertura 0 (no NaN).
+        con_demanda = mediana_d > 0
+        assert np.any((mediana_o == 0) & con_demanda)
+        idx_cero = np.where((mediana_o == 0) & con_demanda)[0][0]
+        assert cobertura[idx_cero] == 0.0
+        assert not np.isnan(cobertura[idx_cero])
 
 
 # ---------------------------------------------------------------------------
