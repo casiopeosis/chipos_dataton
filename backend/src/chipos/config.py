@@ -97,3 +97,24 @@ DELTAS_SENS: tuple[float, float, float] = (0.005, 0.01, 0.02)
 
 # Población infantil mínima (D_2020) para no forzar confianza 'baja'.
 D_MIN_CONF: int = 100
+
+# ---------------------------------------------------------------------------
+# Sobredispersión y piso de incertidumbre (Fase 3 de `correccion/action_plan.md`,
+# metodología §2.7/§6.2; calibrado con `backtest.calibrar_piso_incertidumbre`
+# sobre `data/outputs/backtest.json`, corrida 2026-09-20).
+# ---------------------------------------------------------------------------
+
+# Factor quasi-Poisson mínimo (nunca reduce la varianza de la oferta, metodología §6.2).
+PHI_MINIMO: float = 1.0
+
+# Piso de la desviación estándar de la tasa (unidades de tasa, no pp/año).
+# Calibrado por cobertura empírica del IC95 en `[0.90, 0.97]` (metodología §2.7):
+# con los datos reales, el candidato `0.000` ya sobrecubre en ambas capas
+# (demanda: adelgazamiento 0.98-1.00, LOAO 1.00; oferta: 1.00) -- ninguna
+# alcanza a estar POR DEBAJO del piso de cobertura 0.90, así que no hace
+# falta ensanchar más los intervalos: el error de conteo (más, en oferta, el
+# factor quasi-Poisson `PHI_MINIMO`/`phi_m`) ya basta. Ver `docs/backtest.md`
+# y `docs/metodologia.md` §2.7 para la rejilla completa y la nota de que la
+# rejilla no alcanzó la banda por ARRIBA (sobrecobertura), no por abajo.
+SIGMA_MIN_DEMANDA: float = 0.0
+SIGMA_MIN_OFERTA: float = 0.0

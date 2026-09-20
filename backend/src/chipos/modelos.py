@@ -37,6 +37,9 @@ from chipos.config import (
     P_ALTA,
     P_DECISION,
     P_MANTIENE,
+    PHI_MINIMO,
+    SIGMA_MIN_DEMANDA,
+    SIGMA_MIN_OFERTA,
     T_2010,
     T_2020,
     T_BASE,
@@ -196,7 +199,10 @@ def tasa_directa(
 
 
 def contraccion_eb(
-    r_hat: np.ndarray, psi: np.ndarray, rho_m_por_ageb: np.ndarray
+    r_hat: np.ndarray,
+    psi: np.ndarray,
+    rho_m_por_ageb: np.ndarray,
+    usar_para_tau2: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray, float]:
     """Contracción Fay-Herriot hacia la media de la alcaldía (metodología §2.2-2.3).
 
@@ -205,12 +211,32 @@ def contraccion_eb(
     dato" en oferta): `tau2 = max(0, mean((r_hat-rho_m)**2) - mean(psi))`.
     `B = psi/(psi+tau2)`; `r_tilde = B*rho_m + (1-B)*r_hat`;
     `var_post = (1-B)*psi`.
+
+    `usar_para_tau2`: máscara booleana opcional (Fase 3, metodología §6.2)
+    que restringe QUÉ unidades participan en el promedio de `tau2` -- todas
+    las unidades reciben su propio `B_i`/`r_tilde`/`var_post` de todas
+    formas, con su `psi` real, sin excepción. Pensado para ajustes
+    individuales numéricamente inestables (p. ej. `ajustar_oferta` con
+    conteos casi separados, `psi` ~1e9): incluirlos en el promedio colapsa
+    `tau2` a 0 para todo el grupo; excluirlos SOLO del promedio, pero
+    seguir aplicándoles la fórmula con su `psi` real, hace que reciban la
+    contracción casi total hacia la alcaldía que les corresponde (en vez de
+    sesgar su propio resultado con un `psi` inventado). `None` (por
+    omisión): usa todas las unidades, comportamiento sin cambios.
     """
     r_hat = np.asarray(r_hat, dtype=float)
     psi = np.asarray(psi, dtype=float)
     rho_m = np.asarray(rho_m_por_ageb, dtype=float)
 
-    tau2 = max(0.0, float(np.mean((r_hat - rho_m) ** 2) - np.mean(psi)))
+    if usar_para_tau2 is None:
+        r_hat_tau2, psi_tau2, rho_m_tau2 = r_hat, psi, rho_m
+    else:
+        mascara = np.asarray(usar_para_tau2, dtype=bool)
+        r_hat_tau2, psi_tau2, rho_m_tau2 = r_hat[mascara], psi[mascara], rho_m[mascara]
+        if r_hat_tau2.size == 0:  # defensivo: si la máscara vacía todo, usar el conjunto completo
+            r_hat_tau2, psi_tau2, rho_m_tau2 = r_hat, psi, rho_m
+
+    tau2 = max(0.0, float(np.mean((r_hat_tau2 - rho_m_tau2) ** 2) - np.mean(psi_tau2)))
     b = psi / (psi + tau2)
     r_tilde = b * rho_m + (1.0 - b) * r_hat
     var_post = (1.0 - b) * psi
@@ -343,6 +369,14 @@ def simular_demanda(
     r_tilde[~tiene_r] = rho_m_por_unidad[~tiene_r]
     var_post[~tiene_r] = tau2
 
+    # Piso de incertidumbre (metodología §2.7, calibrado en backtest.py sobre
+    # data/outputs/backtest.json): la varianza posterior nunca baja de
+    # SIGMA_MIN_DEMANDA**2. Con los datos reales el piso calibrado es 0.0 (el
+    # error de conteo ya sobrecubre, ver config.py), así que hoy este `maximum`
+    # no cambia nada -- se aplica de todas formas para que una recalibración
+    # futura (nueva corrida del backtest) solo tenga que cambiar la constante.
+    var_post = np.maximum(var_post, SIGMA_MIN_DEMANDA**2)
+
     r_post = r_tilde[:, None] + rng.standard_normal((n, n_sim)) * np.sqrt(var_post)[:, None]
 
     # Choque compartido por alcaldía (paso 7): sigma_C = |rho_m,censo - rho_m,CONAPO| 2010-2020.
@@ -452,6 +486,26 @@ def _columnas_s_oferta() -> list[str]:
     ]
 
 
+# Umbral de "ajuste numéricamente confiable" (metodología §6.2, hallazgo de la Fase 3 -- no
+# documentado en el plan original, descubierto al verificar que la sobredispersión y el piso
+# NO bastaban para corregir el hallazgo 0.5 de `correccion/action_plan.md`, "IC de oferta
+# degenerados"). Conteos casi separados (p. ej. [1,0,0]: un establecimiento en 2016, ninguno
+# después) hacen que la matriz de información de Fisher de `_newton_raphson_poisson` sea casi
+# singular: su inversa (`var_b`) explota a ~3e9, frente a ~0.01-0.1 en ajustes normales
+# (verificado con datos reales: 73 de 2023 AGEB, todas con este patrón, separación nítida sin
+# valores intermedios). Ese puñado de AGEB, si se deja igual, domina el PROMEDIO que
+# `contraccion_eb` usa para `tau2` (agrupado por alcaldía) y lo colapsa a 0 para TODA la
+# alcaldía -- el origen real del IC95 degenerado, no solo falta de sobredispersión.
+#
+# La corrección NO topa `var_b` (eso sesgaría la contracción de esas AGEB específicas: con un
+# `var_b` artificialmente pequeño recibirían MENOS contracción hacia la alcaldía, justo lo
+# contrario de lo que corresponde cuando el ajuste no es confiable). En vez de eso, estas AGEB
+# se EXCLUYEN solo del cómputo de `tau2` (`contraccion_eb(..., usar_para_tau2=...)`): siguen
+# recibiendo su propio `B_i`/`r_tilde`/`var_post` con su `var_b` real (typically ~100% de
+# contracción hacia la alcaldía, que es la respuesta correcta para un ajuste no confiable).
+_VAR_B_CONFIABLE_MAXIMA: float = 10.0
+
+
 def ajustar_oferta(panel_o: pd.DataFrame) -> pd.DataFrame:
     """Pendiente Poisson log-lineal por AGEB sobre los 3 cortes de oferta (B7a).
 
@@ -460,11 +514,13 @@ def ajustar_oferta(panel_o: pd.DataFrame) -> pd.DataFrame:
     (`_newton_raphson_poisson`, sin bucle `statsmodels` por AGEB; el test de
     paridad sí usa `statsmodels`, por unidad, solo para verificar).
 
-    Columnas de salida: `cvegeo, cve_mun, a_hat, b_hat, var_b, sin_datos`
-    (`sin_datos = True` si `S = 0` en los 3 cortes: esas filas no se ajustan,
-    quedan con `a_hat/b_hat/var_b = NaN`) + una columna `s_<edicion>` por
-    corte (conteos crudos, orden cronológico), que `simular_oferta` reutiliza
-    para ajustar la pendiente de la alcaldía sin volver a leer `panel_o`.
+    Columnas de salida: `cvegeo, cve_mun, a_hat, b_hat, var_b, sin_datos,
+    ajuste_confiable` (`sin_datos = True` si `S = 0` en los 3 cortes: esas
+    filas no se ajustan, quedan con `a_hat/b_hat/var_b = NaN`;
+    `ajuste_confiable = var_b < _VAR_B_CONFIABLE_MAXIMA`, ver su comentario)
+    + una columna `s_<edicion>` por corte (conteos crudos, orden
+    cronológico), que `simular_oferta` reutiliza para ajustar la pendiente
+    de la alcaldía sin volver a leer `panel_o`.
     """
     t_centro = CORTES_OFERTA["2019-11"]
     tiempos = sorted(CORTES_OFERTA.values())
@@ -489,6 +545,8 @@ def ajustar_oferta(panel_o: pd.DataFrame) -> pd.DataFrame:
         b_hat[con_datos] = beta[:, 1]
         var_b[con_datos] = cov[:, 1, 1]
 
+    ajuste_confiable = con_datos & (var_b < _VAR_B_CONFIABLE_MAXIMA)
+
     salida = pd.DataFrame(
         {
             "cvegeo": tabla.index,
@@ -497,11 +555,49 @@ def ajustar_oferta(panel_o: pd.DataFrame) -> pd.DataFrame:
             "b_hat": b_hat,
             "var_b": var_b,
             "sin_datos": ~con_datos,
+            "ajuste_confiable": ajuste_confiable,
         }
     )
     for nombre_col, columna_t in zip(_columnas_s_oferta(), tiempos):
         salida[nombre_col] = tabla[columna_t].to_numpy()
     return salida.reset_index(drop=True)
+
+
+def calcular_phi_por_alcaldia(ajuste: pd.DataFrame) -> pd.Series:
+    """Factor de sobredispersión quasi-Poisson `phi_m` por alcaldía (metodología §6.2).
+
+    `phi_m = chi2(Pearson)/gl`, agrupado por alcaldía: cada AGEB aporta
+    exactamente 1 grado de libertad (3 cortes, 2 parámetros `a_i, b_i` ya
+    ajustados en `ajustar_oferta`), así que un `phi` individual por AGEB
+    sería puro ruido -- se agrega toda la alcaldía. `phi_m >= PHI_MINIMO`
+    (nunca reduce la varianza; es una corrección estadística estándar de GLM
+    quasi-Poisson, no un parámetro libre).
+
+    Devuelve una `pd.Series` indexada por `cve_mun`. AGEB `sin_datos` (S=0 en
+    los 3 cortes) se excluyen del cómputo (no tienen `a_hat`/`b_hat`).
+    """
+    df = ajuste.loc[~ajuste["sin_datos"]].reset_index(drop=True)
+    columnas_s = _columnas_s_oferta()
+    tiempos = np.array(sorted(CORTES_OFERTA.values()))
+    t_centro = CORTES_OFERTA["2019-11"]
+
+    y = df[columnas_s].to_numpy(dtype=float)
+    mu = np.exp(
+        df["a_hat"].to_numpy(dtype=float)[:, None]
+        + df["b_hat"].to_numpy(dtype=float)[:, None] * (tiempos - t_centro)[None, :]
+    )
+    mu = np.clip(mu, 1e-6, None)
+    pearson = (y - mu) ** 2 / mu  # (n_ageb, n_t)
+
+    resultado: dict[str, float] = {}
+    for m, grupo in df.groupby("cve_mun"):
+        idx = grupo.index.to_numpy()
+        gl = len(idx)  # 1 grado de libertad por AGEB
+        if gl == 0:
+            continue
+        chi2 = float(pearson[idx, :].sum())
+        resultado[m] = max(PHI_MINIMO, chi2 / gl)
+    return pd.Series(resultado, name="phi_m")
 
 
 def simular_oferta(
@@ -515,6 +611,36 @@ def simular_oferta(
     (`S = 0` en los 3 cortes; las rurales ya están fuera de `panel_o`/
     `ajuste`, ver `panel.py`). Tope de confianza `'media'` siempre y
     `d2020_conf = None` (no aplica el criterio `D_MIN_CONF` en esta capa).
+
+    Sobredispersión (metodología §6.2, Fase 3): `var_b` se infla por
+    `phi_m` (`calcular_phi_por_alcaldia`) **antes** de la contracción EB
+    (para que la propia contracción ya vea la varianza correcta), y la
+    varianza posterior resultante nunca baja de `SIGMA_MIN_OFERTA**2`.
+
+    `tau2` se estima **solo** con las AGEB de `ajuste_confiable`
+    (`ajustar_oferta`, conteos sin separación numérica): un puñado de
+    ajustes con `var_b` astronómico (~1e9, por conteos casi separados como
+    `[1,0,0]`) colapsaría `tau2` a 0 para toda la ciudad si se incluyeran en
+    ese promedio (`contraccion_eb`'s docstring). Las AGEB no confiables
+    siguen recibiendo su propio `B_i`/`b_tilde`/`var_post` con su `var_b`
+    real (nunca se excluyen de la simulación ni del contrato): con ese
+    `tau2` ya sano, su propio `psi` enorme las contrae casi del todo hacia
+    la alcaldía, que es la respuesta correcta para un ajuste no confiable.
+
+    **La incertidumbre de la propia pendiente de la alcaldía se propaga**
+    (hallazgo adicional de la Fase 3, no estaba en el plan original): con
+    `tau2` genuinamente bajo (las 16 alcaldías de CDMX muestran menos
+    dispersión ENTRE sus AGEB que el ruido de conteo `psi` DENTRO de cada
+    una, un resultado honesto del método de momentos, no un error), `B_i`
+    queda cerca de 1 para casi todas las AGEB y `(1-B_i)*psi_i` por sí solo
+    colapsa a ~0 -- pero eso trata `b_m` (la pendiente de la alcaldía) como
+    si fuera una constante exacta, cuando es ella misma una estimación con
+    su propia varianza muestral (`_cov_mun`, antes descartada). Se propaga
+    con la aproximación de primer orden `var_post += B_i**2 * var(b_m)`
+    (`r_tilde = B*rho_m + (1-B)*r_hat`, tratando a `rho_m` como aleatoria):
+    nunca inventa precisión que no exista, al contrario, reconoce una fuente
+    de incertidumbre real que la fórmula ingenua de Fay-Herriot pasaba por
+    alto. Es la causa real del hallazgo 0.5 de `correccion/action_plan.md`.
     """
     df = ajuste.loc[~ajuste["sin_datos"]].reset_index(drop=True)
     n = len(df)
@@ -524,13 +650,24 @@ def simular_oferta(
     x_diseno = np.column_stack([np.ones(len(tiempos)), np.array(tiempos) - t_centro])
 
     agregado_mun = df.groupby("cve_mun")[columnas_s].sum()
-    beta_mun, _cov_mun = _newton_raphson_poisson(x_diseno, agregado_mun.to_numpy(dtype=float))
+    beta_mun, cov_mun = _newton_raphson_poisson(x_diseno, agregado_mun.to_numpy(dtype=float))
     b_m_serie = pd.Series(beta_mun[:, 1], index=agregado_mun.index)
+    var_b_m_serie = pd.Series(cov_mun[:, 1, 1], index=agregado_mun.index)
     b_m_por_unidad = df["cve_mun"].map(b_m_serie).to_numpy(dtype=float)
+    var_b_m_por_unidad = df["cve_mun"].map(var_b_m_serie).to_numpy(dtype=float)
+
+    phi_por_mun = calcular_phi_por_alcaldia(ajuste)
+    phi_por_unidad = df["cve_mun"].map(phi_por_mun).fillna(PHI_MINIMO).to_numpy(dtype=float)
 
     b_hat = df["b_hat"].to_numpy(dtype=float)
-    var_b = df["var_b"].to_numpy(dtype=float)
-    b_tilde, var_post, _tau2_b = contraccion_eb(b_hat, var_b, b_m_por_unidad)
+    var_b = df["var_b"].to_numpy(dtype=float) * phi_por_unidad
+    ajuste_confiable = df["ajuste_confiable"].to_numpy(dtype=bool)
+    b_tilde, var_post, _tau2_b = contraccion_eb(
+        b_hat, var_b, b_m_por_unidad, usar_para_tau2=ajuste_confiable
+    )
+    b_i = var_b / (var_b + _tau2_b)  # mismo B que contraccion_eb calcula internamente
+    var_post = var_post + (b_i**2) * var_b_m_por_unidad * phi_por_unidad
+    var_post = np.maximum(var_post, SIGMA_MIN_OFERTA**2)
 
     b_post = b_tilde[:, None] + rng.standard_normal((n, n_sim)) * np.sqrt(var_post)[:, None]
 

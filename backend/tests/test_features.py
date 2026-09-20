@@ -17,7 +17,9 @@ import pytest
 from chipos.features import (
     calcular_brecha_ageb,
     calcular_brecha_alcaldia,
+    calcular_escenario_b_oferta,
     construir_diagnostico,
+    construir_escenarios_oferta,
     escribir_diagnostico,
 )
 
@@ -170,6 +172,7 @@ def test_construir_diagnostico_estructura(panel_d_sintetico, panel_o_sintetico):
     diagnostico = construir_diagnostico(panel_d_sintetico, panel_o_sintetico)
 
     assert "generado" in diagnostico
+    assert "oferta_escenarios_denue_2024" in diagnostico
     assert set(diagnostico["brecha"].keys()) >= {"ageb", "alcaldia"}
     assert set(diagnostico["brecha"]["ageb"].keys()) == {
         "0900200011991",
@@ -221,6 +224,61 @@ def test_escribir_diagnostico_json_valido(tmp_path, panel_d_sintetico, panel_o_s
 
 
 # ---------------------------------------------------------------------------
+# calcular_escenario_b_oferta / construir_escenarios_oferta (Fase 3, metodología §6.1)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def panel_o_con_caida_2024() -> pd.DataFrame:
+    """3 AGEB con una caída marcada en 2024-11 (simula el patrón real: estable o al
+    alza 2016->2019, caída fuerte en 2024)."""
+    cortes = [2016.79, 2019.87, 2024.87]
+    conteos = {
+        "0900200010001": [4, 4, 1],  # estable 2016-2019, cae fuerte en 2024
+        "0900200010002": [2, 3, 0],  # al alza 2016-2019, cae a 0 en 2024
+        "0900300010001": [5, 4, 4],  # baja 2016-2019, estable después (menos dramático)
+    }
+    filas = []
+    for cve, valores in conteos.items():
+        for t, s in zip(cortes, valores):
+            filas.append({"cvegeo": cve, "cve_mun": cve[2:5], "t": t, "s": s})
+    return pd.DataFrame(filas)
+
+
+def test_calcular_escenario_b_ignora_el_corte_2024(panel_o_con_caida_2024):
+    tasa_b = calcular_escenario_b_oferta(panel_o_con_caida_2024)
+    # AGEB estable 2016->2019 (4 -> 4): tasa_b debe ser ~0, sin importar la caída de 2024.
+    assert tasa_b.loc["0900200010001"] == pytest.approx(0.0, abs=1e-9)
+    # AGEB al alza 2016->2019 (2 -> 3): tasa_b > 0, aunque el conteo 2024 caiga a 0.
+    assert tasa_b.loc["0900200010002"] > 0
+
+
+def test_escenario_a_difiere_de_b_cuando_hay_caida_2024(panel_o_con_caida_2024):
+    diagnostico = construir_escenarios_oferta(panel_o_con_caida_2024)
+    ageb = diagnostico["ageb"]
+    assert set(ageb.keys()) == {"0900200010001", "0900200010002", "0900300010001"}
+    # La AGEB estable 2016-2019 pero con caída fuerte en 2024 debe mostrar el mayor rango
+    # A-B (el escenario A sí ve la caída; B la ignora por completo).
+    rango_estable = ageb["0900200010001"]["rango_pp_anio"]
+    assert rango_estable > 0
+    for clave in ageb:
+        assert ageb[clave]["rango_pp_anio"] == pytest.approx(
+            abs(ageb[clave]["tasa_a_pct_anio"] - ageb[clave]["tasa_b_pct_anio"]), abs=0.01
+        )
+
+
+def test_construir_escenarios_oferta_nunca_cambia_el_veredicto_publicado(
+    panel_o_con_caida_2024,
+):
+    """El bloque de escenarios es puramente diagnóstico: no debe traer 'veredicto' ni
+    tocar el contrato -- CLAUDE.md / metodología §6.1 ("no se duplica el contrato")."""
+    diagnostico = construir_escenarios_oferta(panel_o_con_caida_2024)
+    for registro in diagnostico["ageb"].values():
+        assert "veredicto" not in registro
+    assert "descripcion" in diagnostico
+
+
+# ---------------------------------------------------------------------------
 # Con datos reales (B10: "diagnostico.json generado con datos reales al final")
 # ---------------------------------------------------------------------------
 
@@ -241,3 +299,8 @@ def test_diagnostico_con_datos_reales_se_escribe():
     assert len(alcaldia) == 16
     # Alguna AGEB urbana con oferta y demanda válidas debe tener brecha no nula.
     assert any(v["brecha_por_mil"] is not None for v in ageb.values())
+
+    escenarios = con_disco["oferta_escenarios_denue_2024"]["ageb"]
+    assert len(escenarios) > 0
+    # el rango A-B debe ser positivo para al menos algunas AGEB (la caída 2024 es real).
+    assert any(v["rango_pp_anio"] > 0 for v in escenarios.values())

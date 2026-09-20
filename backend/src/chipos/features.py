@@ -23,9 +23,11 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from chipos.config import RUTA_DIAGNOSTICO
+from chipos.io import CORTES_OFERTA
 
 # Escala de la brecha (plan §8): establecimientos "Principal" por cada 1,000
 # niñas y niños de 0-14 años (censo 2020).
@@ -112,12 +114,79 @@ def _tabla_a_dict_alcaldia(tabla: pd.DataFrame) -> dict:
     return dict(sorted(salida.items()))
 
 
+def calcular_escenario_b_oferta(panel_o: pd.DataFrame) -> pd.Series:
+    """Tasa "atenuada" (escenario B, metodología §6.1, Fase 3 de action_plan.md).
+
+    Extrapola SOLO 2016-10 + 2019-11, ignorando la magnitud del corte
+    2024-11: la hipótesis de sensibilidad es que parte de la caída 2024-11
+    es depuración del padrón DENUE (no cierres reales), así que un
+    estimador que nunca ve ese corte da la tasa que habría salido "si la
+    caída no hubiera pasado". Mismo ajuste cerrado de 2 puntos, con la misma
+    corrección de continuidad `+0.5`, que `backtest.backtest_oferta`.
+
+    Devuelve una `pd.Series` (tasa, no pp/año) indexada por `cvegeo`.
+    """
+    t_2016, t_2019, _t_2024 = sorted(CORTES_OFERTA.values())
+    dt = t_2019 - t_2016
+    tabla = panel_o.pivot(index="cvegeo", columns="t", values="s")[[t_2016, t_2019]]
+    s1 = tabla[t_2016].to_numpy(dtype=float)
+    s2 = tabla[t_2019].to_numpy(dtype=float)
+    tasa_b = np.log((s2 + 0.5) / (s1 + 0.5)) / dt
+    return pd.Series(tasa_b, index=tabla.index, name="tasa_b")
+
+
+def construir_escenarios_oferta(panel_o: pd.DataFrame) -> dict:
+    """Bloque `oferta_escenarios_denue_2024` de `diagnostico.json` (metodología §6.1).
+
+    Escenario A (el que se publica en el contrato): ajuste completo de los 3
+    cortes (`modelos.ajustar_oferta`, antes de la contracción EB -- la
+    contracción se aplica igual en ambos escenarios, así que compararlos
+    antes de esa contracción aísla el efecto real de la hipótesis).
+    Escenario B (sensibilidad): `calcular_escenario_b_oferta`. El rango
+    `|A - B|` es la sensibilidad reportada; el veredicto publicado siempre
+    usa A (metodología §6.1: "no se duplica el contrato").
+    """
+    from chipos.modelos import ajustar_oferta
+
+    ajuste = ajustar_oferta(panel_o)
+    tasa_a = ajuste.loc[~ajuste["sin_datos"]].set_index("cvegeo")["b_hat"]
+    tasa_b = calcular_escenario_b_oferta(panel_o)
+
+    claves_comunes = sorted(set(tasa_a.index) & set(tasa_b.index))
+    resultado: dict = {}
+    for cve in claves_comunes:
+        a = float(tasa_a.loc[cve])
+        b = float(tasa_b.loc[cve])
+        if pd.isna(a) or pd.isna(b):
+            continue
+        resultado[cve] = {
+            "tasa_a_pct_anio": round(a * 100, 2),
+            "tasa_b_pct_anio": round(b * 100, 2),
+            "rango_pp_anio": round(abs(a - b) * 100, 2),
+        }
+
+    return {
+        "descripcion": (
+            "A (principal, publicado en el contrato): cierres reales acumulados 2020-2023, "
+            "registrados de golpe al volver a campo en 2024 -- tasa repartida en los 5 anios "
+            "entre 2019-11 y 2024-11. B (sensibilidad, nunca publicado como veredicto): parte "
+            "de la caida es depuracion del padron DENUE, no cierres reales -- tasa atenuada, "
+            "extrapola solo 2016-10 -> 2019-11, ignora la magnitud del corte 2024-11. El "
+            "veredicto y la confianza publicados siempre usan el escenario A; el rango A-B se "
+            "reporta aqui como sensibilidad (metodologia S6.1)."
+        ),
+        "ageb": dict(sorted(resultado.items())),
+    }
+
+
 def construir_diagnostico(panel_d: pd.DataFrame, panel_o: pd.DataFrame) -> dict:
-    """Bloque `brecha` de `diagnostico.json` (plan §8, tarea B10).
+    """Bloque `brecha` + `oferta_escenarios_denue_2024` de `diagnostico.json` (plan §8,
+    tarea B10; escenarios A/B de la Fase 3 de `correccion/action_plan.md`).
 
     Estructura: `{"generado": ISO-8601, "brecha": {"ageb": {...}, "alcaldia":
-    {...}}}`. Fuera del contrato v1.1 de CLAUDE.md (no lo valida
-    `exportar.validar_contrato`); solo diagnóstico interno.
+    {...}}, "oferta_escenarios_denue_2024": {...}}`. Fuera del contrato v1.1
+    de CLAUDE.md (no lo valida `exportar.validar_contrato`); solo
+    diagnóstico interno.
     """
     brecha_ageb = calcular_brecha_ageb(panel_d, panel_o)
     brecha_alcaldia = calcular_brecha_alcaldia(brecha_ageb)
@@ -129,6 +198,7 @@ def construir_diagnostico(panel_d: pd.DataFrame, panel_o: pd.DataFrame) -> dict:
             "ageb": _tabla_a_dict_ageb(brecha_ageb),
             "alcaldia": _tabla_a_dict_alcaldia(brecha_alcaldia),
         },
+        "oferta_escenarios_denue_2024": construir_escenarios_oferta(panel_o),
     }
 
 

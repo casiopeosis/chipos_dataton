@@ -163,7 +163,7 @@ a INEGI).
 6. **Simulación** (semilla fija, 4,000 réplicas): `r_i ~ N(r̃_i, (1 − B_i)ψ_i)`, `λ ~ U(0.25, 1)`,
    choque de alcaldía compartido `N(0, σ_C²)` con `σ_C` = discrepancia censo-CONAPO 2010–20 de esa
    alcaldía (§4.3) → `IC95`, `P(sube)`, `P(baja)` e IC de alcaldía.
-7. **Piso de incertidumbre, calibrado con el backtest (🔄 fase 3, depende de fase 2).** La varianza
+7. **Piso de incertidumbre, calibrado con el backtest (✅ fase 3, ver nota).** La varianza
    posterior de la tasa nunca baja de `SIGMA_MIN_TASA²` (`config.py`). Justificación: `(1 − B_i)ψ_i`
    solo representa el error de conteo censal; no cubre cambios metodológicos del censo,
    reconciliación CONAPO ni choques posteriores a 2020 a escala AGEB (§3, fila "no se identifica").
@@ -184,6 +184,14 @@ a INEGI).
    El resultado (piso elegido + cobertura lograda) se escribe en `docs/backtest.md`, nunca se
    redondea "para que se vea bien": si la cobertura lograda queda en `0.88` en vez de `0.90`, se
    reporta `0.88` y se explica.
+
+   **Resultado real:** `SIGMA_MIN_DEMANDA = 0.0` (el candidato `0.000` ya sobrecubre: 0.98-1.00 en
+   adelgazamiento, 1.00 en LOAO — ver `docs/backtest.md`). Implementado en `config.py`
+   (`SIGMA_MIN_DEMANDA`) y aplicado en `modelos.simular_demanda` como
+   `var_post = np.maximum(var_post, SIGMA_MIN_DEMANDA**2)`. Para oferta, la calibración también dio
+   `0.0`, pero ese resultado por sí solo **no bastaba** para el hallazgo 0.5 de
+   `correccion/action_plan.md` (IC95 degenerado) — ver §6.2 para el hallazgo adicional que sí lo
+   corrige.
 
 Salidas, una vez fijada `r_i,fut` (§2.3-2.5): `tasa_anual_pct` = `r_i,fut` proyectada × 100 — **es
 la misma en los tres horizontes de reporte** (`h1`, `h3`, `h5`): depende solo de la tasa, no del
@@ -336,7 +344,7 @@ Tasa Poisson log-lineal sobre las fechas de levantamiento (2016.79, 2019.87, 202
 alcaldía, sin control externo. ✅ Tope de confianza **media** en toda la capa. ✅ `sin_datos` si
 `S = 0` en los tres cortes. ✅
 
-### 6.1 La caída 2024-11 es una hipótesis, no un hecho (🔄 fase 3)
+### 6.1 La caída 2024-11 es una hipótesis, no un hecho ✅ (fase 3)
 
 La caída del corte 2024-11 (−11.2 % global; privado −22.8 %, preescolar privado −38.7 %; público
 +1.2 %; solo reaparece el 3 % de las bajas) se venía tratando como **certeza**: cierres reales
@@ -351,20 +359,54 @@ está demostrada** (`correccion/detalles_a_tratar.md` §4). Se reporta como dos 
 Ambos escenarios van a `diagnostico.json` y el rango entre ellos se menciona en el drawer. No se
 duplica el contrato: el veredicto publicado sigue siendo el del escenario A.
 
-### 6.2 Sobredispersión y piso de incertidumbre (🔄 fase 3, depende de fase 2)
+### 6.2 Sobredispersión y piso de incertidumbre ✅ (fase 3; hallazgo adicional, ver nota)
 
 El Poisson puro subestima la varianza: con 3 cortes y 2 parámetros, `var(b_i)` sale del error de
-conteo y produce intervalos de ancho casi nulo — hoy `agregado_cdmx.oferta.h3.ic95 = [-6.9, -6.9]`,
-un intervalo degenerado. Dos correcciones, de naturaleza distinta:
+conteo y produce intervalos de ancho casi nulo — el hallazgo original era
+`agregado_cdmx.oferta.h3.ic95 = [-6.9, -6.9]`, un intervalo degenerado. Dos correcciones estaban
+previstas, de naturaleza distinta:
 
 - **Factor quasi-Poisson** `φ_m = χ²(Pearson)/gl`, estimado **agrupado por alcaldía** (con 1 grado
   de libertad por AGEB, `φ` individual es puro ruido) y aplicado por AGEB: `var(b_i) ← φ_m · var(b_i)`,
-  con `φ_m ≥ 1`. Este término es una corrección estadística estándar (GLM quasi-Poisson): se estima
-  de los propios datos, no es un parámetro libre.
-- **Piso `SIGMA_MIN_TASA`** (§2.7): a diferencia de `φ_m`, este término **no sale de los datos de
-  ajuste**, así que exige una calibración externa para no ser arbitrario — se fija por el
-  procedimiento de §2.7, con la cobertura empírica del backtest de oferta (origen 2019→2024) como
-  criterio, no con un ancho de intervalo objetivo.
+  con `φ_m ≥ 1`. Implementado en `modelos.calcular_phi_por_alcaldia`. Con datos reales, `φ_m = 1.0`
+  en las 16 alcaldías (sin sobredispersión detectable más allá del error de conteo puro).
+- **Piso `SIGMA_MIN_OFERTA`** (§2.7): calibrado en `0.0` (igual que demanda).
+
+**Ninguna de las dos, por sí sola ni juntas, corrigió el intervalo degenerado.** El hallazgo real,
+descubierto al verificar el pipeline con datos reales tras implementarlas (no estaba en ningún plan
+anterior), tiene dos partes:
+
+1. **Ajustes casi separados envenenan el promedio de `tau2`.** Conteos como `[1, 0, 0]`
+   (un establecimiento en 2016, ninguno después) hacen que la matriz de información de Fisher de
+   `_newton_raphson_poisson` sea casi singular: `var(b_i)` explota a ~3×10⁹ (73 de 2023 AGEB con
+   dato, separación nítida frente al resto: ~0.01-0.1). `contraccion_eb` estima `tau2` como
+   `mean((b̂-b_m)²) - mean(var(b))` **agrupado sobre todas las unidades que recibe**: un puñado de
+   `var(b)` astronómicos domina esa media y colapsa `tau2` a `0` para **toda la alcaldía**, no solo
+   para esas AGEB. Corrección: `contraccion_eb` acepta ahora una máscara opcional
+   `usar_para_tau2` — las AGEB con ajuste no confiable (`ajustar_oferta` añade la columna
+   `ajuste_confiable`) se excluyen **solo** del promedio que estima `tau2`, pero siguen recibiendo
+   su propio `B_i`/`r̃_i`/`var_post_i` con su varianza real (con `tau2` ya sano, su enorme `psi`
+   las contrae casi del todo hacia la alcaldía — la respuesta correcta para un ajuste no confiable,
+   no un valor inventado).
+2. **Con `tau2` ya sano, seguía colapsando.** Las 16 alcaldías de CDMX muestran, genuinamente,
+   *menos* dispersión entre sus AGEB (`mean((b̂-b_m)²) ≈ 0.0059`) que ruido de conteo dentro de cada
+   una (`mean(var(b)) ≈ 0.0157`, con las 73 AGEB ya excluidas) — un resultado honesto del método de
+   momentos, no un error. Eso empuja `B_i → 1` para casi todas las AGEB, y la fórmula ingenua de
+   Fay-Herriot `var_post = (1-B)·ψ` colapsa a `~0` cuando `B → 1`, **porque trata `b_m` (la
+   pendiente de la alcaldía) como una constante exacta** — pero `b_m` es ella misma una estimación
+   (`_newton_raphson_poisson` sobre la suma de conteos de la alcaldía), con su propia varianza
+   muestral. Corrección: `modelos.simular_oferta` propaga esa varianza con la aproximación de
+   primer orden `var_post ← var_post + B_i² · var(b_m) · φ_m` (tratando `b_m` como aleatoria en
+   `r̃ = B·b_m + (1-B)·b̂`). Esto **no inventa precisión**: al contrario, reconoce una fuente de
+   incertidumbre real que la fórmula Fay-Herriot ingenua (la que ya se usaba, sin cambios, para
+   demanda) pasaba por alto. Demanda no mostró el mismo colapso porque el choque compartido `ε_m`
+   (§2.6) ya inyecta una varianza de alcaldía después de la contracción EB; oferta no tenía ningún
+   término análogo.
+
+Verificado con datos reales tras ambas correcciones: `agregado_cdmx.oferta.h3.ic95 = [-7.0, -6.8]`
+(antes `[-6.9, -6.9]`); AGEB individuales pasan de intervalos idénticos y degenerados a intervalos
+propios y no triviales (p. ej. `[-11.0, -1.3]`). `test_modelos.py` incluye una prueba de regresión
+específica (`test_ic95_no_degenerado_cuando_tau2_colapsa_honestamente`).
 
 **Lo que se retira de esta sección:** la versión anterior de este documento proponía como criterio
 de aceptación "ningún registro con `ic95[1] − ic95[0] < 0.2`". Es un criterio equivocado: fuerza un

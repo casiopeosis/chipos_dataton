@@ -13,7 +13,17 @@ import pandas as pd
 import pytest
 import statsmodels.api as sm
 
-from chipos.config import HORIZONTES, HORIZONTES_OFERTA, SEMILLA, T_2010, T_2020, T_HOR
+from chipos.config import (
+    HORIZONTES,
+    HORIZONTES_OFERTA,
+    PHI_MINIMO,
+    SEMILLA,
+    SIGMA_MIN_DEMANDA,
+    SIGMA_MIN_OFERTA,
+    T_2010,
+    T_2020,
+    T_HOR,
+)
 from chipos.io import CORTES_OFERTA
 from chipos.modelos import (
     Simulacion,
@@ -21,6 +31,7 @@ from chipos.modelos import (
     _newton_raphson_poisson,
     agregar_alcaldia,
     ajustar_oferta,
+    calcular_phi_por_alcaldia,
     confianza,
     contraccion_eb,
     resumir,
@@ -276,6 +287,57 @@ class TestContraccionEB:
 
         assert tau2 == 0.0
 
+    def test_usar_para_tau2_excluye_outliers_del_promedio(self) -> None:
+        """Fase 3: un puñado de `psi` astronómicos (ajustes casi separados) colapsa `tau2` a 0
+        si se incluyen en el promedio; excluirlos con `usar_para_tau2` lo evita, y las unidades
+        excluidas siguen recibiendo su propio `B`/`r_tilde`/`var_post` con su `psi` real."""
+        rng = np.random.default_rng(7)
+        n_normal = 100
+        rho_m = np.zeros(n_normal + 2)
+        r_hat_normal = rng.normal(0.0, 0.05, n_normal)  # dispersión real entre unidades
+        psi_normal = np.full(n_normal, 0.0005)  # ruido de conteo bien por debajo de esa dispersión
+        r_hat = np.concatenate([r_hat_normal, [-8.0, 7.5]])  # 2 ajustes casi separados
+        psi = np.concatenate([psi_normal, [3.1e9, 2.8e9]])
+        mascara = np.concatenate([np.ones(n_normal, dtype=bool), [False, False]])
+
+        # Sin máscara: los 2 psi astronómicos dominan mean(psi) y colapsan tau2.
+        _, _, tau2_sin_mascara = contraccion_eb(r_hat, psi, rho_m)
+        assert tau2_sin_mascara == 0.0
+
+        # Con máscara: tau2 se estima solo con las 100 unidades normales -> > 0.
+        r_tilde, var_post, tau2_con_mascara = contraccion_eb(
+            r_hat, psi, rho_m, usar_para_tau2=mascara
+        )
+        assert tau2_con_mascara > 0.0
+        # Las unidades normales ya no tienen var_post degenerada (B < 1 para casi todas).
+        assert np.median(var_post[:n_normal]) > 0.0
+        # Las 2 unidades excluidas siguen recibiendo su propio B/r_tilde con su psi real:
+        # psi tan enorme -> B casi 1 -> casi toda la contracción hacia rho_m=0.
+        assert abs(r_tilde[n_normal]) < 0.01
+        assert abs(r_tilde[n_normal + 1]) < 0.01
+
+    def test_usar_para_tau2_mascara_vacia_usa_todas_las_unidades(self) -> None:
+        """Defensivo: una máscara que no deja ninguna unidad no debe reventar ni dar tau2
+        inventado -- cae de vuelta al comportamiento sin máscara."""
+        r_hat = np.array([0.01, -0.01, 0.02, -0.02])
+        rho_m = np.zeros(4)
+        psi = np.full(4, 0.001)
+        mascara_vacia = np.zeros(4, dtype=bool)
+
+        _, _, tau2_con_mascara_vacia = contraccion_eb(r_hat, psi, rho_m, usar_para_tau2=mascara_vacia)
+        _, _, tau2_sin_mascara = contraccion_eb(r_hat, psi, rho_m)
+        assert tau2_con_mascara_vacia == tau2_sin_mascara
+
+    def test_usar_para_tau2_none_es_identico_a_omitirlo(self) -> None:
+        r_hat = np.array([0.01, -0.01, 0.02, -0.02, 0.5])
+        rho_m = np.zeros(5)
+        psi = np.array([0.001, 0.001, 0.002, 0.002, 0.05])
+
+        r1 = contraccion_eb(r_hat, psi, rho_m)
+        r2 = contraccion_eb(r_hat, psi, rho_m, usar_para_tau2=None)
+        for a, b in zip(r1, r2):
+            np.testing.assert_array_equal(a, b)
+
 
 class TestTasaConapo:
     @pytest.fixture
@@ -410,6 +472,34 @@ class TestSimularDemanda:
         # variante lam=0.6 de `sim_random` (misma lam, mismos sorteos).
         np.testing.assert_allclose(sim_fijo.r_fut, sim_random.r_fut_lambdas[0.6])
 
+    def test_var_post_nunca_baja_de_sigma_min_demanda(
+        self,
+        panel_demanda_sintetico: pd.DataFrame,
+        conapo_anual_dos_mun: pd.DataFrame,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Fase 3, metodología §2.7: con `SIGMA_MIN_DEMANDA` forzado a un valor grande (el
+        calibrado real es 0.0, ver config.py), la dispersión de `r_post` (antes del choque de
+        alcaldía) debe acercarse a ese piso -- muy por encima de la dispersión sin piso."""
+        import chipos.modelos as modelos_mod
+
+        rng_sin_piso = np.random.default_rng(SEMILLA)
+        monkeypatch.setattr(modelos_mod, "SIGMA_MIN_DEMANDA", 0.0)
+        sim_sin_piso = simular_demanda(
+            panel_demanda_sintetico, conapo_anual_dos_mun, rng_sin_piso, n_sim=4000, lam=0.6
+        )
+
+        sigma_grande = 0.5
+        rng_con_piso = np.random.default_rng(SEMILLA)
+        monkeypatch.setattr(modelos_mod, "SIGMA_MIN_DEMANDA", sigma_grande)
+        sim_con_piso = simular_demanda(
+            panel_demanda_sintetico, conapo_anual_dos_mun, rng_con_piso, n_sim=4000, lam=0.6
+        )
+
+        desv_sin_piso = sim_sin_piso.r_fut.std(axis=1)
+        desv_con_piso = sim_con_piso.r_fut.std(axis=1)
+        assert np.all(desv_con_piso >= desv_sin_piso)
+
 
 # ---------------------------------------------------------------------------
 # B6: tau agrupado sobre datos reales (validación contra docs/metodologia.md §3)
@@ -527,6 +617,68 @@ class TestAjustarOferta:
         assert ajuste.set_index("cvegeo").loc["0900200012005", "b_hat"] > 0
         assert ajuste.set_index("cvegeo").loc["0900200011991", "b_hat"] < 0
 
+    def test_conteos_bien_comportados_son_confiables(
+        self, panel_oferta_para_ajuste: pd.DataFrame
+    ) -> None:
+        ajuste = ajustar_oferta(panel_oferta_para_ajuste)
+        con_datos = ajuste.loc[~ajuste["sin_datos"]]
+        assert con_datos["ajuste_confiable"].all()
+
+    def test_conteos_casi_separados_no_son_confiables(self) -> None:
+        """Fase 3: `[1,0,0]` (un establecimiento en 2016, ninguno después) hace que la
+        matriz de información de Fisher sea casi singular; `var_b` explota y
+        `ajuste_confiable` debe marcarlo como no confiable."""
+        cortes = sorted(CORTES_OFERTA.values())
+        panel = pd.DataFrame(
+            {
+                "cvegeo": [cve for cve in ["0900200010001"] for _ in cortes],
+                "cve_mun": ["002"] * 3,
+                "t": cortes,
+                "s": [1, 0, 0],
+            }
+        )
+        ajuste = ajustar_oferta(panel)
+        fila = ajuste.set_index("cvegeo").loc["0900200010001"]
+        assert not fila["ajuste_confiable"]
+        assert fila["var_b"] > 1e6  # el valor explota; no se topa, solo se marca no confiable
+
+    def test_sin_datos_no_es_confiable(self, panel_oferta_para_ajuste: pd.DataFrame) -> None:
+        ajuste = ajustar_oferta(panel_oferta_para_ajuste)
+        fila = ajuste.set_index("cvegeo").loc["0900300010112"]  # S=0 en los 3 cortes
+        assert not fila["ajuste_confiable"]
+
+
+class TestCalcularPhiPorAlcaldia:
+    def test_phi_nunca_baja_de_phi_minimo(self, panel_oferta_para_ajuste: pd.DataFrame) -> None:
+        ajuste = ajustar_oferta(panel_oferta_para_ajuste)
+        phi = calcular_phi_por_alcaldia(ajuste)
+        assert (phi >= PHI_MINIMO).all()
+
+    def test_agrupa_por_alcaldia_no_por_ageb(self, panel_oferta_para_ajuste: pd.DataFrame) -> None:
+        ajuste = ajustar_oferta(panel_oferta_para_ajuste)
+        phi = calcular_phi_por_alcaldia(ajuste)
+        # 2 alcaldías con AGEB con dato en la fixture (002, 003); nunca una entrada por AGEB.
+        assert set(phi.index) <= {"002", "003"}
+        assert len(phi) <= 2
+
+    def test_ajuste_perfecto_da_phi_minimo(self) -> None:
+        """Si el ajuste reproduce los conteos exactamente (residuos de Pearson = 0),
+        `phi_m` debe quedar en `PHI_MINIMO`, no en 0."""
+        cortes = sorted(CORTES_OFERTA.values())
+        # Construye un panel cuyo log-conteo es EXACTAMENTE lineal en t -> ajuste perfecto.
+        filas = []
+        for cve, b in [("0900200010001", 0.05), ("0900200010002", -0.03)]:
+            a = np.log(10.0)
+            for t in cortes:
+                s = round(float(np.exp(a + b * (t - cortes[1]))))
+                filas.append({"cvegeo": cve, "cve_mun": "002", "t": t, "s": s})
+        panel = pd.DataFrame(filas)
+        ajuste = ajustar_oferta(panel)
+        phi = calcular_phi_por_alcaldia(ajuste)
+        # Con conteos redondeados el ajuste no es perfecto al 100%, pero debe quedar cerca
+        # de PHI_MINIMO (mucho menor que un phi inflado por sobredispersión real).
+        assert phi["002"] < 5.0
+
 
 class TestSimularOferta:
     def test_excluye_sin_datos(self, panel_oferta_para_ajuste: pd.DataFrame) -> None:
@@ -534,6 +686,35 @@ class TestSimularOferta:
         rng = np.random.default_rng(SEMILLA)
         sim = simular_oferta(ajuste, rng, n_sim=200)
         assert "0900300010112" not in set(sim.clave)
+
+    def test_ic95_no_degenerado_cuando_tau2_colapsa_honestamente(self) -> None:
+        """Regresión del hallazgo 0.5 de `correccion/action_plan.md` (IC95 de oferta
+        degenerado, `ic95=[-6.9,-6.9]`): una alcaldía con muchas AGEB de tendencia casi
+        idéntica hace que `tau2` sea genuinamente ~0 por el método de momentos (no es un
+        outlier, es honesto) -- eso NO debe colapsar `var_post` a exactamente 0 para todas
+        las AGEB, porque ignoraría la incertidumbre de la propia pendiente de la alcaldía
+        (`b_m`), que también es una estimación, no una constante."""
+        rng_datos = np.random.default_rng(99)
+        cortes = sorted(CORTES_OFERTA.values())
+        filas = []
+        # 40 AGEB con la MISMA tendencia real (b=-0.02) y conteos moderados: la dispersión
+        # observada entre ellas debe salir consistente con puro ruido de conteo -> tau2~0.
+        for i in range(40):
+            s0 = int(rng_datos.integers(4, 9))
+            s1 = max(0, s0 + int(rng_datos.integers(-1, 1)))
+            s2 = max(0, s1 + int(rng_datos.integers(-2, 1)))
+            for t, s in zip(cortes, [s0, s1, s2]):
+                filas.append({"cvegeo": f"090020001{i:04d}", "cve_mun": "002", "t": t, "s": s})
+        panel = pd.DataFrame(filas)
+
+        ajuste = ajustar_oferta(panel)
+        rng = np.random.default_rng(SEMILLA)
+        sim = simular_oferta(ajuste, rng, n_sim=2000)
+        res = resumir(sim, {"h3": HORIZONTES["h3"]})["h3"]
+
+        anchos = res["ic95"].apply(lambda ic: ic[1] - ic[0])
+        assert (anchos > 0.0).all(), "ningún IC95 debe salir con ancho exactamente 0"
+        assert anchos.median() > 0.1  # ancho no trivial, no solo un epsilon numérico
 
     def test_n_obs_siempre_3_y_d2020_conf_none(
         self, panel_oferta_para_ajuste: pd.DataFrame
@@ -555,6 +736,63 @@ class TestSimularOferta:
         res = resumir(sim, {"h3": HORIZONTES["h3"]})["h3"]
         assert "alta" not in set(res["confianza"])
         assert np.all(sim.tope == "media")
+
+    def test_var_post_nunca_baja_de_sigma_min_oferta(
+        self, panel_oferta_para_ajuste: pd.DataFrame, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Fase 3, metodología §2.7/§6.2: con `SIGMA_MIN_OFERTA` forzado a un valor grande (el
+        calibrado real es 0.0, ver config.py), la varianza empírica de las réplicas debe
+        acercarse a ese piso, muy por encima de la varianza sin piso."""
+        import chipos.modelos as modelos_mod
+
+        ajuste = ajustar_oferta(panel_oferta_para_ajuste)
+
+        rng_sin_piso = np.random.default_rng(SEMILLA)
+        monkeypatch.setattr(modelos_mod, "SIGMA_MIN_OFERTA", 0.0)
+        sim_sin_piso = simular_oferta(ajuste, rng_sin_piso, n_sim=4000)
+
+        sigma_grande = 0.5
+        rng_con_piso = np.random.default_rng(SEMILLA)
+        monkeypatch.setattr(modelos_mod, "SIGMA_MIN_OFERTA", sigma_grande)
+        sim_con_piso = simular_oferta(ajuste, rng_con_piso, n_sim=4000)
+
+        desv_sin_piso = sim_sin_piso.r_fut.std(axis=1)
+        desv_con_piso = sim_con_piso.r_fut.std(axis=1)
+        assert np.all(desv_con_piso >= desv_sin_piso)
+        assert np.all(desv_con_piso >= sigma_grande * 0.9)
+
+    def test_var_b_se_infla_por_phi_antes_de_la_contraccion(
+        self, panel_oferta_para_ajuste: pd.DataFrame
+    ) -> None:
+        """Con `phi_m > 1`, `var_post` de `simular_oferta` debe ser mayor que si se ignorara
+        la sobredispersión (comparado contra `contraccion_eb` corrido a mano sin inflar)."""
+        ajuste = ajustar_oferta(panel_oferta_para_ajuste)
+        df = ajuste.loc[~ajuste["sin_datos"]].reset_index(drop=True)
+        phi = calcular_phi_por_alcaldia(ajuste)
+        if (phi <= 1.0 + 1e-9).all():
+            pytest.skip("la fixture no produce sobredispersión real (phi_m == PHI_MINIMO)")
+
+        columnas_s = ["s_2016_10", "s_2019_11", "s_2024_11"]
+        tiempos = sorted(CORTES_OFERTA.values())
+        x_diseno = np.column_stack([np.ones(len(tiempos)), np.array(tiempos) - CORTES_OFERTA["2019-11"]])
+        agregado_mun = df.groupby("cve_mun")[columnas_s].sum()
+        from chipos.modelos import _newton_raphson_poisson
+
+        beta_mun, _ = _newton_raphson_poisson(x_diseno, agregado_mun.to_numpy(dtype=float))
+        b_m_serie = pd.Series(beta_mun[:, 1], index=agregado_mun.index)
+        b_m_por_unidad = df["cve_mun"].map(b_m_serie).to_numpy(dtype=float)
+
+        _, var_post_sin_phi, _ = contraccion_eb(
+            df["b_hat"].to_numpy(dtype=float), df["var_b"].to_numpy(dtype=float), b_m_por_unidad
+        )
+        phi_por_unidad = df["cve_mun"].map(phi).to_numpy(dtype=float)
+        _, var_post_con_phi, _ = contraccion_eb(
+            df["b_hat"].to_numpy(dtype=float),
+            df["var_b"].to_numpy(dtype=float) * phi_por_unidad,
+            b_m_por_unidad,
+        )
+        assert np.all(var_post_con_phi >= var_post_sin_phi - 1e-12)
+        assert np.any(var_post_con_phi > var_post_sin_phi)
 
 
 # ---------------------------------------------------------------------------
