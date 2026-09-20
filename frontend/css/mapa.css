@@ -49,7 +49,7 @@
 }
 
 /* Escala de prioridad (spec §4.2): quintiles de oportunidad/disponibilidad relativa, NUNCA la
-   escala divergente de tendencia (--sube-*/--baja-*, reservada a graficas.js de Nivel 2). */
+   escala divergente de tendencia (sube/baja, reservada a graficas.js de Nivel 2). */
 .mapa__alcaldia--prioridad-1 { fill: var(--prioridad-1); }
 .mapa__alcaldia--prioridad-2 { fill: var(--prioridad-2); }
 .mapa__alcaldia--prioridad-3 { fill: var(--prioridad-3); }
