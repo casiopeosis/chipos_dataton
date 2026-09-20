@@ -1,0 +1,67 @@
+/*
+ * ranking.css — ranking por AGEB (plans/frontend_specs.md §7, plan F50).
+ *
+ * Contiene por ahora solo el estilo del ranking MÍNIMO de main.js (placeholder documentado en su
+ * propia cabecera: lista simple, sin FLIP ni acordeón) -- se amplía, no se reemplaza, cuando
+ * ranking.js exista.
+ */
+
+.ranking-min__titulo {
+  margin: 0 0 var(--e-2);
+  font-size: calc(var(--t-h2-tam) * var(--escala));
+  line-height: var(--t-h2-alto);
+  font-weight: var(--t-h2-peso);
+  color: var(--tinta);
+}
+
+.ranking-min__nota {
+  margin: 0 0 var(--e-3);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}
+
+.ranking-min__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ranking-min__fila {
+  display: flex;
+  align-items: center;
+  gap: var(--e-3);
+  height: 36px;
+  padding: 0 var(--e-2);
+  border-bottom: 1px solid var(--linea);
+}
+
+.ranking-min__nombre {
+  flex: 1 1 auto;
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  color: var(--tinta);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranking-min__tercil {
+  flex: 0 0 auto;
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  padding: 2px var(--e-2);
+  border-radius: 2px;
+}
+
+.ranking-min__tercil--alta { background: var(--prioridad-4); color: var(--papel); }
+.ranking-min__tercil--media { background: var(--prioridad-3); color: var(--tinta); }
+.ranking-min__tercil--baja { background: var(--prioridad-1); color: var(--tinta); }
+.ranking-min__tercil--sin_datos { background: var(--sin-datos); color: var(--tinta-3); }
+
+.ranking-min__valor {
+  flex: 0 0 auto;
+  width: 4em;
+  text-align: right;
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  color: var(--tinta-2);
+}

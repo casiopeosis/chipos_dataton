@@ -73,6 +73,17 @@ body > header {
 body > footer {
   grid-row: 3;
   min-height: 0;
+  padding: var(--e-2) var(--e-4);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}
+
+body > footer p {
+  margin: 0 0 var(--e-1);
+}
+
+.pie__advertencia {
+  max-width: 60ch;
 }
 
 /* ------------------------------------------------------------------------------------------ */

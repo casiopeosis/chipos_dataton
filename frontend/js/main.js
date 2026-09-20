@@ -1,37 +1,48 @@
 // frontend/js/main.js
 //
-// Arranque y orquestación (plans/frontend_plan.md §9, F100): carga los datos reales/mock, monta
-// todos los módulos de la UI sobre los contenedores que ya deja `index.html`, y reacciona a
-// `estado.js` para intercambiar el contenido de `#vista-principal` (titular+tabla / titular+
-// vista de alcaldía / ficha de AGEB) según `estado.vista`. Los demás módulos (mapa, leyenda,
-// control de capas, control de horizonte, cabecera, franja) son autocontenidos y se suscriben
-// a `estado.js` por su cuenta; aquí solo se montan una vez con los datos ya cargados.
+// Arranque y orquestación (plans/frontend_plan.md §9, F100): carga los datos reales/mock, corre
+// el motor de composición cliente (composicion.js) y monta los módulos de la UI sobre los
+// contenedores que ya deja `index.html`, reaccionando a `estado.js`.
+//
+// NOTA DE ALCANCE (Fase 7, en progreso): este archivo ya conecta el pipeline completo de datos ->
+// composicion.js -> mapa.js/leyenda.js (la parte más difícil de acertar, spec §17). El panel de
+// `#vista-principal` (resumen estructurado Nivel 1 + ranking, plans/frontend_plan.md F45/F50) usa
+// por ahora un ranking mínimo inline -- placeholder deliberado hasta que `resumen.js`/`ranking.js`
+// existan; se reemplaza sin tocar el resto de este archivo (mismo patrón que ya separa
+// mapa/leyenda). `prioridades.js`/`filtros.js`/`poblacion.js`/`busqueda.js`/`riesgo.js`/
+// `comparar.js`/`ayuda.js`/`franja.js`/`ficha.js`/`graficas.js`/`interaccion.js`/`presentacion.js`
+// aún no están conectados aquí -- ver el commit para el detalle exacto.
 
-import { NIVEL } from "./config.js";
+import { NIVEL, RAMAS, RAMAS_CON_PROYECCION, HORIZONTES_OFERTA, SEGMENTO_POR_OMISION } from "./config.js";
 import { cargarPrediccion, ErrorDatos } from "./api.js";
-import { crear, limpiar, reemplazarContenido } from "./dom.js";
-import { textos, texto as t } from "./textos.js";
-import { obtenerEstado, suscribir, despachar, ACCIONES, VISTA } from "./estado.js";
+import { crear, limpiar, reemplazarContenido, texto as nodoTexto } from "./dom.js";
+import { textos } from "./textos.js";
+import { formatoPorcentaje, formatoEntero } from "./formato.js";
+import { obtenerEstado, suscribir, despachar, ACCIONES, VISTA, VISTA_MAPA, BUSQUEDA } from "./estado.js";
 import { iniciarCabecera, establecerNombreAlcaldia } from "./cabecera.js";
-import { montarFranja } from "./franja.js";
-import { montarTitular, calcularTitular } from "./titular.js";
-import { montarTabla } from "./tabla.js";
-import { montarAlcaldia } from "./alcaldia.js";
-import { montarFicha } from "./ficha.js";
-import { montarControlCapas, capasDesdeAdaptado } from "./capas.js";
+import { montarVistaMapa } from "./vista_mapa.js";
 import { montarControlHorizonte } from "./horizonte.js";
 import { montarMapa } from "./mapa.js";
 import { montarLeyenda } from "./leyenda.js";
-import { iniciarPresentacion } from "./presentacion.js";
-import { iniciarInteraccionGlobal } from "./interaccion.js";
+import {
+  sumaCeldas,
+  tasaAnualImplicita,
+  coberturaProyectada,
+  indiceOportunidad,
+  indiceDisponibilidad,
+  indiceCompuesto,
+  clasificadorQuintiles,
+  clasificadorTerciles,
+  tercilDeQuintil,
+} from "./composicion.js";
 
-// Igual que config.js#rutaDatos: rutas planas bajo frontend/data/, que `make frontend-datos`
-// (F105) llena con copias de data/reference/ y data/outputs/ (data/ es solo lectura, CLAUDE.md).
+// Rutas planas bajo frontend/data/, que `make frontend-datos` llena con copias de
+// data/reference/ y data/outputs/ (data/ es solo lectura, CLAUDE.md).
 const RUTA_ALCALDIAS_GEOJSON = "data/alcaldias.geojson";
 const RUTA_AGEB_GEOJSON = "data/ageb_cdmx_simplificado.geojson";
 
 // ---------------------------------------------------------------------------------------------
-// Referencias a los contenedores que ya deja index.html (F25/F80).
+// Referencias a los contenedores que ya deja index.html.
 // ---------------------------------------------------------------------------------------------
 
 const elementoHeader = document.querySelector("body > header");
@@ -40,62 +51,14 @@ const mapaHost = document.getElementById("mapa-svg-host");
 const leyendaHost = document.getElementById("leyenda");
 const horizonteHost = document.getElementById("control-horizonte");
 const pieEl = document.getElementById("pie");
-const franjaEl = document.getElementById("franja-metodologia");
-const dialogoEl = document.getElementById("drawer-metodologia");
 
 // ---------------------------------------------------------------------------------------------
-// Helpers de datos: de los índices Map de api.js a los objetos "planos" que esperan tabla.js,
-// alcaldia.js y ficha.js (cada uno documenta su forma esperada en su propio módulo).
-// ---------------------------------------------------------------------------------------------
-
-function registroPlano(entrada, capa, claveHorizonte) {
-  return entrada?.[capa]?.h?.[claveHorizonte] ?? null;
-}
-
-const REGISTRO_SIN_DATOS = Object.freeze({
-  veredicto: "sin_datos",
-  delta_pct: null,
-  tasa_anual_pct: null,
-  ic95: null,
-  confianza: "baja",
-  n_obs: 0,
-});
-
-function listaAlcaldiasParaTabla(datosAlcaldia, capa, nombresAlcaldia, claveHorizonte) {
-  const lista = [];
-  for (const [cveMun, entrada] of datosAlcaldia.indices.porCveMun) {
-    const reg = registroPlano(entrada, capa, claveHorizonte) ?? REGISTRO_SIN_DATOS;
-    lista.push({ ...reg, cve_mun: cveMun, nombre: nombresAlcaldia.get(cveMun) ?? cveMun });
-  }
-  return lista;
-}
-
-function mapaCapaAgebPorCvegeo(datosAgeb, capa, claveHorizonte) {
-  const mapa = new Map();
-  for (const [cvegeo, entrada] of datosAgeb.indices.porCvegeo) {
-    mapa.set(cvegeo, registroPlano(entrada, capa, claveHorizonte) ?? REGISTRO_SIN_DATOS);
-  }
-  return mapa;
-}
-
-function listaAgebDeAlcaldia(datosAgeb, cveMun, capa, claveHorizonte) {
-  const claves = datosAgeb.indices.porCveMun.get(cveMun) ?? [];
-  return claves.map((cvegeo) => {
-    const entrada = datosAgeb.indices.porCvegeo.get(cvegeo);
-    const reg = registroPlano(entrada, capa, claveHorizonte) ?? REGISTRO_SIN_DATOS;
-    return { ...reg, cvegeo };
-  });
-}
-
-// ---------------------------------------------------------------------------------------------
-// Estados de carga/error (spec §15). Los 4 escenarios accesibles vía `?mock=error|v11|vacio|lento`
-// se cubren con este único bloque: `cargarPrediccion` ya lanza `ErrorDatos` con el código
-// adecuado y ya aplica la demora de `?mock=lento` (js/api.js).
+// Estados de carga/error (spec §15).
 // ---------------------------------------------------------------------------------------------
 
 function pintarCargando() {
   reemplazarContenido(vistaPrincipal, [
-    crear("p", { clase: "estado-carga", role: "status" }, [textos.titular.cargandoPronosticos]),
+    crear("p", { clase: "estado-carga", role: "status" }, [textos.accesibilidad.cargandoPronosticos]),
   ]);
 }
 
@@ -105,10 +68,176 @@ function pintarError(error, reintentar) {
     textos.estados.reintentar,
   ]);
   reemplazarContenido(vistaPrincipal, [
-    crear("div", { clase: "estado-error", role: "alert" }, [
-      crear("p", {}, [mensaje]),
-      boton,
-    ]),
+    crear("div", { clase: "estado-error", role: "alert" }, [crear("p", {}, [mensaje]), boton]),
+  ]);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Motor de composición: de los datos adaptados (v1.4) + estado activo a {valor, quintil, tercil,
+// confianzaBaja} por clave. Es el único lugar de todo el frontend que llama a composicion.js
+// (plans/frontend_plan.md §2: "el día que cambie el contrato, solo se tocan api.js y
+// composicion.js" -- y aquí, el único orquestador que los conecta).
+// ---------------------------------------------------------------------------------------------
+
+/** Celdas seleccionadas de una rama según el filtro activo (`[]` = todas las celdas reales). */
+function celdasSeleccionadas(rama, filtroRama, celdasDisponiblesPorClave) {
+  if (Array.isArray(filtroRama) && filtroRama.length > 0) return filtroRama;
+  // "Todas": las celdas reales que existan en el propio registro (evita asumir un catálogo fijo
+  // aquí, cuando panel.py es la fuente real de qué celdas hay por rama).
+  return Object.keys(celdasDisponiblesPorClave ?? {});
+}
+
+/**
+ * Calcula, para cada clave del índice de demanda (`datos.capas.demanda`), el nivel/tasa
+ * combinados de UNA rama bajo el filtro activo, en el horizonte activo (o el nivel estático si es
+ * verde). Devuelve `Map<clave, {nivelBase, nivelHorizonte, tasaAnual}>`.
+ */
+function nivelesPorRama(datos, rama, filtroRama, horizonteActivo, horizonteAnios) {
+  const capaRama = datos.capas.ramas[rama] ?? {};
+  const esVerde = rama === "verde";
+  const resultado = new Map();
+  for (const [clave, registro] of Object.entries(capaRama)) {
+    const celdas = celdasSeleccionadas(rama, filtroRama, registro.celdas);
+    const { nivelBase, nivelHorizonte } = sumaCeldas(registro.celdas ?? {}, celdas, esVerde ? null : horizonteActivo);
+    const tasaAnual = esVerde ? null : tasaAnualImplicita(nivelBase, nivelHorizonte, horizonteAnios);
+    resultado.set(clave, { nivelBase, nivelHorizonte: esVerde ? nivelBase : nivelHorizonte, tasaAnual });
+  }
+  return resultado;
+}
+
+/**
+ * Ejecuta el motor de composición completo sobre `datos` (adaptado v1.4, un nivel territorial) y
+ * el estado activo: cobertura + índice de oportunidad/disponibilidad por rama, índice compuesto,
+ * y el resultado final por clave (según `busqueda` y `vistaMapa`) con quintil/tercil de color.
+ *
+ * @returns {{claves: string[], porClave: Map<string, {valor:number, quintil:number|"sin_datos", tercil:string, confianzaBaja:boolean, oPorRama: Record<string, number>}>}}
+ */
+function calcularComposicion(datos, estado) {
+  const claves = Object.keys(datos.capas.demanda);
+  const horizonteEntrada = datos.horizontes.find((h) => h.clave === estado.horizonte) ?? datos.horizontes[0];
+  const horizonteOferta = HORIZONTES_OFERTA.includes(estado.horizonte) ? estado.horizonte : HORIZONTES_OFERTA[HORIZONTES_OFERTA.length - 1];
+  const horizonteOfertaEntrada = datos.horizontes.find((h) => h.clave === horizonteOferta) ?? horizonteEntrada;
+
+  // --- Demanda: nivel/tasa del segmento activo, por clave. ---
+  const demandaPorClave = new Map();
+  for (const [clave, registro] of Object.entries(datos.capas.demanda)) {
+    const seg = registro.segmentos?.[estado.poblacion] ?? registro.segmentos?.[SEGMENTO_POR_OMISION];
+    const bloqueH = seg?.h?.[estado.horizonte];
+    const nivelBase = seg?.nivel_base ?? null;
+    const nivelHorizonte = nivelBase !== null && bloqueH?.delta_pct != null ? nivelBase * (1 + bloqueH.delta_pct / 100) : nivelBase;
+    demandaPorClave.set(clave, {
+      nivelBase,
+      nivelHorizonte,
+      tasaAnual: bloqueH?.tasa_anual_pct ?? null,
+      confianza: bloqueH?.confianza ?? "baja",
+      confianzaBaja: bloqueH?.confianza === "baja",
+    });
+  }
+  const nD = claves.length;
+  const nivelDemandaH = new Float64Array(nD);
+  const tasaD = new Float64Array(nD);
+  claves.forEach((clave, i) => {
+    const d = demandaPorClave.get(clave);
+    nivelDemandaH[i] = d?.nivelHorizonte ?? NaN;
+    tasaD[i] = d?.tasaAnual ?? 0;
+  });
+
+  // --- Oferta: cobertura + O/F por rama, bajo el filtro activo. ---
+  const oPorRama = {};
+  const fPorRama = {};
+  for (const rama of RAMAS) {
+    const esVerde = rama === "verde";
+    const horizonteRama = esVerde ? null : horizonteOferta;
+    const anios = esVerde ? null : horizonteOfertaEntrada.anios;
+    const niveles = nivelesPorRama(datos, rama, estado.filtros[rama], horizonteRama, anios);
+
+    const nivelOferta = new Float64Array(nD);
+    const tasaS = esVerde ? null : new Float64Array(nD);
+    claves.forEach((clave, i) => {
+      const n = niveles.get(clave);
+      nivelOferta[i] = n?.nivelHorizonte ?? 0;
+      if (tasaS) tasaS[i] = n?.tasaAnual ?? 0;
+    });
+
+    const coberturas = new Float64Array(nD);
+    for (let i = 0; i < nD; i++) coberturas[i] = coberturaProyectada(nivelOferta[i], nivelDemandaH[i]);
+
+    oPorRama[rama] = indiceOportunidad(coberturas, tasaD, tasaS);
+    fPorRama[rama] = indiceDisponibilidad(coberturas, tasaS, claves.map((clave) => demandaPorClave.get(clave)?.confianza ?? "baja"));
+  }
+
+  const ic = indiceCompuesto(oPorRama, estado.pesos);
+  const idisp = indiceCompuesto(fPorRama, estado.pesos);
+
+  // --- Resultado final por clave: según vistaMapa (general = compuesto, o una rama) y búsqueda. ---
+  const valores = new Float64Array(nD);
+  claves.forEach((_, i) => {
+    const fuente = estado.busqueda === BUSQUEDA.DISPONIBILIDAD ? idisp : ic;
+    const fuenteRama = estado.busqueda === BUSQUEDA.DISPONIBILIDAD ? fPorRama : oPorRama;
+    valores[i] = estado.vistaMapa === VISTA_MAPA.GENERAL ? fuente[i] : fuenteRama[estado.vistaMapa][i];
+  });
+
+  const clasificarQuintil = clasificadorQuintiles(valores);
+  const clasificarTercil = clasificadorTerciles(valores);
+
+  const porClave = new Map();
+  claves.forEach((clave, i) => {
+    const oRama = {};
+    for (const rama of RAMAS) oRama[rama] = oPorRama[rama][i];
+    porClave.set(clave, {
+      valor: valores[i],
+      quintil: clasificarQuintil(valores[i]),
+      tercil: clasificarTercil(valores[i]),
+      confianzaBaja: demandaPorClave.get(clave)?.confianzaBaja ?? false,
+      oPorRama: oRama,
+    });
+  });
+
+  return { claves, porClave, horizonteEntrada };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Ranking mínimo (placeholder de F50, ver nota de cabecera): lista ordenada por prioridad
+// descendente, top 20 (acción_plan.md Fase 6 punto 33), sin FLIP ni acordeón todavía.
+// ---------------------------------------------------------------------------------------------
+
+const TOP_N_RANKING = 20;
+
+function pintarVistaPrincipal(composicion, datos, nombresAlcaldia, estado) {
+  const filas = composicion.claves
+    .map((clave) => ({ clave, ...composicion.porClave.get(clave) }))
+    .filter((f) => !Number.isNaN(f.valor))
+    .sort((a, b) => b.valor - a.valor)
+    .slice(0, TOP_N_RANKING);
+
+  const lista = crear(
+    "ol",
+    { clase: "ranking-min__lista" },
+    filas.map((f) => {
+      const cveMun = datos.capas.demanda[f.clave]?.cve_mun;
+      const nombre = estado.vista === VISTA.CIUDAD ? (nombresAlcaldia.get(cveMun) ?? cveMun) : f.clave;
+      return crear("li", { clase: "ranking-min__fila" }, [
+        crear("span", { clase: "ranking-min__nombre" }, [String(nombre)]),
+        crear("span", { clase: `ranking-min__tercil ranking-min__tercil--${f.tercil}` }, [
+          textos.tercil.palabra[f.tercil] ?? "",
+        ]),
+        crear("span", { clase: "ranking-min__valor cifras" }, [formatoPorcentaje(f.valor * 100, { decimales: 0 })]),
+      ]);
+    }),
+  );
+
+  const resumenTexto = estado.vista === VISTA.CIUDAD
+    ? textos.resumen.tituloGeneral({ poblacion: textos.poblacion.nombre[estado.poblacion], h: composicion.horizonteEntrada?.anios ?? "" })
+    : textos.resumen.tituloAlcaldia({
+        alcaldia: nombresAlcaldia.get(estado.cve_mun) ?? estado.cve_mun,
+        poblacion: textos.poblacion.nombre[estado.poblacion],
+        h: composicion.horizonteEntrada?.anios ?? "",
+      });
+
+  reemplazarContenido(vistaPrincipal, [
+    crear("h2", { clase: "ranking-min__titulo" }, [resumenTexto]),
+    crear("p", { clase: "ranking-min__nota" }, [textos.ranking.topN(filas.length)]),
+    lista,
   ]);
 }
 
@@ -117,10 +246,8 @@ function pintarError(error, reintentar) {
 // ---------------------------------------------------------------------------------------------
 
 async function iniciar() {
-  if (elementoHeader) iniciarCabecera(elementoHeader);
-  if (franjaEl && dialogoEl) montarFranja(franjaEl, dialogoEl);
-  iniciarPresentacion(document.getElementById("boton-presentacion"));
-  iniciarInteraccionGlobal();
+  let cabecera = null;
+  if (elementoHeader) cabecera = iniciarCabecera(elementoHeader);
 
   pintarCargando();
 
@@ -151,242 +278,61 @@ async function iniciar() {
   );
   for (const [cveMun, nombre] of nombresAlcaldia) establecerNombreAlcaldia(cveMun, nombre);
 
-  montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAgeb, nombresAlcaldia });
+  if (cabecera) montarVistaMapa(cabecera.contenedorVistaMapa);
+
+  montarInterfaz({ cabecera, alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAgeb, nombresAlcaldia });
 }
 
 function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAgeb, nombresAlcaldia }) {
-  const horizonteInicial = datosAlcaldia.horizontes[0] ?? { clave: "hU", anios: null, fecha: null };
-
-  // Horizontes que de verdad tiene una capa (spec §18-2: oferta solo trae h3, sin calibración a
-  // 5/7 años). Se lee `horizontes_disponibles` de cualquier registro real de esa capa que lo
-  // traiga (v1.2); si ninguno lo trae (v1.1, o una capa sin ese campo como demanda) se asume que
-  // trae todos los horizontes del archivo.
-  function horizontesParaCapa(capa) {
-    const registros = Object.values(datosAlcaldia.capas?.[capa] ?? {});
-    const conLista = registros.find((r) => Array.isArray(r?.horizontes_disponibles));
-    if (!conLista) return datosAlcaldia.horizontes;
-    const disponibles = new Set(conLista.horizontes_disponibles);
-    return datosAlcaldia.horizontes.filter((h) => disponibles.has(h.clave));
-  }
-
-  // El horizonte por defecto de estado.js (`CLAVE_HORIZONTE_UNICO`, "hU") es un valor de
-  // arranque para cuando aún no se sabe qué archivo se va a cargar. En cuanto los datos llegan,
-  // si esa clave no existe entre los horizontes reales de la capa activa (p. ej. contrato v1.2
-  // con h3/h5/h7, o la capa oferta que solo trae h3), se reconcilia el estado ANTES de montar
-  // mapa.js/leyenda.js/horizonte.js, que leen `obtenerEstado().horizonte` directamente (a
-  // diferencia de `horizonteActivo()` más abajo, que ya degrada con gracia solo para
-  // tabla/alcaldía/ficha).
-  const horizontesCapaInicial = horizontesParaCapa(obtenerEstado().capa);
-  if (!horizontesCapaInicial.some((h) => h.clave === obtenerEstado().horizonte)) {
-    despachar({
-      tipo: ACCIONES.CAMBIAR_HORIZONTE,
-      horizonte: horizontesCapaInicial[0]?.clave ?? horizonteInicial.clave,
-    });
-  }
+  let instanciaMapa = null;
+  let instanciaLeyenda = null;
 
   if (mapaHost) {
-    montarMapa(mapaHost, alcaldiasGeoJSON, datosAlcaldia.indices.porCveMun, {
-      agebGeoJSON,
-      registrosAgebPorCvegeo: datosAgeb.indices.porCvegeo,
-    });
+    instanciaMapa = montarMapa(mapaHost, alcaldiasGeoJSON, new Map(), { agebGeoJSON, registrosAgebPorCvegeo: new Map() });
   }
-
   if (leyendaHost) {
-    montarLeyenda(leyendaHost, { datosAlcaldia, datosAgeb, nombresAlcaldia });
+    instanciaLeyenda = montarLeyenda(leyendaHost, { registros: [], nombresAlcaldia });
   }
 
   const controlHorizonte = horizonteHost
-    ? montarControlHorizonte(horizonteHost, horizontesCapaInicial, {
-        claveActiva: obtenerEstado().horizonte,
-      })
+    ? montarControlHorizonte(horizonteHost, datosAlcaldia.horizontes, { claveActiva: obtenerEstado().horizonte })
     : null;
-
-  // Al cambiar de capa (no de horizonte: eso no debe recrear el control ni robarle el foco a
-  // media interacción), se recalculan los horizontes disponibles de la nueva capa. Si la clave
-  // activa ya no existe en esa capa (p. ej. se estaba en h7 y se cambia a oferta), se reconcilia
-  // el estado con el primer horizonte que sí tenga esa capa.
-  let capaControlHorizonteAnterior = obtenerEstado().capa;
-  function sincronizarControlHorizonte(estado) {
-    if (!controlHorizonte || estado.capa === capaControlHorizonteAnterior) return;
-    capaControlHorizonteAnterior = estado.capa;
-    const disponibles = horizontesParaCapa(estado.capa);
-    const claveActiva = disponibles.some((h) => h.clave === estado.horizonte)
-      ? estado.horizonte
-      : disponibles[0]?.clave ?? horizonteInicial.clave;
-    controlHorizonte.actualizar(disponibles, { claveActiva });
-    if (claveActiva !== estado.horizonte) {
-      despachar({ tipo: ACCIONES.CAMBIAR_HORIZONTE, horizonte: claveActiva });
-    }
-  }
-
-  const controlCapasHost = document.getElementById("control-capas");
-  if (controlCapasHost) {
-    montarControlCapas(controlCapasHost, capasDesdeAdaptado(datosAlcaldia));
-    controlCapasHost.dataset.montado = "capas-real";
-  }
 
   if (pieEl) {
     reemplazarContenido(pieEl, [
       crear("p", {}, [textos.pie.fuentes]),
       crear("p", {}, [textos.pie.datosGenerados(datosAlcaldia.generado ?? "—")]),
+      crear("p", { clase: "pie__advertencia" }, [textos.pie.advertenciaSesgos]),
     ]);
   }
 
-  // -----------------------------------------------------------------------------------------
-  // #vista-principal: titular+tabla (ciudad) / titular+vista de alcaldía / ficha de AGEB, según
-  // `estado.vista`. Se remonta solo cuando cambia el tipo de vista o la alcaldía/AGEB activos;
-  // en cambios de capa/horizonte solo se llama `actualizar()` sobre lo ya montado.
-  // -----------------------------------------------------------------------------------------
+  function recalcularYPintar(estado) {
+    const enAlcaldia = estado.vista !== VISTA.CIUDAD;
+    const datosVista = enAlcaldia ? datosAgeb : datosAlcaldia;
+    const composicion = calcularComposicion(datosVista, estado);
 
-  let montado = null; // { tipo: "ciudad"|"alcaldia"|"ageb", claveActiva, destruir, ...refs }
-
-  function horizonteActivo(estado) {
-    return datosAlcaldia.horizontes.find((h) => h.clave === estado.horizonte) ?? horizonteInicial;
-  }
-
-  function renderCiudad(estado) {
-    const capa = estado.capa;
-    const horizonte = horizonteActivo(estado);
-    const claveHorizonte = horizonte.clave;
-    const registros = listaAlcaldiasParaTabla(datosAlcaldia, capa, nombresAlcaldia, claveHorizonte);
-
-    if (montado?.tipo !== "ciudad") {
-      montado?.destruir?.();
-      limpiar(vistaPrincipal);
-      const tituloHost = crear("div");
-      const tablaHost = crear("div");
-      vistaPrincipal.appendChild(tituloHost);
-      vistaPrincipal.appendChild(tablaHost);
-      const titular = montarTitular(tituloHost);
-      const tabla = montarTabla(tablaHost, registros, {
-        capa,
-        horizonte,
-        generadoIso: datosAlcaldia.generado,
-        geojsonAgeb: agebGeoJSON,
-        registrosAgebPorCvegeo: mapaCapaAgebPorCvegeo(datosAgeb, capa, claveHorizonte),
+    if (enAlcaldia) {
+      const clavesAlcaldia = composicion.claves.filter((c) => datosAgeb.capas.demanda[c]?.cve_mun === estado.cve_mun);
+      const registrosMapa = new Map(clavesAlcaldia.map((c) => [c, composicion.porClave.get(c)]));
+      instanciaMapa?.actualizarAgeb(agebGeoJSON, registrosMapa);
+      instanciaLeyenda?.actualizar({
+        registros: clavesAlcaldia.map((c) => composicion.porClave.get(c)),
+        anio: composicion.horizonteEntrada?.fecha?.slice(0, 4) ?? "",
       });
-      montado = { tipo: "ciudad", titular, tabla, destruir: () => tabla.destruir() };
     } else {
-      montado.tabla.actualizar(registros, {
-        capa,
-        horizonte,
-        generadoIso: datosAlcaldia.generado,
-        registrosAgebPorCvegeo: mapaCapaAgebPorCvegeo(datosAgeb, capa, claveHorizonte),
+      const registrosMapa = new Map(composicion.claves.map((c) => [c, composicion.porClave.get(c)]));
+      instanciaMapa?.actualizarRegistros(registrosMapa);
+      instanciaLeyenda?.actualizar({
+        registros: composicion.claves.map((c) => composicion.porClave.get(c)),
+        anio: composicion.horizonteEntrada?.fecha?.slice(0, 4) ?? "",
       });
     }
-    montado.titular.actualizar(
-      calcularTitular({ capa, vista: "general", registros, horizonte, generadoIso: datosAlcaldia.generado }),
-    );
+
+    pintarVistaPrincipal(composicion, datosVista, nombresAlcaldia, estado);
   }
 
-  function renderAlcaldia(estado) {
-    const capa = estado.capa;
-    const cveMun = estado.cve_mun;
-    const horizonte = horizonteActivo(estado);
-    const claveHorizonte = horizonte.clave;
-    const registrosAgeb = listaAgebDeAlcaldia(datosAgeb, cveMun, capa, claveHorizonte);
-    const registroAlcaldia = registroPlano(datosAlcaldia.indices.porCveMun.get(cveMun), capa, claveHorizonte);
-    const alcaldiaNombre = nombresAlcaldia.get(cveMun) ?? cveMun;
-
-    if (montado?.tipo !== "alcaldia" || montado.claveActiva !== cveMun) {
-      montado?.destruir?.();
-      limpiar(vistaPrincipal);
-      const tituloHost = crear("div");
-      const alcaldiaHostEl = crear("div");
-      vistaPrincipal.appendChild(tituloHost);
-      vistaPrincipal.appendChild(alcaldiaHostEl);
-      const titular = montarTitular(tituloHost);
-      const vistaAlcaldia = montarAlcaldia(alcaldiaHostEl, cveMun, registrosAgeb, {
-        capa,
-        horizonte,
-        generadoIso: datosAlcaldia.generado,
-        alcaldiaNombre,
-        registroAlcaldia,
-      });
-      montado = { tipo: "alcaldia", claveActiva: cveMun, titular, vistaAlcaldia, destruir: () => vistaAlcaldia.destruir() };
-    } else {
-      montado.vistaAlcaldia.actualizar(registrosAgeb, {
-        capa,
-        horizonte,
-        generadoIso: datosAlcaldia.generado,
-        alcaldiaNombre,
-        registroAlcaldia,
-      });
-    }
-    const nSinDatosAgeb = registrosAgeb.filter((r) => r.veredicto === "sin_datos").length;
-    montado.titular.actualizar(
-      calcularTitular({
-        capa,
-        vista: "alcaldia",
-        registros: registrosAgeb,
-        horizonte,
-        generadoIso: datosAlcaldia.generado,
-        alcaldiaNombre,
-        resumenAlcaldia: registroAlcaldia,
-        nSinDatosAgeb,
-      }),
-    );
-  }
-
-  function renderAgeb(estado) {
-    const capa = estado.capa;
-    const cvegeo = estado.cvegeo;
-    const horizonte = horizonteActivo(estado);
-    const claveHorizonte = horizonte.clave;
-    const entrada = datosAgeb.indices.porCvegeo.get(cvegeo);
-    const entradaCapa = entrada?.[capa] ?? null;
-    const registro = registroPlano(entrada, capa, claveHorizonte) ?? REGISTRO_SIN_DATOS;
-    const cveMun = estado.cve_mun ?? entradaCapa?.cve_mun ?? registro.cve_mun;
-    const alcaldiaNombre = nombresAlcaldia.get(cveMun) ?? cveMun;
-    const feature = (agebGeoJSON.features ?? []).find((f) => f.properties.cvegeo === cvegeo);
-    const tipoAgeb = feature?.properties.ambito === "rural" ? "rural" : "urbana";
-    // Datos reales para la mini-gráfica (js/graficas.js, ya genérico): con el contrato v1.1
-    // (`entradaCapa.serie` siempre ausente) esto degrada solo con `horizontes:[]`, igual que
-    // antes; con v1.2 la ficha recibe la serie censal/DENUE y los 3 horizontes con su `.h`.
-    const opcionesGrafica = {
-      serie: entradaCapa?.serie ?? null,
-      nivelBase: typeof entradaCapa?.nivel_base === "number" ? entradaCapa.nivel_base : null,
-      horizontes: datosAgeb.horizontes ?? [],
-      registrosPorHorizonte: new Map(Object.entries(entradaCapa?.h ?? {})),
-      fechaBase: datosAgeb.fecha_base ?? null,
-    };
-
-    if (montado?.tipo !== "ageb" || montado.claveActiva !== cvegeo) {
-      montado?.destruir?.();
-      limpiar(vistaPrincipal);
-      const fichaHost = crear("div");
-      vistaPrincipal.appendChild(fichaHost);
-      const ficha = montarFicha(fichaHost, cvegeo, registro, {
-        capa,
-        horizonte,
-        generadoIso: datosAlcaldia.generado,
-        alcaldiaNombre,
-        tipoAgeb,
-        cveMun,
-        ...opcionesGrafica,
-      });
-      montado = { tipo: "ageb", claveActiva: cvegeo, ficha, destruir: () => ficha.destruir() };
-    } else {
-      montado.ficha.actualizar(cvegeo, registro, {
-        capa,
-        horizonte,
-        generadoIso: datosAlcaldia.generado,
-        alcaldiaNombre,
-        tipoAgeb,
-        ...opcionesGrafica,
-      });
-    }
-  }
-
-  function render(estado) {
-    sincronizarControlHorizonte(estado);
-    if (estado.vista === VISTA.ALCALDIA) renderAlcaldia(estado);
-    else if (estado.vista === VISTA.AGEB) renderAgeb(estado);
-    else renderCiudad(estado);
-  }
-
-  render(obtenerEstado());
-  suscribir(render);
+  recalcularYPintar(obtenerEstado());
+  suscribir(recalcularYPintar);
 }
 
 if (typeof document !== "undefined") {

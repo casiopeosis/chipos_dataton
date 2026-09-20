@@ -560,7 +560,7 @@ const ayuda = {
 const leyenda = {
   encabezadoGeneral: (v) => interpolar('Leyenda · {vista} · {anio}', v),
   encabezadoAlcaldia: (v) => interpolar('Leyenda · {alcaldia} · {vista} · {anio}', v),
-  categoria: (n) => interpolar('{tercil} ({n})', { tercil: n.tercil, n: n.n }),
+  confianzaBaja: (n) => interpolar('{n} con confianza baja en la demanda que alimenta el índice.', { n }),
   filtroActivo: (v) => interpolar('Mostrando {n} de {total} · Quitar filtro', v),
 };
 
@@ -671,6 +671,17 @@ const estados = {
 // Pie de página
 // ---------------------------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------------------------
+// §10.15 Modo presentación
+// ---------------------------------------------------------------------------------------------
+
+const presentacion = {
+  boton: 'Modo presentación',
+  simbolo: '⤢',
+  activar: 'Activar modo presentación',
+  desactivar: 'Salir del modo presentación',
+};
+
 const pie = {
   fuentes: 'Fuentes: INEGI, CONAPO, DENUE, Datos Abiertos CDMX',
   datosGenerados: (fecha) => interpolar('Datos: {fecha}', { fecha }),
@@ -711,6 +722,7 @@ export const textos = {
   motivosSinDatos,
   accesibilidad,
   estados,
+  presentacion,
   pie,
 };
 

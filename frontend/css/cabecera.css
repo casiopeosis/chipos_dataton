@@ -106,33 +106,16 @@ a.cabecera__miga:hover {
 }
 
 /* ------------------------------------------------------------------------------------------ */
-/* Control de capa (placeholder de solo lectura; F60/js/capas.js monta el control real aquí)    */
+/* Selector de vista de mapa (spec §9): el contenedor vive aquí, css/vista-mapa.css lo estiliza */
+/* (vista_mapa.js#montarVistaMapa lo monta dentro).                                             */
 /* ------------------------------------------------------------------------------------------ */
 
-.cabecera__capas {
+.cabecera__vista-mapa {
   flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: var(--e-3);
-  padding: 0 var(--e-3);
-  border: 1px solid var(--linea);
-  border-radius: 2px;
-  height: 26px;
-}
-
-.cabecera__capa {
-  font-size: var(--t-nota-tam);
-  line-height: var(--t-nota-alto);
-  color: var(--tinta-3);
-}
-
-.cabecera__capa--activa {
-  color: var(--tinta);
-  font-weight: 600;
 }
 
 /* ------------------------------------------------------------------------------------------ */
-/* Acciones a la derecha: Metodología ↗ y modo presentación ⤢ (sin manejador propio en F25)    */
+/* Acciones a la derecha: modo presentación ⤢                                                  */
 /* ------------------------------------------------------------------------------------------ */
 
 .cabecera__acciones {

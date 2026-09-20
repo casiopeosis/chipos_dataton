@@ -104,15 +104,7 @@ Calidad de producción; detalle vinculante en `plans/frontend_specs.md`. Mínimo
 - CSV: `head -n 3`, `wc -l`, `duckdb -c "DESCRIBE SELECT * FROM 'f.csv'"`. GeoJSON: `jq -c '.features[0].properties'`, `jq '.features|length'`; jamás imprimir geometrías.
 - Las 11 tablas de cada familia comparten esquema: perfilar una a fondo y las demás solo por diferencias.
 - Imprimir agregados, no filas; máximo ~40 líneas por salida. Los hallazgos van a archivos `.md`, no a la conversación.
-- Agentes: respuesta final ≤ 15 líneas, sin pegar código ni datos ya escritos en disco.
 
-## Flujo de trabajo
-1. `/plan` → `plans/backend_plan.md` y `plans/frontend_plan.md` (sin código de producción).
-2. Aprobación del equipo. 3. Implementación por sub-agentes con archivos disjuntos y contratos fijos.
-4. Verificación: `make test`, `make pipeline`, revisión visual.
-- Commits pequeños y atómicos (`feat:`, `fix:`, `data:`, `docs:`), una fase = un commit. No commitear `data/interim/` ni archivos > 50 MB.
-- Tests junto al código: sumas por alcaldía = suma de AGEB, sin `CVEGEO` duplicados, veredictos en el conjunto válido.
-- Problemas de datos = hallazgos concretos (archivo, columna, magnitud), no advertencias genéricas.
 
 ## Definición de terminado
 - Backend: tests verdes; backtest reportado (métrica del modelo vs baseline, 5 líneas); salidas validadas contra el contrato; `docs/metodologia.md` al día.
