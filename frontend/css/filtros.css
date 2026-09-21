@@ -10,6 +10,17 @@
   gap: var(--e-2);
 }
 
+.filtros__cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+}
+
+.filtros__titulo {
+  font-size: calc(var(--t-subtitulo-tam) * var(--escala));
+  color: var(--tinta-2);
+}
+
 .filtros__subpanel {
   border: 1px solid var(--linea);
   padding: var(--e-2) var(--e-3);
