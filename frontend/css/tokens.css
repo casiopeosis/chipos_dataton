@@ -51,15 +51,21 @@
 
   /* --------------------------------------------------------------------
    * §4.2 Escala de prioridad: oportunidad/disponibilidad relativa (color PRIMARIO del mapa y
-   * del ranking, Habitancia). Secuencial de un solo matiz (ocre cálido): O_{i,h,r}/IC_{i,h} es
-   * un percentil de prioridad [0,1], no una comparación de dos sentidos. El mapa pinta con los
-   * 5 tonos (quintiles); la leyenda agrupa en 3 categorías legibles (leyenda.js).
+   * del ranking, Habitancia). Secuencial de un solo matiz (rosa mexicano, en honor a la CDMX):
+   * O_{i,h,r}/IC_{i,h} es un percentil de prioridad [0,1], no una comparación de dos sentidos. El
+   * mapa pinta con los 5 tonos (quintiles); la leyenda agrupa en 3 categorías legibles
+   * (leyenda.js). Sigue siendo apta para daltonismo: un solo matiz, degradado solo por
+   * luminosidad/saturación (nunca se distingue por tono), igual que la escala ocre anterior.
+   * Contraste contra --papel calibrado paso a paso igual o mejor que la escala anterior (1.15,
+   * 1.52, 2.25, 3.65, 6.51:1) porque --prioridad-3/--prioridad-5 también se usan como color de
+   * texto (resumen.css, ranking.css, comparar.css), siempre junto a un símbolo (●●●) que no
+   * depende solo del color.
    * -------------------------------------------------------------------- */
-  --prioridad-1: #f2e9dc; /* percentil 0–20 (menor prioridad relativa) */
-  --prioridad-2: #e3cba0; /* percentil 20–40 */
-  --prioridad-3: #cba363; /* percentil 40–60 */
-  --prioridad-4: #a97a2e; /* percentil 60–80 */
-  --prioridad-5: #7a5416; /* percentil 80–100 (mayor prioridad relativa, tope) */
+  --prioridad-1: #f9e5ee; /* percentil 0–20 (menor prioridad relativa) */
+  --prioridad-2: #f3bfd7; /* percentil 20–40 */
+  --prioridad-3: #eb8bb8; /* percentil 40–60 */
+  --prioridad-4: #e1478f; /* percentil 60–80 */
+  --prioridad-5: #ac1c5f; /* percentil 80–100 (mayor prioridad relativa, tope; rosa mexicano oscuro) */
   --sin-datos: #f2f2ef; /* sin_datos (rama o AGEB completa), con patrón hachurado */
   --sin-datos-hachura: #8c8c88; /* líneas del hachurado a 45°, 1px cada 6px */
   --confianza-baja-punto: rgba(17, 17, 17, 0.45); /* punteado de confianza baja: puntos de 1.2px cada 5px */
