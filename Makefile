@@ -55,6 +55,16 @@ serve:
 	@test -d frontend || { echo "frontend/ no existe todavía"; exit 1; }
 	$(PY) -m http.server $(PUERTO) --directory frontend
 
+# Igual que `serve` pero en Docker (cualquier SO): nginx sirve frontend/ y monta
+# data/outputs + data/reference en vivo (docker-compose.yml, docker/nginx.conf).
+# No requiere Python ni .venv en el host, solo Docker.
+docker-serve:
+	docker compose up -d --build
+	@echo "Habitancia disponible en http://localhost:$(PUERTO)"
+
+docker-stop:
+	docker compose down
+
 # Regenera frontend/vendor/d3/d3-chipos.esm.js con esbuild (offline, puntual).
 # Ver frontend/vendor/d3/README.md para el detalle del comando.
 vendor-d3:
