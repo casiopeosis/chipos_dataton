@@ -2,7 +2,7 @@
 PY ?= .venv/bin/python
 PUERTO ?= 8000
 
-.PHONY: perfil pipeline backtest test validar serve censo datos descargas vendor-d3
+.PHONY: perfil pipeline backtest test validar frontend-test serve censo datos descargas vendor-d3
 
 # Descarga fuentes oficiales y extrae la CDMX a data/processed/ (no sobrescribe)
 descargas:
@@ -48,10 +48,15 @@ alcaldia = json.loads(RUTA_PREDICCION_ALCALDIA.read_text(encoding='utf-8')); \
 validar_contrato(ageb, 'ageb'); \
 validar_contrato(alcaldia, 'alcaldia'); \
 verificar_suma_ageb_alcaldia(ageb, alcaldia); \
-print('data/outputs/*.json válidos contra el contrato v1.4')"
+	print('data/outputs/*.json válidos contra el contrato v1.4')"
+
+# Validación reproducible de los fixtures que usa ?mock=1 (sin dependencias externas).
+frontend-test:
+	python3 frontend/tests/validar_mocks.py
+	@for archivo in frontend/js/*.js frontend/tests/*.js; do node --check "$$archivo"; done
 
 # Servidor estático del frontend (sin build)
-serve:
+serve: frontend-datos
 	@test -d frontend || { echo "frontend/ no existe todavía"; exit 1; }
 	$(PY) -m http.server $(PUERTO) --directory frontend
 
