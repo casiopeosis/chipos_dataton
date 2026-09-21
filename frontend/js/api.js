@@ -78,6 +78,21 @@ export function validarContrato(json) {
   if (!json.capas || typeof json.capas !== "object") {
     throw new ErrorDatos("Los datos no traen capas.", { codigo: "esquema_invalido" });
   }
+  if (!json.capas.demanda || typeof json.capas.demanda !== "object") {
+    throw new ErrorDatos("Los datos no traen la capa de demanda.", { codigo: "esquema_invalido" });
+  }
+  if (json.version === "1.4") {
+    if (!json.capas.ramas || typeof json.capas.ramas !== "object") {
+      throw new ErrorDatos("Los datos no traen ramas.", { codigo: "esquema_invalido" });
+    }
+    for (const rama of RAMAS) {
+      if (!json.capas.ramas[rama] || typeof json.capas.ramas[rama] !== "object") {
+        throw new ErrorDatos(`Los datos no traen la rama ${rama}.`, { codigo: "esquema_invalido" });
+      }
+    }
+  } else if (!json.capas.oferta || typeof json.capas.oferta !== "object") {
+    throw new ErrorDatos("Los datos no traen la capa de oferta.", { codigo: "esquema_invalido" });
+  }
   return true;
 }
 
@@ -306,7 +321,9 @@ export function adaptarV11aV14(json, nivel) {
   const v12Sintetico = {
     version: "1.2",
     generado: json.generado,
-    fecha_base: null,
+    // Debe ser una cadena para que el v1.2 sintético pase por la misma validación estricta.
+    // En v1.1 no existía una fecha base separada: el único horizonte es la mejor referencia.
+    fecha_base: json.horizonte,
     horizontes: [{ clave: CLAVE_HORIZONTE_UNICO, anios: null, fecha: json.horizonte }],
     capas: {
       demanda: Object.fromEntries(
