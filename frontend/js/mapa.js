@@ -39,6 +39,18 @@ const MARGEN_PROYECCION_PX = 32;
 const DEBOUNCE_RESIZE_MS = 150;
 const DESPLAZAMIENTO_TOOLTIP_PX = 12;
 
+// TEMP-DIAG: interruptores de diagnostico por URL, p. ej. `index.html?diag=sinanim,sinhover#/`.
+//   sinanim   -> el foco aplica el transform de golpe (sin transicion de 820 ms).
+//   sinhover  -> ningun manejador de hover/tooltip.
+//   sinpatron -> AGEB/alcaldias sin_datos con color plano en vez de patron hachurado.
+//   sinagebs  -> no se dibuja ningun AGEB (aisla el coste del SVG de AGEB).
+// Quitar junto con las referencias a DIAG cuando se cierre el diagnostico.
+const DIAG = new Set(
+  (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("diag") ?? "" : "")
+    .split(",")
+    .filter(Boolean),
+);
+
 // --- F70: transición de foco/inversa y zoom de la vista de alcaldía (spec §10.2-§10.3, §10.7). ---
 // 820 ms es el valor exacto que fija el spec para el gesto de foco (y su inverso); no forma parte
 // de la escala `--d-*` de tokens.css porque es una medida de diseño puntual de esta transición,
@@ -208,7 +220,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   // entre navegadores"), así que el mapa se oculta del árbol de accesibilidad.
   const svg = select(contenedor)
     .append("svg")
-    .attr("class", "mapa__lienzo")
+    .attr("class", DIAG.has("sinpatron") ? "mapa__lienzo mapa__lienzo--sin-patron" : "mapa__lienzo")
     .attr("aria-hidden", "true")
     .attr("focusable", "false");
 
@@ -241,6 +253,10 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   let sombraHover = null;
   let contornoHover = null;
   let tooltipEl = null;
+  let escalaTrazo = 1; // escala con la que se calculo el ultimo trazo (ajustarTrazoEscena)
+  let animacionTooltip = null;
+  let posicionTooltipPendiente = null;
+  let rafTooltip = 0;
 
   function medidasContenedor() {
     const rect = contenedor.getBoundingClientRect();
@@ -259,7 +275,8 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
     gAlcaldias
       .selectAll("path.mapa__alcaldia")
       .attr("class", (feature) => `mapa__alcaldia ${claseFeature(feature)}`)
-      .classed("mapa__alcaldia--recesivo", (feature) => cveMunEnfocado !== null && feature.properties.cve_alc !== cveMunEnfocado);
+      .classed("mapa__alcaldia--recesivo", (feature) => cveMunEnfocado !== null && feature.properties.cve_alc !== cveMunEnfocado)
+      .classed("mapa__alcaldia--enfocada", (feature) => cveMunEnfocado !== null && feature.properties.cve_alc === cveMunEnfocado);
     gAgebs
       .selectAll("path.mapa__ageb")
       .attr("class", (feature) => `mapa__ageb ${claseFeatureAgeb(feature)}`);
@@ -270,22 +287,42 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
     contenedor.appendChild(tooltipEl);
   }
 
-  function posicionarTooltip(evento) {
+  function calcularYFijarPosicionTooltip(clientX, clientY) {
     if (!tooltipEl) return;
     const rectContenedor = contenedor.getBoundingClientRect();
     const rectTooltip = tooltipEl.getBoundingClientRect();
-    let x = evento.clientX - rectContenedor.left + DESPLAZAMIENTO_TOOLTIP_PX;
-    let y = evento.clientY - rectContenedor.top + DESPLAZAMIENTO_TOOLTIP_PX;
+    let x = clientX - rectContenedor.left + DESPLAZAMIENTO_TOOLTIP_PX;
+    let y = clientY - rectContenedor.top + DESPLAZAMIENTO_TOOLTIP_PX;
     // "se voltea si toca un borde" (spec §10.1).
     if (x + rectTooltip.width > rectContenedor.width) {
-      x = evento.clientX - rectContenedor.left - DESPLAZAMIENTO_TOOLTIP_PX - rectTooltip.width;
+      x = clientX - rectContenedor.left - DESPLAZAMIENTO_TOOLTIP_PX - rectTooltip.width;
     }
     if (y + rectTooltip.height > rectContenedor.height) {
-      y = evento.clientY - rectContenedor.top - DESPLAZAMIENTO_TOOLTIP_PX - rectTooltip.height;
+      y = clientY - rectContenedor.top - DESPLAZAMIENTO_TOOLTIP_PX - rectTooltip.height;
     }
-    // `fijarEstilo` (Web Animations API) en vez de `tooltipEl.style.left/top`: la CSP del
-    // proyecto (`style-src 'self'`) bloquea cualquier escritura al atributo `style` desde JS.
-    fijarEstilo(tooltipEl, { left: `${x}px`, top: `${y}px` });
+    // `fijarEstilo` (Web Animations API) en vez de `style.left/top`: la CSP (`style-src 'self'`)
+    // bloquea el atributo `style`. Se cancela la animacion previa: antes cada mousemove dejaba
+    // una nueva con `fill: forwards` (un objeto Animation por evento).
+    animacionTooltip?.cancel();
+    animacionTooltip = fijarEstilo(tooltipEl, { left: `${x}px`, top: `${y}px` });
+  }
+
+  // `inmediato` (mouseenter): posiciona ya, para que no aparezca un fotograma en el sitio viejo.
+  // mousemove: como mucho un calculo (con dos lecturas de layout) por fotograma.
+  function posicionarTooltip(evento, { inmediato = false } = {}) {
+    if (!tooltipEl) return;
+    if (inmediato) {
+      calcularYFijarPosicionTooltip(evento.clientX, evento.clientY);
+      return;
+    }
+    posicionTooltipPendiente = { x: evento.clientX, y: evento.clientY };
+    if (rafTooltip) return;
+    rafTooltip = requestAnimationFrame(() => {
+      rafTooltip = 0;
+      const p = posicionTooltipPendiente;
+      posicionTooltipPendiente = null;
+      if (p) calcularYFijarPosicionTooltip(p.x, p.y);
+    });
   }
 
   function mostrarTooltip(evento, feature) {
@@ -304,7 +341,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
       ]),
     );
     tooltipEl.classList.add("mapa__tooltip--visible");
-    posicionarTooltip(evento);
+    posicionarTooltip(evento, { inmediato: true });
   }
 
   function ocultarTooltip() {
@@ -358,10 +395,14 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
       .attr("class", (feature) => `mapa__alcaldia ${claseFeature(feature)}`)
       .attr("data-cve-mun", (feature) => feature.properties.cve_alc)
       .on("mouseenter", (evento, feature) => {
+        if (DIAG.has("sinhover") || cveMunEnfocado !== null) return;
         mostrarRealce(feature);
         mostrarTooltip(evento, feature);
       })
-      .on("mousemove", (evento) => posicionarTooltip(evento))
+      .on("mousemove", (evento) => {
+        if (DIAG.has("sinhover") || cveMunEnfocado !== null) return;
+        posicionarTooltip(evento);
+      })
       .on("mouseleave", () => {
         ocultarRealce();
         ocultarTooltip();
@@ -402,6 +443,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   // (en pantalla) a cualquier escala, sin depender de `vector-effect: non-scaling-stroke`.
   function ajustarTrazoEscena(escala) {
     const k = escala > 0 ? escala : 1;
+    escalaTrazo = k;
     gAlcaldias.selectAll("path.mapa__alcaldia").attr("stroke-width", TRAZO_BASE_ALCALDIA / k);
     rutaContornoExterior?.attr("stroke-width", TRAZO_BASE_CONTORNO_EXTERIOR / k);
     gAgebs.selectAll("path.mapa__ageb").attr("stroke-width", TRAZO_BASE_AGEB / k);
@@ -413,17 +455,24 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
 
   function aplicarTransform(t, { animar = false, duracion = DURACION_ENFOQUE_MS } = {}) {
     const cadenaTransform = `translate(${t.tx},${t.ty}) scale(${t.escala})`;
-    if (animar) {
+    if (animar && !DIAG.has("sinanim")) {
+      // Trazo una sola vez, ya con la escala destino (no por fotograma).
+      ajustarTrazoEscena(t.escala);
+      // Durante los 820 ms el contenido se desliza bajo el puntero: sin hit-testing ni
+      // mouseenter/mouseleave por fotograma (mapa.css: `.mapa__lienzo--animando`).
+      svg.classed("mapa__lienzo--animando", true);
       gEscenario
         .transition()
         .duration(duracionEfectiva(duracion))
         .attr("transform", cadenaTransform)
-        .on("end", () => ajustarTrazoEscena(t.escala));
+        .on("end interrupt", () => svg.classed("mapa__lienzo--animando", false));
     } else {
-      // Ramal SOLO del gesto de zoom del usuario (rueda/pellizco/arrastre o `reencuadrar()`):
-      // aquí NO se recalcula el trazo en cada tick (sería "por fotograma", justo lo que el punto
-      // 44 evita); `activarZoomUsuario` lo hace una sola vez con el evento `end` del propio gesto.
+      // Zoom del usuario (rueda/pellizco/arrastre o `reencuadrar()`), o `?diag=sinanim`: sin
+      // animacion propia. El trazo se recalcula en el evento `end` del gesto (activarZoomUsuario).
+      gEscenario.interrupt?.();
+      svg.classed("mapa__lienzo--animando", false);
       gEscenario.attr("transform", cadenaTransform);
+      if (animar) ajustarTrazoEscena(t.escala);
     }
   }
 
@@ -448,10 +497,11 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
       ]),
     );
     tooltipEl.classList.add("mapa__tooltip--visible");
-    posicionarTooltip(evento);
+    posicionarTooltip(evento, { inmediato: true });
   }
 
   function pintarAgebs() {
+    if (DIAG.has("sinagebs")) return;
     const features = agebGeoJSON?.features?.filter((f) => f.properties.cve_mun === cveMunEnfocado) ?? [];
     const seleccion = gAgebs
       .selectAll("path.mapa__ageb")
@@ -472,12 +522,17 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
       .append("path")
       .attr("class", (feature) => `mapa__ageb mapa__ageb--sin-transicion ${claseFeatureAgeb(feature)}`)
       .attr("data-cvegeo", (feature) => feature.properties.cvegeo)
+      .attr("stroke-width", TRAZO_BASE_AGEB / escalaTrazo)
       .attr("d", generadorRuta)
       .on("mouseenter", (evento, feature) => {
+        if (DIAG.has("sinhover")) return;
         tooltipAgebFeature = feature;
         crearTooltipAgeb(evento, feature);
       })
-      .on("mousemove", (evento) => posicionarTooltip(evento))
+      .on("mousemove", (evento) => {
+        if (DIAG.has("sinhover")) return;
+        posicionarTooltip(evento);
+      })
       .on("mouseleave", () => {
         tooltipAgebFeature = null;
         ocultarTooltip();
@@ -505,6 +560,8 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
       )
       .join("path")
       .attr("class", "mapa__ageb-confianza-baja")
+      .attr("stroke-width", TRAZO_BASE_CONFIANZA_BAJA / escalaTrazo)
+      .attr("stroke-dasharray", TRAZO_BASE_CONFIANZA_BAJA_GUION.map((v) => v / escalaTrazo).join(" "))
       .attr("aria-hidden", "true")
       .attr("d", generadorRuta);
   }
@@ -589,11 +646,18 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
 
     gAlcaldias
       .selectAll("path.mapa__alcaldia")
-      .classed("mapa__alcaldia--recesivo", (f) => f.properties.cve_alc !== cveMun);
+      .classed("mapa__alcaldia--recesivo", (f) => f.properties.cve_alc !== cveMun)
+      // La alcaldia enfocada se dibuja ENCIMA de g.agebs (spec §3) con su relleno opaco: sin
+      // ocultarla taparia los AGEB y captaria su hover/clic. `visibility` no lo pisa leyenda.css.
+      .classed("mapa__alcaldia--enfocada", (f) => f.properties.cve_alc === cveMun);
     ocultarRealce();
     ocultarTooltip();
 
-    pintarAgebs();
+    // Si aun no hay registros de AGEB, main.js llama a `actualizarAgeb` en esta misma
+    // notificacion y pinta una sola vez ya con color final (antes: dos pasadas, la primera "sin_datos").
+    if (registrosAgeb instanceof Map ? registrosAgeb.size > 0 : Object.keys(registrosAgeb ?? {}).length > 0) {
+      pintarAgebs();
+    }
     aplicarTransform(transformEnfoque, { animar: true });
     activarZoomUsuario();
   }
@@ -602,7 +666,10 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   function volverAVistaGeneral() {
     cveMunEnfocado = null;
     desactivarZoomUsuario();
-    gAlcaldias.selectAll("path.mapa__alcaldia").classed("mapa__alcaldia--recesivo", false);
+    gAlcaldias
+      .selectAll("path.mapa__alcaldia")
+      .classed("mapa__alcaldia--recesivo", false)
+      .classed("mapa__alcaldia--enfocada", false);
     aplicarTransform({ escala: 1, tx: 0, ty: 0 }, { animar: true });
     // La animación de salida de los AGEB es la misma duración que el foco; se quitan del DOM al
     // terminar para no competir con el siguiente `enfocarAlcaldia` si el usuario navega rápido.

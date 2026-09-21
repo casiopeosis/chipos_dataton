@@ -37,7 +37,6 @@
  * -------------------------------------------------------------------- */
 .mapa__alcaldia {
   stroke: var(--papel);
-  stroke-width: 1; /* recalculado en JS con la escala activa (mapa.js#ajustarTrazoEscena, punto 44) */
   cursor: pointer;
   /* Cambio de capa (§9): recolor por transición de fill, sin recrear el <path>. */
   transition: fill var(--d-m) var(--ease-salida), transform var(--d-xs) var(--ease-salida);
@@ -64,7 +63,6 @@
 .mapa__contorno-exterior {
   fill: none;
   stroke: var(--linea-fuerte);
-  stroke-width: 1; /* recalculado en JS con la escala activa (mapa.js#ajustarTrazoEscena, punto 44) */
   pointer-events: none;
 }
 
@@ -161,7 +159,6 @@
 
 .mapa__ageb {
   stroke: var(--papel);
-  stroke-width: 0.75; /* recalculado en JS con la escala activa (mapa.js#ajustarTrazoEscena, punto 44) */
   cursor: pointer;
   transition: fill var(--d-m) var(--ease-salida);
 }
@@ -179,9 +176,27 @@
 .mapa__ageb-confianza-baja {
   fill: none;
   stroke: var(--confianza-baja-punto);
-  stroke-width: 1.2; /* recalculado en JS, igual que `stroke-dasharray` (punto 44) */
-  stroke-dasharray: 1.2 5;
   pointer-events: none;
+}
+
+/* stroke-width/stroke-dasharray de las capas escaladas NO se declaran aqui: una regla CSS gana
+   siempre a un atributo de presentacion SVG, asi que mapa.js#ajustarTrazoEscena (que los escribe
+   como atributos, unico camino compatible con la CSP) quedaba anulado. Valor base en mapa.js. */
+
+/* Foco: durante la transicion el contenido se desliza bajo el puntero; sin eventos de puntero
+   no hay mouseenter/mouseleave ni hit-testing por fotograma. */
+.mapa__lienzo--animando .escenario {
+  pointer-events: none;
+}
+
+/* La alcaldia enfocada queda encima de g.agebs (spec §3): oculta para no tapar ni captar los AGEB. */
+.mapa__alcaldia--enfocada {
+  visibility: hidden;
+}
+
+/* TEMP-DIAG (?diag=sinpatron): sin_datos en color plano; 2 clases ganan a la regla de 1 clase. */
+.mapa__lienzo--sin-patron .mapa__alcaldia--sin-datos {
+  fill: var(--sin-datos);
 }
 
 /* Sin `transition: transform` (correccion/action_plan.md §8.2 punto 41): D3
