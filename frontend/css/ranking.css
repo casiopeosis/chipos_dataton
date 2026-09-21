@@ -1,0 +1,209 @@
+/*
+ * ranking.css — ranking por AGEB/alcaldía (plans/frontend_specs.md §7, plan F50).
+ * Mismo patrón visual que tabla.css (fila de 36px, fila desplegada de 136px, FLIP), adaptado a
+ * las columnas de §7.1: ZONA · OPORTUNIDAD/DISPONIBILIDAD · RAMA PRINCIPAL · CONFIANZA.
+ * Solo variables de tokens.css (CLAUDE.md, spec §4).
+ */
+
+.ranking-contenedor {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.ranking__buscador {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+  margin-bottom: var(--e-3);
+}
+
+.ranking__buscador:empty {
+  display: none;
+}
+
+.ranking__buscador-etiqueta {
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-2);
+}
+
+.ranking__buscador-campo {
+  padding: var(--e-1) var(--e-2);
+  border: 1px solid var(--linea-fuerte);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  color: var(--tinta);
+  background: var(--superficie);
+}
+
+.ranking__buscador-campo:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.ranking__sin-resultados {
+  margin: 0 0 var(--e-3);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}
+
+.ranking__sin-resultados:empty {
+  display: none;
+}
+
+.ranking {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+}
+
+.ranking__th {
+  padding: var(--e-2) var(--e-2);
+  text-align: left;
+  font-size: calc(var(--t-etiqueta-tam) * var(--escala));
+  font-weight: var(--t-etiqueta-peso);
+  letter-spacing: var(--t-etiqueta-tracking);
+  text-transform: uppercase;
+  color: var(--tinta-2);
+  border-bottom: 1px solid var(--linea-fuerte);
+}
+
+.ranking__th--valor,
+.ranking__th--confianza {
+  text-align: center;
+}
+
+.ranking__th-boton {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.ranking__th-boton:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.ranking__fila {
+  height: 36px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--linea);
+}
+
+.ranking__fila:hover,
+.ranking__fila--expandida {
+  background: var(--superficie-realzada);
+}
+
+.ranking__fila:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: -2px;
+}
+
+.ranking__celda {
+  padding: var(--e-1) var(--e-2);
+  color: var(--tinta);
+}
+
+.ranking__celda--valor,
+.ranking__celda--confianza {
+  text-align: center;
+}
+
+.ranking__nombre {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--tinta);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ranking__nombre:hover {
+  text-decoration: underline;
+}
+
+.ranking__nombre:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.ranking__celda--tercil-alta { color: var(--prioridad-5); font-weight: 500; }
+.ranking__celda--tercil-media { color: var(--prioridad-3); }
+.ranking__celda--tercil-baja { color: var(--tinta-2); }
+.ranking__celda--tercil-sin_datos { color: var(--tinta-3); }
+
+.ranking__celda-detalle {
+  padding: 0;
+  border-bottom: 1px solid var(--linea);
+}
+
+.ranking__detalle {
+  height: 136px;
+  box-sizing: border-box;
+  padding: var(--e-3) var(--e-4);
+  background: var(--superficie-realzada);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+  justify-content: center;
+}
+
+.ranking__detalle-linea {
+  margin: 0;
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-2);
+}
+
+.ranking__entender {
+  align-self: flex-start;
+  margin-top: var(--e-1);
+  padding: var(--e-1) var(--e-2);
+  background: var(--superficie);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--tinta);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  cursor: pointer;
+}
+
+.ranking__entender:hover {
+  background: var(--papel);
+}
+
+.ranking__entender:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.ranking__pie {
+  margin-top: var(--e-3);
+}
+
+.ranking__ver-mas {
+  padding: var(--e-2) var(--e-3);
+  background: var(--superficie);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--tinta);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  cursor: pointer;
+}
+
+.ranking__ver-mas:hover {
+  background: var(--superficie-realzada);
+}
+
+.ranking__ver-mas:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+/* prefers-reduced-motion: tokens.css ya lleva --d-s a 0ms (excepto crossfade dedicado); el FLIP
+   de ranking.js comprueba `matchMedia` y no anima si el usuario lo pidió, así que no hace falta
+   una regla adicional aquí. */

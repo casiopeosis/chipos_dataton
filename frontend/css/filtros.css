@@ -1,0 +1,125 @@
+/*
+ * filtros.css — filtros por rama (plans/frontend_specs.md §10.11, plan F40). Un `<details>` por
+ * rama (spec: "sub-panel"); casillas de nivel/tipo, radiogroup de sector para educación/salud.
+ * Solo variables de tokens.css (CLAUDE.md, spec §4).
+ */
+
+.filtros {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-2);
+}
+
+.filtros__cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+}
+
+.filtros__titulo {
+  font-size: calc(var(--t-subtitulo-tam) * var(--escala));
+  color: var(--tinta-2);
+}
+
+.filtros__subpanel {
+  border: 1px solid var(--linea);
+  padding: var(--e-2) var(--e-3);
+}
+
+.filtros__pregunta {
+  cursor: pointer;
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  color: var(--tinta);
+  font-weight: 500;
+}
+
+.filtros__pregunta:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.filtros__opciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+  margin-top: var(--e-2);
+}
+
+.filtros__item {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+}
+
+.filtros__item label {
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.filtros__preset {
+  margin-top: var(--e-2);
+  padding: var(--e-1) var(--e-2);
+  background: var(--superficie);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--tinta);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  cursor: pointer;
+}
+
+.filtros__preset:hover {
+  background: var(--superficie-realzada);
+}
+
+.filtros__preset:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.filtros__sector {
+  display: flex;
+  align-items: center;
+  gap: var(--e-3);
+  margin-top: var(--e-2);
+  padding-top: var(--e-2);
+  border-top: 1px solid var(--linea);
+}
+
+.filtros__sector label {
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.filtros__ayuda {
+  margin: var(--e-2) 0 0;
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}
+
+.filtros__restablecer {
+  align-self: flex-start;
+  padding: var(--e-1) var(--e-2);
+  background: var(--superficie);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--tinta);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  cursor: pointer;
+}
+
+.filtros__restablecer:hover {
+  background: var(--superficie-realzada);
+}
+
+.filtros__restablecer:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.filtros__ayuda-general {
+  margin: 0;
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}

@@ -1,0 +1,873 @@
+// frontend/js/mapa.js
+//
+// Mapa D3 (plans/frontend_plan.md → F65/F70; plans/frontend_specs.md §3, §10.1–§10.3, §10.7).
+// Este archivo cubre F65: SOLO la vista general (16 alcaldías). F70 continúa este mismo
+// archivo, EN SERIE, para añadir: el gesto de foco de 820 ms (§10.2), la vista de alcaldía con
+// AGEB y zoom acotado (§10.3) y la transición inversa (§10.7). Por eso:
+//   - las 6 capas SVG de §3 se crean todas desde ahora, en el orden exacto del spec, aunque
+//     `g.alcaldias-fondo`, `g.agebs` y `g.confianza-baja` queden vacías hasta F70;
+//   - la proyección, el generador de rutas y los grupos se devuelven en `_interno` para que F70
+//     no tenga que volver a montar el SVG ni re-consultar el DOM;
+//   - no se importa `zoom` del vendor de D3: esta vista es de encuadre fijo (spec §3 "Zoom
+//     libre... Desactivado en la vista general"); F70 es quien lo añade para la vista de alcaldía.
+//
+// Seguridad (CLAUDE.md, spec §3): nada de `innerHTML`; todo nodo con datos se crea con
+// `dom.js`/D3 (`.attr`, `.text` sobre nodos ya creados, nunca un parser de HTML).
+
+import { geoMercator, geoPath, select, zoom, zoomIdentity } from "../vendor/d3/d3-chipos.esm.js";
+import { crear, limpiar, fijarEstilo } from "./dom.js";
+import { texto as cadena, textos } from "./textos.js";
+import { ACCIONES, despachar, suscribir, obtenerEstado, VISTA } from "./estado.js";
+
+// Fase 7 (Habitancia): el mapa ya no colorea por veredicto binario (sube/se_mantiene/baja) de una
+// capa demanda/oferta -- colorea por TERCIL de un índice continuo (oportunidad o disponibilidad,
+// según `estado.busqueda`) de la vista de mapa activa (general = índice compuesto, o una rama),
+// ya calculado por `composicion.js` (plans/frontend_specs.md §9, §17.4). `main.js` recalcula ese
+// índice en cada cambio de peso/filtro/horizonte/población y llama `actualizarRegistros`/
+// `actualizarAgeb` con el resultado -- este módulo nunca vuelve a calcularlo.
+
+// ---------------------------------------------------------------------------------------------
+// Constantes de dibujo. Los valores de movimiento (duración/easing del hover) NO viven aquí:
+// se expresan en `mapa.css` con `var(--d-xs)`/`var(--ease-salida)` (tokens.css), tal como pide
+// la tarea F65. Los siguientes SÍ son literales a propósito porque el spec los fija como medidas
+// de diseño exactas, no como parte de la escala de movimiento ni de espaciado:
+// -  32  px de margen de la proyección (spec §3: "fitExtent()... con 32 px de margen").
+// - 150  ms de debounce de resize (spec §3: "se recalcula al redimensionar, con 150 ms de
+//   debounce, sin animación").
+// -  12  px de desplazamiento del tooltip respecto al puntero (spec §10.1).
+const MARGEN_PROYECCION_PX = 32;
+const DEBOUNCE_RESIZE_MS = 150;
+const DESPLAZAMIENTO_TOOLTIP_PX = 12;
+
+// --- F70: transición de foco/inversa y zoom de la vista de alcaldía (spec §10.2-§10.3, §10.7). ---
+// 820 ms es el valor exacto que fija el spec para el gesto de foco (y su inverso); no forma parte
+// de la escala `--d-*` de tokens.css porque es una medida de diseño puntual de esta transición,
+// igual que el resto de literales de este archivo (ver comentario de cabecera).
+const DURACION_ENFOQUE_MS = 820;
+// `scaleExtent [k, 6k]` (spec §10.3): k = 1 porque el zoom del usuario se aplica ENCIMA de la
+// transformación de encuadre de la alcaldía (que ya hizo su propio "zoom" al reproyectar), así
+// que 1 es "tal como quedó encuadrada" y 6 es el límite superior pedido por el spec.
+const ZOOM_ESCALA_MINIMA = 1;
+const ZOOM_ESCALA_MAXIMA = 6;
+
+// correccion/action_plan.md §8.2 punto 45: `--d-xs` (tokens.css) ya respeta
+// `prefers-reduced-motion` vía CSS, pero `DURACION_ENFOQUE_MS` es un literal de JS que no pasa
+// por esa media query. Se consulta en vivo (no se cachea) porque el sistema operativo puede
+// cambiar la preferencia mientras la página está abierta, igual que la propia media query CSS.
+function duracionEfectiva(ms) {
+  const reducido =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  return reducido ? 0 : ms;
+}
+
+// correccion/action_plan.md §8.2 punto 44: con `vector-effect: non-scaling-stroke` retirado de
+// mapa.css (recomputarlo en cada fotograma de la transición de foco costaba ~2 290 ms medidos),
+// el trazo de estas capas se recalcula a mano, UNA SOLA VEZ al terminar la animación (o de
+// inmediato en cambios sin animar, p. ej. el zoom con rueda/gesto), para que no engorde ni
+// adelgace con la escala. Los valores base son los `stroke-width`/`stroke-dasharray` que antes
+// fijaba mapa.css sin escalar.
+const TRAZO_BASE_ALCALDIA = 1;
+const TRAZO_BASE_CONTORNO_EXTERIOR = 1;
+const TRAZO_BASE_AGEB = 0.75;
+const TRAZO_BASE_CONFIANZA_BAJA = 1.2;
+const TRAZO_BASE_CONFIANZA_BAJA_GUION = [1.2, 5];
+// Resaltado del contorno completo de una colonia (búsqueda por colonia, `colonia.js`): un trazo
+// bien distinguible del resto (AGEB 0.75px, alcaldía 1px), sin relleno -- no es una escala de
+// datos (§4.2 la reserva a oportunidad/tendencia), solo un localizador temporal.
+const TRAZO_BASE_COLONIA = 3;
+
+/**
+ * Clase CSS de relleno por QUINTIL de un índice continuo (spec §4.2: el mapa se pinta con los 5
+ * tonos de la escala de prioridad sequencial -- más granularidad que la leyenda, que agrupa en 3
+ * -- nunca la escala divergente de tendencia, reservada a la gráfica de población de Nivel 2).
+ * `registro` es `{valor: number, quintil: 1..5|"sin_datos", tercil: string}|null|undefined`, la
+ * forma que produce `composicion.js` (`clasificadorQuintiles`/`clasificadorTerciles`).
+ */
+function claseTercil(registro) {
+  const quintil = registro?.quintil ?? "sin_datos";
+  if (quintil === "sin_datos") return "mapa__alcaldia--sin-datos";
+  return `mapa__alcaldia--prioridad-${quintil}`;
+}
+
+/** Busca el registro `{valor, quintil, tercil}` de una clave en el índice (`Map` o objeto plano). */
+function obtenerRegistroCveMun(registrosPorCveMun, cveMun) {
+  if (registrosPorCveMun instanceof Map) return registrosPorCveMun.get(cveMun) ?? null;
+  if (registrosPorCveMun && typeof registrosPorCveMun === "object") {
+    return registrosPorCveMun[cveMun] ?? null;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Contorno exterior de la CDMX (spec §10.1). No hay geometría de unión de polígonos entre los
+// módulos vendorizados (§3 no incluye d3-geo-voronoi ni topojson), así que se calcula por conteo
+// de aristas: toda arista que solo aparece una vez entre las 16 alcaldías es exterior; la que se
+// repite (compartida entre dos vecinas) es interior y se descarta. El resultado es un conjunto de
+// segmentos sueltos (no un anillo cerrado), suficiente para un trazo: se dibujan como comandos
+// "M...L..." independientes en un único <path>.
+// ---------------------------------------------------------------------------------------------
+
+function anillosDeGeometria(geometria) {
+  if (!geometria) return [];
+  if (geometria.type === "Polygon") return geometria.coordinates;
+  if (geometria.type === "MultiPolygon") return geometria.coordinates.flat(1);
+  return [];
+}
+
+// ---------------------------------------------------------------------------------------------
+// Corrección de orientación de anillos (causa raíz del color uniforme al enfocar una alcaldía,
+// `correccion/solucion_agebs.md`): `data/reference/ageb_cdmx_simplificado.geojson` trae los 2453
+// anillos de AGEB devanados en sentido inverso al que exige `d3-geo` (RFC 7946 visto desde fuera
+// de la esfera) -- `alcaldias.geojson` y el `ageb_cdmx.geojson` sin simplificar están devanados al
+// revés (correctamente) del `_simplificado`, así que el simplificador invirtió el orden de los
+// puntos de cada anillo. Con el devanado equivocado, el algoritmo de recorte de antimeridiano de
+// `d3-geo` interpreta cada AGEB como "todo el planisferio menos ese polígono": el `<path>`
+// resultante trae, además del contorno real (pequeño), un segundo anillo gigantesco (un
+// rectángulo del tamaño del dominio proyectado) que tapa visualmente a los demás AGEB pintados
+// antes -- de ahí el "color uniforme, el mismo de la alcaldía" reportado (en realidad es el color
+// del último AGEB pintado, ampliado a un rectángulo que cubre toda la escena).
+// `data/reference/` es de solo lectura (CLAUDE.md): la corrección vive aquí, del lado del
+// cliente, nunca reescribiendo el GeoJSON. Es idempotente y defensiva: solo invierte un anillo si
+// su área plana (lon/lat) tiene el signo equivocado, así que si el archivo de referencia se
+// corrigiera algún día en el pipeline, esta función no le haría nada.
+export function areaPlanaAnillo(anillo) {
+  let area = 0;
+  for (let i = 0; i < anillo.length - 1; i++) {
+    const [x1, y1] = anillo[i];
+    const [x2, y2] = anillo[i + 1];
+    area += x1 * y2 - x2 * y1;
+  }
+  return area / 2;
+}
+
+/** Anillo exterior: área plana negativa (mismo devanado que `alcaldias.geojson`). Anillos
+ * interiores (huecos): signo contrario al exterior. */
+export function anilloConOrientacionCorrecta(anillo, esExterior) {
+  const area = areaPlanaAnillo(anillo);
+  const necesitaInvertir = esExterior ? area > 0 : area < 0;
+  return necesitaInvertir ? anillo.slice().reverse() : anillo;
+}
+
+export function repararOrientacionGeometria(geometria) {
+  if (!geometria) return geometria;
+  if (geometria.type === "Polygon") {
+    return { ...geometria, coordinates: geometria.coordinates.map((anillo, i) => anilloConOrientacionCorrecta(anillo, i === 0)) };
+  }
+  if (geometria.type === "MultiPolygon") {
+    return {
+      ...geometria,
+      coordinates: geometria.coordinates.map((poligono) => poligono.map((anillo, i) => anilloConOrientacionCorrecta(anillo, i === 0))),
+    };
+  }
+  return geometria;
+}
+
+/** Corrige la orientación de cada feature de una colección de AGEB (memoizada por referencia:
+ * `main.js` entrega el mismo objeto `agebGeoJSON` en cada recálculo, no hay que reprocesarlo). */
+const cacheGeoJSONReparado = new WeakMap();
+export function repararAgebGeoJSON(coleccion) {
+  if (!coleccion) return coleccion;
+  if (cacheGeoJSONReparado.has(coleccion)) return cacheGeoJSONReparado.get(coleccion);
+  const reparado = {
+    ...coleccion,
+    features: coleccion.features.map((feature) => ({ ...feature, geometry: repararOrientacionGeometria(feature.geometry) })),
+  };
+  cacheGeoJSONReparado.set(coleccion, reparado);
+  return reparado;
+}
+
+function calcularSegmentosExteriores(coleccion) {
+  const conteoPorArista = new Map();
+  const puntosPorArista = new Map();
+  const clavePunto = (punto) => `${punto[0].toFixed(6)},${punto[1].toFixed(6)}`;
+
+  for (const feature of coleccion?.features ?? []) {
+    for (const anillo of anillosDeGeometria(feature.geometry)) {
+      for (let i = 0; i < anillo.length - 1; i += 1) {
+        const a = anillo[i];
+        const b = anillo[i + 1];
+        const claveA = clavePunto(a);
+        const claveB = clavePunto(b);
+        const clave = claveA < claveB ? `${claveA}|${claveB}` : `${claveB}|${claveA}`;
+        conteoPorArista.set(clave, (conteoPorArista.get(clave) ?? 0) + 1);
+        if (!puntosPorArista.has(clave)) puntosPorArista.set(clave, [a, b]);
+      }
+    }
+  }
+
+  const segmentos = [];
+  for (const [clave, veces] of conteoPorArista) {
+    if (veces === 1) segmentos.push(puntosPorArista.get(clave));
+  }
+  return segmentos;
+}
+
+function trazarSegmentosProyectados(segmentos, proyeccion) {
+  let d = "";
+  for (const [a, b] of segmentos) {
+    const pa = proyeccion(a);
+    const pb = proyeccion(b);
+    if (!pa || !pb) continue;
+    d += `M${pa[0]},${pa[1]}L${pb[0]},${pb[1]}`;
+  }
+  return d;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Montaje
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Monta el mapa D3 de vista general (16 alcaldías) dentro de `contenedor`.
+ *
+ * No asume ningún `id` fijo de `index.html`: el layout (F25) puede construirse en paralelo, así
+ * que quien llame a `montarMapa` decide qué elemento le pertenece al mapa.
+ *
+ * @param {Element} contenedor - elemento donde se monta el `<svg>` y el tooltip. Se limpia con
+ *   `dom.js#limpiar` (nunca `innerHTML`) antes de montar.
+ * @param {GeoJSON.FeatureCollection} alcaldiasGeoJSON - `data/reference/alcaldias.geojson`
+ *   (propiedades `cve_alc`, `nombre`; ver `docs/perfil_datos.md`).
+ * @param {Map<string, {valor: number, tercil: string}>|Object} registrosPorCveMun - índice ya
+ *   resuelto por `composicion.js` (vista de mapa, búsqueda, horizonte, filtros y pesos activos
+ *   YA aplicados) + `composicion.clasificadorTerciles`, indexado por `cve_alc`/`cve_mun` de 3
+ *   dígitos. `main.js` lo recalcula en cada cambio relevante y llama `actualizarRegistros`; este
+ *   módulo nunca vuelve a tocar el contrato crudo ni las fórmulas.
+ * @param {object} [opciones]
+ * @param {GeoJSON.FeatureCollection|null} [opciones.agebGeoJSON] -
+ *   `data/reference/ageb_cdmx_simplificado.geojson` (propiedades `cvegeo`, `cve_mun`, `ambito`);
+ *   puede llegar después con `actualizarAgeb` (carga diferida/prefetch, spec §10.2).
+ * @param {Map<string, {valor: number, tercil: string}>|Object} [opciones.registrosAgebPorCvegeo]
+ *   mismo formato que `registrosPorCveMun` pero indexado por `CVEGEO` (13 dígitos).
+ * @param {GeoJSON.FeatureCollection|null} [opciones.coloniasGeoJSON] -
+ *   `data/colonias_cdmx_simplificado.geojson` (propiedades `cveut`, `colonia`, `alcaldia`); solo
+ *   se usa para `resaltarColonia`, nunca se colorea ni participa en el hover/clic de AGEB.
+ * @param {Record<string, {cveut: string, colonia: string, cobertura_pct: number}|null>|null}
+ *   [opciones.coloniasAgebLookup] - `data/colonias_ageb.json` (cvegeo -> colonia asociada); si
+ *   viene, el tooltip de AGEB (`crearTooltipAgeb`) añade una línea con el nombre de colonia.
+ * @returns {{
+ *   actualizarRegistros(nuevo: Map|Object): void,
+ *   actualizarAgeb(agebGeoJSON: GeoJSON.FeatureCollection, registrosAgebPorCvegeo: Map|Object): void,
+ *   destruir(): void,
+ *   _interno: object,
+ * }}
+ */
+export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opciones = {}) {
+  if (!(contenedor instanceof Element)) {
+    throw new TypeError("montarMapa: contenedor debe ser un elemento del DOM");
+  }
+
+  let registros = registrosPorCveMun;
+  let vistaActiva = obtenerEstado().vistaMapa;
+  let agebGeoJSON = repararAgebGeoJSON(opciones.agebGeoJSON ?? null);
+  let registrosAgeb = opciones.registrosAgebPorCvegeo ?? new Map();
+  let coloniasGeoJSON = repararAgebGeoJSON(opciones.coloniasGeoJSON ?? null);
+  const coloniasAgebLookup = opciones.coloniasAgebLookup ?? null;
+  let cveMunEnfocado = null;
+  let transformEnfoque = { escala: 1, tx: 0, ty: 0 };
+  let comportamientoZoom = null;
+  let botonReencuadrar = null;
+  let tooltipAgebFeature = null;
+  let featureColoniaResaltada = null;
+
+  limpiar(contenedor);
+  contenedor.classList.add("mapa");
+
+  const segmentosExteriores = calcularSegmentosExteriores(alcaldiasGeoJSON);
+  const proyeccion = geoMercator();
+  const generadorRuta = geoPath(proyeccion);
+
+  // El SVG es decorativo de cara a lectores de pantalla: la tabla (F40) y la lista de AGEB
+  // (F45) son la alternativa completa por teclado (plan §8, riesgo "foco en <path> no uniforme
+  // entre navegadores"), así que el mapa se oculta del árbol de accesibilidad.
+  const svg = select(contenedor)
+    .append("svg")
+    .attr("class", "mapa__lienzo")
+    .attr("aria-hidden", "true")
+    .attr("focusable", "false");
+
+  // --- defs: patrón de hachurado de "sin_datos" (spec §4.2: "líneas a 45°, 1 px, cada 6 px"). ---
+  const defs = svg.append("defs");
+  const patron = defs
+    .append("pattern")
+    .attr("id", "mapa-patron-sin-datos")
+    .attr("width", 6)
+    .attr("height", 6)
+    .attr("patternUnits", "userSpaceOnUse")
+    .attr("patternTransform", "rotate(45)");
+  patron.append("rect").attr("class", "mapa__hachura-fondo").attr("width", 6).attr("height", 6);
+  patron.append("line").attr("class", "mapa__hachura-linea").attr("x1", 0).attr("y1", 0).attr("x2", 0).attr("y2", 6);
+
+  // --- Capas SVG, de abajo arriba, en el orden exacto de la spec §3. ---
+  // Las 4 capas que se paneo/zoomean juntas viven dentro de un único `<g class="escenario">`
+  // (correccion/action_plan.md §8.2 punto 43): `aplicarTransform` escribía el atributo
+  // `transform` en 4 grupos por fotograma; con un solo grupo envolvente es una escritura por
+  // fotograma, punto de anclaje también del mapa multi-vista (Fase 7).
+  const gEscenario = svg.append("g").attr("class", "escenario");
+  const gFondo = gEscenario.append("g").attr("class", "alcaldias-fondo"); // F70: silueta de vecinas
+  const gAgebs = gEscenario.append("g").attr("class", "agebs"); // F70: polígonos AGEB en foco
+  const gConfianzaBaja = gEscenario.append("g").attr("class", "confianza-baja"); // F70: punteado sobre AGEB
+  const gAlcaldias = gEscenario.append("g").attr("class", "alcaldias"); // esta tarea: 16 alcaldías
+  // Resaltado del contorno completo de UNA colonia (búsqueda por colonia, `colonia.js`): encima
+  // de las 4 capas anteriores dentro del mismo `g.escenario` (se panea/zoomea con ellas), nunca
+  // dentro de `g.agebs` (no es un AGEB, no participa en su hover/clic/tooltip).
+  const gColoniaResaltada = gEscenario.append("g").attr("class", "colonia-resaltada").attr("aria-hidden", "true");
+  const gRealce = svg.append("g").attr("class", "realce"); // hover/foco
+
+  let rutaContornoExterior = null;
+  let featureConHover = null;
+  let sombraHover = null;
+  let contornoHover = null;
+  let tooltipEl = null;
+  let escalaTrazo = 1; // escala con la que se calculo el ultimo trazo (ajustarTrazoEscena)
+  let animacionTooltip = null;
+  let posicionTooltipPendiente = null;
+  let rafTooltip = 0;
+
+  function medidasContenedor() {
+    const rect = contenedor.getBoundingClientRect();
+    return {
+      ancho: rect.width > 0 ? rect.width : 800,
+      alto: rect.height > 0 ? rect.height : 600,
+    };
+  }
+
+  function claseFeature(feature) {
+    const entrada = obtenerRegistroCveMun(registros, feature.properties.cve_alc);
+    return claseTercil(entrada);
+  }
+
+  function actualizarClases() {
+    gAlcaldias
+      .selectAll("path.mapa__alcaldia")
+      .attr("class", (feature) => `mapa__alcaldia ${claseFeature(feature)}`)
+      .classed("mapa__alcaldia--recesivo", (feature) => cveMunEnfocado !== null && feature.properties.cve_alc !== cveMunEnfocado)
+      .classed("mapa__alcaldia--enfocada", (feature) => cveMunEnfocado !== null && feature.properties.cve_alc === cveMunEnfocado);
+    gAgebs
+      .selectAll("path.mapa__ageb")
+      .attr("class", (feature) => `mapa__ageb ${claseFeatureAgeb(feature)}`);
+  }
+
+  function crearTooltip() {
+    tooltipEl = crear("div", { clase: "mapa__tooltip" }, []);
+    contenedor.appendChild(tooltipEl);
+  }
+
+  function calcularYFijarPosicionTooltip(clientX, clientY) {
+    if (!tooltipEl) return;
+    const rectContenedor = contenedor.getBoundingClientRect();
+    const rectTooltip = tooltipEl.getBoundingClientRect();
+    let x = clientX - rectContenedor.left + DESPLAZAMIENTO_TOOLTIP_PX;
+    let y = clientY - rectContenedor.top + DESPLAZAMIENTO_TOOLTIP_PX;
+    // "se voltea si toca un borde" (spec §10.1).
+    if (x + rectTooltip.width > rectContenedor.width) {
+      x = clientX - rectContenedor.left - DESPLAZAMIENTO_TOOLTIP_PX - rectTooltip.width;
+    }
+    if (y + rectTooltip.height > rectContenedor.height) {
+      y = clientY - rectContenedor.top - DESPLAZAMIENTO_TOOLTIP_PX - rectTooltip.height;
+    }
+    // `fijarEstilo` (Web Animations API) en vez de `style.left/top`: la CSP (`style-src 'self'`)
+    // bloquea el atributo `style`. Se cancela la animacion previa: antes cada mousemove dejaba
+    // una nueva con `fill: forwards` (un objeto Animation por evento).
+    animacionTooltip?.cancel();
+    animacionTooltip = fijarEstilo(tooltipEl, { left: `${x}px`, top: `${y}px` });
+  }
+
+  // `inmediato` (mouseenter): posiciona ya, para que no aparezca un fotograma en el sitio viejo.
+  // mousemove: como mucho un calculo (con dos lecturas de layout) por fotograma.
+  function posicionarTooltip(evento, { inmediato = false } = {}) {
+    if (!tooltipEl) return;
+    if (inmediato) {
+      calcularYFijarPosicionTooltip(evento.clientX, evento.clientY);
+      return;
+    }
+    posicionTooltipPendiente = { x: evento.clientX, y: evento.clientY };
+    if (rafTooltip) return;
+    rafTooltip = requestAnimationFrame(() => {
+      rafTooltip = 0;
+      const p = posicionTooltipPendiente;
+      posicionTooltipPendiente = null;
+      if (p) calcularYFijarPosicionTooltip(p.x, p.y);
+    });
+  }
+
+  function mostrarTooltip(evento, feature) {
+    if (!tooltipEl) crearTooltip();
+    const entrada = obtenerRegistroCveMun(registros, feature.properties.cve_alc);
+    const tercil = entrada?.tercil ?? "sin_datos";
+    limpiar(tooltipEl);
+    tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-nombre" }, [feature.properties.nombre]));
+    tooltipEl.appendChild(
+      crear("p", { clase: "mapa__tooltip-veredicto" }, [
+        cadena("tooltip.vistaTercil", {
+          vista: textos.vista.nombre[vistaActiva] ?? textos.vista.nombre.general,
+          simbolo: textos.tercil.simbolo[tercil],
+          tercil: textos.tercil.palabra[tercil],
+        }),
+      ]),
+    );
+    tooltipEl.classList.add("mapa__tooltip--visible");
+    posicionarTooltip(evento, { inmediato: true });
+  }
+
+  function ocultarTooltip() {
+    tooltipEl?.classList.remove("mapa__tooltip--visible");
+  }
+
+  // --- Hover: contorno de 2px + "elevación" (spec §10.1: copia del contorno 2px hacia abajo al
+  // 15% de --tinta, sin desenfoque; el polígono real sube -1px en Y). Duración/easing SIEMPRE
+  // por CSS con var(--d-xs)/var(--ease-salida) (mapa.css), nunca un valor propio en JS. ---
+  function mostrarRealce(feature) {
+    const d = generadorRuta(feature);
+    if (!sombraHover) sombraHover = gRealce.append("path").attr("class", "mapa__realce-elevacion");
+    if (!contornoHover) contornoHover = gRealce.append("path").attr("class", "mapa__realce-contorno");
+    sombraHover.attr("d", d);
+    contornoHover.attr("d", d);
+    featureConHover = feature;
+    gAlcaldias
+      .select(`path.mapa__alcaldia[data-cve-mun="${feature.properties.cve_alc}"]`)
+      .classed("mapa__alcaldia--elevada", true);
+  }
+
+  function ocultarRealce() {
+    sombraHover?.remove();
+    contornoHover?.remove();
+    sombraHover = null;
+    contornoHover = null;
+    if (featureConHover) {
+      gAlcaldias
+        .select(`path.mapa__alcaldia[data-cve-mun="${featureConHover.properties.cve_alc}"]`)
+        .classed("mapa__alcaldia--elevada", false);
+    }
+    featureConHover = null;
+  }
+
+  function actualizarRealceTrasReproyeccion() {
+    if (!featureConHover) return;
+    const d = generadorRuta(featureConHover);
+    sombraHover?.attr("d", d);
+    contornoHover?.attr("d", d);
+  }
+
+  function alManejarClic(feature) {
+    despachar({ tipo: ACCIONES.IR_A_ALCALDIA, cve_mun: feature.properties.cve_alc });
+  }
+
+  function pintarAlcaldias() {
+    gAlcaldias
+      .selectAll("path.mapa__alcaldia")
+      .data(alcaldiasGeoJSON.features, (feature) => feature.properties.cve_alc)
+      .join("path")
+      .attr("class", (feature) => `mapa__alcaldia ${claseFeature(feature)}`)
+      .attr("data-cve-mun", (feature) => feature.properties.cve_alc)
+      .on("mouseenter", (evento, feature) => {
+        if (cveMunEnfocado !== null) return;
+        mostrarRealce(feature);
+        mostrarTooltip(evento, feature);
+      })
+      .on("mousemove", (evento) => {
+        if (cveMunEnfocado !== null) return;
+        posicionarTooltip(evento);
+      })
+      .on("mouseleave", () => {
+        ocultarRealce();
+        ocultarTooltip();
+      })
+      .on("click", (_evento, feature) => alManejarClic(feature));
+
+    rutaContornoExterior = gAlcaldias.append("path").attr("class", "mapa__contorno-exterior").attr("aria-hidden", "true");
+  }
+
+  function actualizarGeometria() {
+    gAlcaldias.selectAll("path.mapa__alcaldia").attr("d", generadorRuta);
+    rutaContornoExterior?.attr("d", trazarSegmentosProyectados(segmentosExteriores, proyeccion));
+    actualizarRealceTrasReproyeccion();
+    if (featureColoniaResaltada) gColoniaResaltada.select("path").attr("d", generadorRuta);
+  }
+
+  function recalcularProyeccion() {
+    const { ancho, alto } = medidasContenedor();
+    svg.attr("viewBox", `0 0 ${ancho} ${alto}`).attr("width", ancho).attr("height", alto);
+    proyeccion.fitExtent(
+      [
+        [MARGEN_PROYECCION_PX, MARGEN_PROYECCION_PX],
+        [ancho - MARGEN_PROYECCION_PX, alto - MARGEN_PROYECCION_PX],
+      ],
+      alcaldiasGeoJSON,
+    );
+    actualizarGeometria();
+  }
+
+  // -----------------------------------------------------------------------------------------
+  // F70: foco en una alcaldía (AGEB coloreados, vecinas "recesivas"), zoom acotado y transición
+  // inversa (spec §10.2-§10.3, §10.7). No se vuelve a llamar `proyeccion.fitExtent()`: se calcula
+  // el encuadre de la alcaldía en el espacio YA proyectado (`generadorRuta.bounds`) y se anima
+  // como una transformación SVG de grupo — evita recalcular el `d` de cada `<path>` en cada
+  // fotograma y hace que el zoom del usuario (d3-zoom) se componga con el mismo mecanismo.
+  // -----------------------------------------------------------------------------------------
+
+  // Punto 44: recalcula el trazo de las 4 capas escaladas para que se vea igual de fino
+  // (en pantalla) a cualquier escala, sin depender de `vector-effect: non-scaling-stroke`.
+  function ajustarTrazoEscena(escala) {
+    const k = escala > 0 ? escala : 1;
+    escalaTrazo = k;
+    gAlcaldias.selectAll("path.mapa__alcaldia").attr("stroke-width", TRAZO_BASE_ALCALDIA / k);
+    rutaContornoExterior?.attr("stroke-width", TRAZO_BASE_CONTORNO_EXTERIOR / k);
+    gAgebs.selectAll("path.mapa__ageb").attr("stroke-width", TRAZO_BASE_AGEB / k);
+    gConfianzaBaja
+      .selectAll("path.mapa__ageb-confianza-baja")
+      .attr("stroke-width", TRAZO_BASE_CONFIANZA_BAJA / k)
+      .attr("stroke-dasharray", TRAZO_BASE_CONFIANZA_BAJA_GUION.map((v) => v / k).join(" "));
+    gColoniaResaltada.select("path").attr("stroke-width", TRAZO_BASE_COLONIA / k);
+  }
+
+  function aplicarTransform(t, { animar = false, duracion = DURACION_ENFOQUE_MS } = {}) {
+    const cadenaTransform = `translate(${t.tx},${t.ty}) scale(${t.escala})`;
+    if (animar) {
+      // Trazo una sola vez, ya con la escala destino (no por fotograma).
+      ajustarTrazoEscena(t.escala);
+      // Durante los 820 ms el contenido se desliza bajo el puntero: sin hit-testing ni
+      // mouseenter/mouseleave por fotograma (mapa.css: `.mapa__lienzo--animando`).
+      svg.classed("mapa__lienzo--animando", true);
+      gEscenario
+        .transition()
+        .duration(duracionEfectiva(duracion))
+        .attr("transform", cadenaTransform)
+        .on("end interrupt", () => svg.classed("mapa__lienzo--animando", false));
+    } else {
+      // Zoom del usuario (rueda/pellizco/arrastre o `reencuadrar()`): sin animacion propia. El
+      // trazo se recalcula en el evento `end` del gesto (activarZoomUsuario).
+      gEscenario.interrupt?.();
+      svg.classed("mapa__lienzo--animando", false);
+      gEscenario.attr("transform", cadenaTransform);
+    }
+  }
+
+  function claseFeatureAgeb(feature) {
+    const entrada = obtenerRegistroCveMun(registrosAgeb, feature.properties.cvegeo);
+    return claseTercil(entrada);
+  }
+
+  function crearTooltipAgeb(evento, feature) {
+    if (!tooltipEl) crearTooltip();
+    const entrada = obtenerRegistroCveMun(registrosAgeb, feature.properties.cvegeo);
+    const tercil = entrada?.tercil ?? "sin_datos";
+    // Colonia asociada (join por mayor área de intersección, `docs/perfil_datos.md` →
+    // "Colonias"), no un dato oficial de AGEB en sí (la ficha, `ficha.js`, sí trae el matiz
+    // "(aprox.)" con más espacio para explicarlo; aquí, en un tooltip angosto, alcanza con el
+    // nombre). Vale tanto en la vista general (índice compuesto) como en cualquier rama: es el
+    // mismo tooltip para las dos, no hay dos rutas de código distintas que mantener en sync.
+    const colonia = coloniasAgebLookup?.[feature.properties.cvegeo]?.colonia ?? null;
+    limpiar(tooltipEl);
+    // Encabezado: colonia en grande y en negritas si se conoce -- más reconocible que una clave
+    // AGEB para quien no se las memoriza; la clave sigue mostrándose siempre, como texto
+    // secundario más pequeño debajo (nunca se pierde, solo deja de ser lo primero que se lee).
+    if (colonia) {
+      tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-nombre" }, [colonia]));
+      tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-secundario cifras" }, [feature.properties.cvegeo]));
+    } else {
+      tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-nombre cifras" }, [feature.properties.cvegeo]));
+    }
+    tooltipEl.appendChild(
+      crear("p", { clase: "mapa__tooltip-veredicto" }, [
+        cadena("tooltip.vistaTercil", {
+          vista: textos.vista.nombre[vistaActiva] ?? textos.vista.nombre.general,
+          simbolo: textos.tercil.simbolo[tercil],
+          tercil: textos.tercil.palabra[tercil],
+        }),
+      ]),
+    );
+    tooltipEl.classList.add("mapa__tooltip--visible");
+    posicionarTooltip(evento, { inmediato: true });
+  }
+
+  function pintarAgebs() {
+    const features = agebGeoJSON?.features?.filter((f) => f.properties.cve_mun === cveMunEnfocado) ?? [];
+    const seleccion = gAgebs
+      .selectAll("path.mapa__ageb")
+      .data(features, (feature) => feature.properties.cvegeo);
+
+    seleccion.exit().remove();
+
+    // Medido en Iztapalapa (458 AGEB, la alcaldía más grande): dejar que `mapa.css`
+    // (`transition: fill`) anime los ~458 `<path>` que se CREAN de golpe al enfocar añadía una
+    // tarea larga de sí sola (256 ms -> 0 ms al desactivarla solo para los nuevos). No es el
+    // bug de la Fase 8 original (§8.1: transición de `transform`), pero el mismo síntoma con la
+    // misma causa raíz: cientos de transiciones CSS arrancando en el mismo fotograma. Los
+    // recién creados se pintan YA con su color final, con un modificador que anula la
+    // transición un solo fotograma; los que ya existían (actualización por cambio de horizonte/
+    // población) sí deben poder transicionar de color con normalidad.
+    const entrando = seleccion
+      .enter()
+      .append("path")
+      .attr("class", (feature) => `mapa__ageb mapa__ageb--sin-transicion ${claseFeatureAgeb(feature)}`)
+      .attr("data-cvegeo", (feature) => feature.properties.cvegeo)
+      .attr("stroke-width", TRAZO_BASE_AGEB / escalaTrazo)
+      .attr("d", generadorRuta)
+      .on("mouseenter", (evento, feature) => {
+        tooltipAgebFeature = feature;
+        crearTooltipAgeb(evento, feature);
+      })
+      .on("mousemove", (evento) => {
+        posicionarTooltip(evento);
+      })
+      .on("mouseleave", () => {
+        tooltipAgebFeature = null;
+        ocultarTooltip();
+      })
+      .on("click", (_evento, feature) => {
+        despachar({ tipo: ACCIONES.IR_A_AGEB, cve_mun: cveMunEnfocado, cvegeo: feature.properties.cvegeo });
+      });
+
+    seleccion
+      .attr("class", (feature) => `mapa__ageb ${claseFeatureAgeb(feature)}`)
+      .attr("d", generadorRuta);
+
+    if (!entrando.empty()) {
+      requestAnimationFrame(() => entrando.classed("mapa__ageb--sin-transicion", false));
+    }
+
+    gConfianzaBaja
+      .selectAll("path.mapa__ageb-confianza-baja")
+      .data(
+        features.filter((f) => {
+          const r = obtenerRegistroCveMun(registrosAgeb, f.properties.cvegeo);
+          return r?.confianzaBaja === true;
+        }),
+        (feature) => feature.properties.cvegeo,
+      )
+      .join("path")
+      .attr("class", "mapa__ageb-confianza-baja")
+      .attr("stroke-width", TRAZO_BASE_CONFIANZA_BAJA / escalaTrazo)
+      .attr("stroke-dasharray", TRAZO_BASE_CONFIANZA_BAJA_GUION.map((v) => v / escalaTrazo).join(" "))
+      .attr("aria-hidden", "true")
+      .attr("d", generadorRuta);
+  }
+
+  function limpiarAgebs() {
+    gAgebs.selectAll("path.mapa__ageb").remove();
+    gConfianzaBaja.selectAll("path.mapa__ageb-confianza-baja").remove();
+  }
+
+  /** Dibuja (o reemplaza) el contorno completo de una colonia por su `cveut` (búsqueda por
+   * colonia, `colonia.js`). No cambia la vista: quien llama ya despachó `IR_A_ALCALDIA`/
+   * `IR_A_AGEB` antes, si corresponde -- este método solo dibuja el trazo. */
+  function resaltarColonia(cveut) {
+    const feature = (coloniasGeoJSON?.features ?? []).find((f) => f.properties.cveut === cveut);
+    featureColoniaResaltada = feature ?? null;
+    gColoniaResaltada.selectAll("path").remove();
+    if (!feature) return;
+    gColoniaResaltada
+      .append("path")
+      .datum(feature)
+      .attr("class", "mapa__colonia-resaltada")
+      .attr("d", generadorRuta)
+      .attr("stroke-width", TRAZO_BASE_COLONIA / escalaTrazo);
+  }
+
+  function quitarResaltadoColonia() {
+    featureColoniaResaltada = null;
+    gColoniaResaltada.selectAll("path").remove();
+  }
+
+  function crearBotonReencuadrar() {
+    botonReencuadrar = crear(
+      "button",
+      {
+        type: "button",
+        clase: "mapa__reencuadrar",
+        onclick: () => reencuadrar(),
+      },
+      [textos.navegacion.reencuadrar],
+    );
+    contenedor.appendChild(botonReencuadrar);
+  }
+
+  function mostrarBotonReencuadrar(visible) {
+    if (!botonReencuadrar) crearBotonReencuadrar();
+    botonReencuadrar.classList.toggle("mapa__reencuadrar--visible", visible);
+  }
+
+  function activarZoomUsuario() {
+    if (comportamientoZoom) return;
+    comportamientoZoom = zoom()
+      .scaleExtent([ZOOM_ESCALA_MINIMA, ZOOM_ESCALA_MAXIMA])
+      .on("zoom", (evento) => {
+        const t = evento.transform;
+        aplicarTransform({
+          escala: transformEnfoque.escala * t.k,
+          tx: transformEnfoque.tx + t.x,
+          ty: transformEnfoque.ty + t.y,
+        });
+        // Solo gestos con `sourceEvent` (rueda/pellizco/arrastre real) cuentan como paneo manual;
+        // el reencuadre programático (`zoom.transform`) no debe volver a mostrar el botón.
+        if (evento.sourceEvent) mostrarBotonReencuadrar(true);
+      })
+      // Punto 44: el trazo se recalcula UNA SOLA VEZ cuando el gesto de zoom termina (rueda,
+      // pellizco, arrastre o el propio `reencuadrar()`), no en cada tick de `on("zoom")`.
+      .on("end", (evento) => ajustarTrazoEscena(transformEnfoque.escala * evento.transform.k));
+    svg.call(comportamientoZoom);
+  }
+
+  function desactivarZoomUsuario() {
+    if (!comportamientoZoom) return;
+    svg.on(".zoom", null);
+    comportamientoZoom = null;
+    mostrarBotonReencuadrar(false);
+  }
+
+  function reencuadrar() {
+    if (!comportamientoZoom) return;
+    svg.transition().duration(duracionEfectiva(DURACION_ENFOQUE_MS / 2)).call(comportamientoZoom.transform, zoomIdentity);
+    mostrarBotonReencuadrar(false);
+  }
+
+  function calcularTransformEnfoque(feature) {
+    const [[x0, y0], [x1, y1]] = generadorRuta.bounds(feature);
+    const { ancho, alto } = medidasContenedor();
+    const anchoBbox = Math.max(x1 - x0, 1);
+    const altoBbox = Math.max(y1 - y0, 1);
+    const escala = Math.min(
+      (ancho - MARGEN_PROYECCION_PX * 2) / anchoBbox,
+      (alto - MARGEN_PROYECCION_PX * 2) / altoBbox,
+    );
+    const cx = (x0 + x1) / 2;
+    const cy = (y0 + y1) / 2;
+    return { escala, tx: ancho / 2 - escala * cx, ty: alto / 2 - escala * cy };
+  }
+
+  /** Transición de foco (spec §10.2): recesivo en las vecinas, AGEB de la alcaldía, zoom acotado. */
+  function enfocarAlcaldia(cveMun) {
+    const feature = alcaldiasGeoJSON.features.find((f) => f.properties.cve_alc === cveMun);
+    if (!feature) return;
+    cveMunEnfocado = cveMun;
+    transformEnfoque = calcularTransformEnfoque(feature);
+
+    gAlcaldias
+      .selectAll("path.mapa__alcaldia")
+      .classed("mapa__alcaldia--recesivo", (f) => f.properties.cve_alc !== cveMun)
+      // La alcaldia enfocada se dibuja ENCIMA de g.agebs (spec §3) con su relleno opaco: sin
+      // ocultarla taparia los AGEB y captaria su hover/clic. `visibility` no lo pisa leyenda.css.
+      .classed("mapa__alcaldia--enfocada", (f) => f.properties.cve_alc === cveMun);
+    ocultarRealce();
+    ocultarTooltip();
+
+    // Si aun no hay registros de AGEB, main.js llama a `actualizarAgeb` en esta misma
+    // notificacion y pinta una sola vez ya con color final (antes: dos pasadas, la primera "sin_datos").
+    if (registrosAgeb instanceof Map ? registrosAgeb.size > 0 : Object.keys(registrosAgeb ?? {}).length > 0) {
+      pintarAgebs();
+    }
+    aplicarTransform(transformEnfoque, { animar: true });
+    activarZoomUsuario();
+  }
+
+  /** Transición inversa (spec §10.7): vuelve a la vista general, sin dejar zoom/AGEB residuales. */
+  function volverAVistaGeneral() {
+    cveMunEnfocado = null;
+    quitarResaltadoColonia();
+    desactivarZoomUsuario();
+    gAlcaldias
+      .selectAll("path.mapa__alcaldia")
+      .classed("mapa__alcaldia--recesivo", false)
+      .classed("mapa__alcaldia--enfocada", false);
+    aplicarTransform({ escala: 1, tx: 0, ty: 0 }, { animar: true });
+    // La animación de salida de los AGEB es la misma duración que el foco; se quitan del DOM al
+    // terminar para no competir con el siguiente `enfocarAlcaldia` si el usuario navega rápido.
+    window.setTimeout(() => {
+      if (cveMunEnfocado === null) limpiarAgebs();
+    }, duracionEfectiva(DURACION_ENFOQUE_MS));
+  }
+
+  function sincronizarVista(estado) {
+    const enfocando = estado.vista === VISTA.ALCALDIA || estado.vista === VISTA.AGEB;
+    if (enfocando && estado.cve_mun !== cveMunEnfocado) {
+      enfocarAlcaldia(estado.cve_mun);
+    } else if (!enfocando && cveMunEnfocado !== null) {
+      volverAVistaGeneral();
+    }
+  }
+
+  pintarAlcaldias();
+  recalcularProyeccion();
+  sincronizarVista(obtenerEstado());
+
+  // --- Recálculo debounced a 150 ms en resize (spec §3), sin animación. ---
+  let temporizadorResize = null;
+  function programarRecalculo() {
+    if (temporizadorResize !== null) clearTimeout(temporizadorResize);
+    temporizadorResize = setTimeout(() => {
+      temporizadorResize = null;
+      recalcularProyeccion();
+    }, DEBOUNCE_RESIZE_MS);
+  }
+
+  let observadorResize = null;
+  if (typeof ResizeObserver !== "undefined") {
+    observadorResize = new ResizeObserver(() => programarRecalculo());
+    observadorResize.observe(contenedor);
+  } else if (typeof window !== "undefined") {
+    window.addEventListener("resize", programarRecalculo);
+  }
+
+  // --- Cambio de vista de mapa (§9), horizonte (§8), población, búsqueda, pesos o filtros: NINGUNO
+  // de esos recolorea por sí solo aquí -- `main.js` es quien escucha `estado.js`, vuelve a llamar a
+  // `composicion.js` y entrega el resultado ya resuelto vía `actualizarRegistros`/`actualizarAgeb`
+  // (spec §17.1: "el backend/el motor publican ingredientes, el cliente los combina", una sola vez,
+  // no en cada módulo). Este módulo solo seguía necesitando enterarse de `vistaMapa` (para el
+  // nombre en el tooltip) y de la navegación ciudad/alcaldía/AGEB (`sincronizarVista`), nunca
+  // recrea geometría por un cambio de coloreado (transición de `fill` por CSS).
+  const cancelarSuscripcion = suscribir((estado) => {
+    vistaActiva = estado.vistaMapa;
+    sincronizarVista(estado);
+  });
+
+  return {
+    /** Reemplaza los registros por alcaldía (ya resueltos por `composicion.js`) y recolorea. */
+    actualizarRegistros(nuevosRegistros) {
+      registros = nuevosRegistros;
+      actualizarClases();
+    },
+    /** Entrega (o reemplaza) el GeoJSON de AGEB y sus registros; recolorea si hay una alcaldía enfocada. */
+    actualizarAgeb(nuevoAgebGeoJSON, nuevosRegistrosAgeb) {
+      agebGeoJSON = repararAgebGeoJSON(nuevoAgebGeoJSON) ?? agebGeoJSON;
+      if (nuevosRegistrosAgeb) registrosAgeb = nuevosRegistrosAgeb;
+      if (cveMunEnfocado !== null) pintarAgebs();
+    },
+    /** Entrega (o reemplaza) el GeoJSON de colonias (`data/colonias_cdmx_simplificado.geojson`);
+     * puede llegar después del montaje, igual que `actualizarAgeb`. */
+    actualizarColonias(nuevoColoniasGeoJSON) {
+      coloniasGeoJSON = repararAgebGeoJSON(nuevoColoniasGeoJSON) ?? coloniasGeoJSON;
+      if (featureColoniaResaltada) resaltarColonia(featureColoniaResaltada.properties.cveut);
+    },
+    /** Dibuja el contorno completo de la colonia `cveut` (búsqueda por colonia, `colonia.js`). */
+    resaltarColonia,
+    /** Quita el resaltado de colonia, si lo hay (p. ej. al iniciar una nueva búsqueda). */
+    quitarResaltadoColonia,
+    /** Libera observadores/listeners/suscripciones y vacía el contenedor. */
+    destruir() {
+      if (temporizadorResize !== null) clearTimeout(temporizadorResize);
+      observadorResize?.disconnect();
+      if (typeof window !== "undefined") window.removeEventListener("resize", programarRecalculo);
+      desactivarZoomUsuario();
+      cancelarSuscripcion();
+      tooltipEl?.remove();
+      botonReencuadrar?.remove();
+      limpiar(contenedor);
+      contenedor.classList.remove("mapa");
+    },
+    _interno: {
+      svg,
+      defs,
+      proyeccion,
+      generadorRuta,
+      gFondo,
+      gAgebs,
+      gConfianzaBaja,
+      gAlcaldias,
+      gRealce,
+      segmentosExteriores,
+      recalcularProyeccion,
+    },
+  };
+}

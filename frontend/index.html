@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'"
+    />
+    <title>Habitancia — Oportunidades de servicios para infancias y adolescencias</title>
+    <link
+      rel="preload"
+      href="vendor/fonts/InterVariable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/estados.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/cabecera.css" />
+    <link rel="stylesheet" href="css/vista-mapa.css" />
+    <link rel="stylesheet" href="css/alcaldia.css" />
+    <link rel="stylesheet" href="css/ficha.css" />
+    <link rel="stylesheet" href="css/ayuda.css" />
+    <link rel="stylesheet" href="css/comparar.css" />
+    <link rel="stylesheet" href="css/configuracion.css" />
+    <link rel="stylesheet" href="css/prioridades.css" />
+    <link rel="stylesheet" href="css/filtros.css" />
+    <link rel="stylesheet" href="css/resumen.css" />
+    <link rel="stylesheet" href="css/ranking.css" />
+    <link rel="stylesheet" href="css/horizonte.css" />
+    <link rel="stylesheet" href="css/mapa.css" />
+    <link rel="stylesheet" href="css/leyenda.css" />
+    <link rel="stylesheet" href="css/franja.css" />
+    <link rel="stylesheet" href="css/graficas.css" />
+    <link rel="stylesheet" href="css/presentacion.css" />
+    <!-- movil.css al final: solo sobreescribe bajo 1023px, activado por movil.js (F91). -->
+    <link rel="stylesheet" href="css/movil.css" />
+  </head>
+  <body>
+    <!-- El contenido de la cabecera (h1 oculto, nombre, migas, selector de vista de mapa, modo
+         presentación) lo pinta js/cabecera.js + js/vista_mapa.js (F25/F65): reacciona a
+         js/estado.js, así que no se hardcodea aquí. -->
+    <header></header>
+
+    <main class="app-layout">
+      <!-- Columna izquierda: resumen estructurado Nivel 1 + ranking (vista ciudad/alcaldía) o
+           ficha de zona (vista AGEB) se montan dentro de #vista-principal, según la vista activa
+           en estado.js (plans/frontend_plan.md F45/F50/F55/F60 -- hoy un ranking mínimo
+           provisional, ver la nota de cabecera de js/main.js). -->
+      <section id="panel-datos" class="panel-datos" aria-label="Datos de la vista">
+        <!-- Flujo de configuración del escenario (§5.3/§5.5/§10.10/§10.12, F31/F35): población
+             objetivo, tipo de búsqueda, prioridades por rama y filtro de nivel de riesgo. Cambia
+             el escenario activo sin red (estado.js); el resumen/ranking de abajo reacciona solo. -->
+        <div id="panel-configuracion" class="panel-configuracion"></div>
+        <div id="vista-principal"></div>
+      </section>
+
+      <!-- Mapa D3 (F65/F70/F75). La leyenda y el control de horizonte se posicionan sobre el
+           mapa; sus propios módulos deciden su contenido y estilo fino. -->
+      <section id="contenedor-mapa" class="contenedor-mapa" role="region" aria-label="Mapa de la CDMX">
+        <div id="mapa-svg-host"></div>
+        <aside id="leyenda" aria-label="Leyenda"></aside>
+        <div id="control-horizonte"></div>
+      </section>
+
+      <!-- Franja lateral y drawer "Entender esta zona / Metodología" (F85, pendiente de adaptar). -->
+      <div id="franja-metodologia" class="franja"></div>
+    </main>
+
+    <!-- Pie de página (fuentes, fecha de generación, advertencia de sesgos): lo completa
+         js/main.js con el `generado` del contrato una vez cargados los datos. -->
+    <footer id="pie"></footer>
+
+    <!-- Drawer modal de metodología (F85, js/franja.js, pendiente de adaptar). Vacío hasta
+         entonces; se abre con `.showModal()`, nunca con el atributo `open` a mano, para
+         conservar el foco atrapado y el `::backdrop` nativos. -->
+    <dialog id="drawer-metodologia"></dialog>
+
+    <!-- Punto de entrada único: carga los datos, corre el motor de composición
+         (js/composicion.js) y monta el resto de módulos de la UI, reaccionando a js/estado.js. -->
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

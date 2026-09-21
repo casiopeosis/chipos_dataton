@@ -1,0 +1,33 @@
+/*
+ * ficha.css — ficha de zona AGEB, Nivel 1 (plans/frontend_specs.md §7.4, plan F60). El contenido
+ * de campos (`<dl>`) lo pinta `resumen.css`/`resumen.js` (reutilizado); aquí solo la ubicación y
+ * el motivo de sin_datos. Solo variables de tokens.css (CLAUDE.md, spec §4).
+ */
+
+.ficha__ubicacion {
+  margin: 0 0 var(--e-1);
+  font-size: calc(var(--t-subtitulo-tam) * var(--escala));
+  color: var(--tinta-2);
+}
+
+.ficha__colonia {
+  margin: 0 0 var(--e-2);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}
+
+.ficha__colonia:empty {
+  display: none;
+  margin: 0;
+}
+
+.ficha__motivo {
+  margin: 0 0 var(--e-4);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}
+
+.ficha__motivo:empty {
+  display: none;
+  margin: 0;
+}

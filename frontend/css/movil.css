@@ -1,0 +1,76 @@
+/*
+ * movil.css — hoja inferior de 3 alturas (plans/frontend_specs.md §11, plan F91). Se importa
+ * DESPUÉS de layout.css (index.html) y solo actúa bajo el mismo punto de corte, 1023px, cuando
+ * `movil.js` añade la clase `.movil` a `.panel-datos` (JS, no un media query aquí: la altura
+ * exacta la decide el botón cíclico, no el ancho de pantalla). Solo variables de tokens.css.
+ */
+
+@media (max-width: 1023px) {
+  .contenedor-mapa {
+    position: fixed;
+    top: 48px; /* debajo de la cabecera, mismo alto que --grid-template-rows de layout.css */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+  }
+
+  .panel-datos.movil {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    background: var(--papel);
+    border-top: 1px solid var(--linea-fuerte);
+    box-shadow: 0 -2px 12px rgba(17, 17, 17, 0.12);
+    transition: height var(--d-m) var(--ease-salida);
+    overflow-y: auto;
+    padding-top: var(--e-6); /* deja sitio a la asa, fijada arriba del scroll */
+  }
+
+  .panel-datos.movil--baja { height: 128px; }
+  .panel-datos.movil--media { height: 50dvh; }
+  .panel-datos.movil--alta { height: 88dvh; }
+
+  /* Franja lateral: la hoja la cubriría por completo en baja/media; se mueve a una tira fija en
+     el borde superior derecho, siempre alcanzable, en vez de reordenar cabecera.js/index.html. */
+  .franja {
+    position: fixed;
+    top: 48px;
+    right: 0;
+    left: auto;
+    width: 40px;
+    height: auto;
+    z-index: 2;
+  }
+}
+
+.movil__asa {
+  position: sticky;
+  top: calc(var(--e-6) * -1);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: var(--e-2) 0;
+  background: var(--papel);
+  border: none;
+  cursor: pointer;
+}
+
+.movil__asa-barra {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--linea-fuerte);
+}
+
+.movil__asa:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+/* prefers-reduced-motion: tokens.css lleva --d-m a 0ms, así que el cambio de altura queda
+   instantáneo sin una regla propia aquí. */

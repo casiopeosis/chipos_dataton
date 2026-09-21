@@ -1,0 +1,244 @@
+/*
+ * tokens.css — única fuente de valores de color, tipografía, espaciado y
+ * movimiento del frontend (plans/frontend_specs.md §4). Ningún otro archivo
+ * CSS o JS debe usar un color, tamaño de fuente, espaciado o duración
+ * literal: siempre a través de las variables definidas aquí.
+ *
+ * Tipografía vendorizada: frontend/vendor/fonts/InterVariable*.woff2
+ * (Inter 4.x variable, licencia SIL Open Font License 1.1, ver
+ * frontend/vendor/fonts/LICENSE-OFL.txt). Subconjunto latín + latín
+ * extendido, ejes wght 300–700 y opsz 14–32. Sin CDN.
+ */
+
+/* ---------------------------------------------------------------------- */
+/* Tipografía: carga de Inter (vendorizada, §4.5)                          */
+/* ---------------------------------------------------------------------- */
+
+@font-face {
+  font-family: "InterVariable";
+  src:
+    url("../vendor/fonts/InterVariable.woff2") format("woff2-variations"),
+    url("../vendor/fonts/InterVariable.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "InterVariable";
+  src:
+    url("../vendor/fonts/InterVariable-Italic.woff2") format("woff2-variations"),
+    url("../vendor/fonts/InterVariable-Italic.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  /* --------------------------------------------------------------------
+   * §4.1 Color base (monocromo). Contrastes medidos contra --papel.
+   * -------------------------------------------------------------------- */
+  --papel: #fafaf8; /* fondo de página y del mapa — contraste: — */
+  --tinta: #111111; /* texto principal, contornos activos — 18.1:1 */
+  --tinta-2: #555553; /* texto secundario, encabezados de tabla — 7.1:1 */
+  --tinta-3: #6e6e6b; /* notas y metadatos (mínimo permitido para texto) — 4.9:1 */
+  --linea: #d9d9d5; /* reglas de tabla y divisor de columnas (decorativo) — — */
+  --linea-fuerte: #858581; /* contornos de polígonos a distinguir — 3.5:1 */
+  --foco: #111111; /* anillo de foco de 2px con 2px de separación — 18.1:1 */
+  --superficie: #ffffff; /* drawer, tooltip, hoja móvil — — */
+  --esqueleto: #ecece8; /* bloques de carga — — */
+  --superficie-realzada: #f0f0ec; /* fila activa/expandida de tabla (spec §7.1) — — */
+
+  /* --------------------------------------------------------------------
+   * §4.2 Escala de prioridad: oportunidad/disponibilidad relativa (color PRIMARIO del mapa y
+   * del ranking, Habitancia). Secuencial de un solo matiz (rosa mexicano, en honor a la CDMX):
+   * O_{i,h,r}/IC_{i,h} es un percentil de prioridad [0,1], no una comparación de dos sentidos. El
+   * mapa pinta con los 5 tonos (quintiles); la leyenda agrupa en 3 categorías legibles
+   * (leyenda.js). Sigue siendo apta para daltonismo: un solo matiz, degradado solo por
+   * luminosidad/saturación (nunca se distingue por tono), igual que la escala ocre anterior.
+   * Contraste contra --papel calibrado paso a paso igual o mejor que la escala anterior (1.15,
+   * 1.52, 2.25, 3.65, 6.51:1) porque --prioridad-3/--prioridad-5 también se usan como color de
+   * texto (resumen.css, ranking.css, comparar.css), siempre junto a un símbolo (●●●) que no
+   * depende solo del color.
+   * -------------------------------------------------------------------- */
+  --prioridad-1: #f9e5ee; /* percentil 0–20 (menor prioridad relativa) */
+  --prioridad-2: #f3bfd7; /* percentil 20–40 */
+  --prioridad-3: #eb8bb8; /* percentil 40–60 */
+  --prioridad-4: #e1478f; /* percentil 60–80 */
+  --prioridad-5: #ac1c5f; /* percentil 80–100 (mayor prioridad relativa, tope; rosa mexicano oscuro) */
+  --sin-datos: #f2f2ef; /* sin_datos (rama o AGEB completa), con patrón hachurado */
+  --sin-datos-hachura: #8c8c88; /* líneas del hachurado a 45°, 1px cada 6px */
+  --confianza-baja-punto: rgba(17, 17, 17, 0.45); /* punteado de confianza baja: puntos de 1.2px cada 5px */
+
+  /* --------------------------------------------------------------------
+   * §4.3 Escala de tendencia (heredada; uso RESTRINGIDO a Nivel 2 -- la gráfica de población
+   * objetivo, graficas.js -- nunca colorea el mapa ni el ranking en su color principal, eso es
+   * tarea de §4.2 arriba). Escala divergente azul ↔ ocre, sin rojo/verde.
+   * -------------------------------------------------------------------- */
+  --sube-1: #c6daea; /* tendencia al alza, |tasa| < 2 %/año */
+  --sube-2: #7ea7cb; /* 2 – 3.5 */
+  --sube-3: #2f6a9e; /* ≥ 3.5 (tope) */
+  --baja-1: #f1d3b3; /* tendencia a la baja, |tasa| < 2 %/año */
+  --baja-2: #dd9a5e; /* 2 – 3.5 */
+  --baja-3: #a95616; /* ≥ 3.5 (tope) */
+  --mantiene: #e3ddd0; /* estable (neutro cálido, un solo tono) */
+  --sube-texto: #245a88; /* símbolo/palabra "Sube" como texto — 6.9:1 */
+  --baja-texto: #8f4712; /* símbolo/palabra "Baja" como texto — 6.5:1 */
+  --mantiene-texto: #5e5646; /* símbolo/palabra "Se mantiene" — 7.0:1 */
+
+  /* --------------------------------------------------------------------
+   * §4.3 Estado recesivo (atenuación por foco: luminosidad/saturación,
+   * nunca opacidad — la opacidad queda reservada al punteado de §4.2).
+   * -------------------------------------------------------------------- */
+  --recesivo-relleno: #eeeeeb; /* relleno de alcaldías vecinas en vista de alcaldía */
+  --recesivo-contorno: #858581; /* contorno de las vecinas — 3.5:1 (silueta) */
+  --recesivo-texto: #6e6e6b; /* etiquetas de las vecinas — 4.9:1 */
+  /* --recesivo-filtro: retirado (correccion/action_plan.md §8.2 punto 42, plans/frontend_specs.md
+     §4.4): costaba ~9s de hilo bloqueado (filter CSS rasterizando vecinas fuera de pantalla). El
+     mismo efecto visual ya lo dan --recesivo-relleno/--recesivo-contorno sin filter. */
+
+  /* --------------------------------------------------------------------
+   * §4.5 Prioridades y pesos (componente nuevo: círculos de peso 1-5 por rama, prioridades.js).
+   * -------------------------------------------------------------------- */
+  --peso-relleno: var(--tinta); /* círculo de prioridad activo (1–5) */
+  --peso-vacio: var(--linea); /* círculo de prioridad inactivo */
+  --peso-foco: var(--foco); /* anillo de foco sobre el control de círculos */
+
+  /* --------------------------------------------------------------------
+   * §4.6 Tipografía. Familia única (Inter variable) para todo el sitio.
+   * Cada fila de la tabla del spec: tamaño/interlínea, peso, tracking.
+   * -------------------------------------------------------------------- */
+  --f-familia: "InterVariable", "Inter", "Helvetica Neue", Arial, system-ui, sans-serif;
+
+  /* escala de modo presentación (§10.9): 1 por defecto, 1.25 activada por
+     la clase .modo-presentacion en <html> (conmutada en interaccion.js) */
+  --escala: 1;
+
+  /* pantalla inicial, "¿Dónde podrían hacer falta más servicios...?" (spec §4.6; reemplaza al
+     titular dinámico retirado -- Habitancia no genera frases en tiempo de ejecución) */
+  --t-mision-tam: clamp(24px, 2vw, 30px);
+  --t-mision-alto: 1.15;
+  --t-mision-peso: 420;
+  --t-mision-tracking: -0.01em;
+
+  /* cifra principal de la ficha AGEB */
+  --t-ficha-cifra-tam: 44px;
+  --t-ficha-cifra-alto: 1;
+  --t-ficha-cifra-peso: 380;
+  --t-ficha-cifra-tracking: -0.02em;
+
+  /* nombre de alcaldía o AGEB en la columna */
+  --t-h2-tam: 20px;
+  --t-h2-alto: 1.2;
+  --t-h2-peso: 500;
+  --t-h2-tracking: -0.005em;
+
+  /* celdas, detalle, drawer */
+  --t-cuerpo-tam: 14px;
+  --t-cuerpo-alto: 20px;
+  --t-cuerpo-peso: 400;
+  --t-cuerpo-tracking: 0em;
+
+  /* línea de capa + horizonte bajo el titular */
+  --t-subtitulo-tam: 13px;
+  --t-subtitulo-alto: 18px;
+  --t-subtitulo-peso: 450;
+  --t-subtitulo-tracking: 0em;
+
+  /* notas, fuentes, tooltip secundario */
+  --t-nota-tam: 12px;
+  --t-nota-alto: 16px;
+  --t-nota-peso: 400;
+  --t-nota-tracking: 0em;
+
+  /* encabezados de tabla, enlaces pequeños, franja lateral (mayúsculas) */
+  --t-etiqueta-tam: 11px;
+  --t-etiqueta-alto: 14px;
+  --t-etiqueta-peso: 550;
+  --t-etiqueta-tracking: 0.08em;
+
+  /* --------------------------------------------------------------------
+   * §4.6 Espaciado y retícula. Escala base de 8px (con el paso de 4px
+   * inicial para ajustes finos).
+   * -------------------------------------------------------------------- */
+  --e-1: 4px;
+  --e-2: 8px;
+  --e-3: 12px;
+  --e-4: 16px;
+  --e-5: 24px;
+  --e-6: 32px;
+  --e-7: 48px;
+  --e-8: 64px;
+
+  /* --------------------------------------------------------------------
+   * §4.7 Movimiento. Con prefers-reduced-motion, ver la media query de
+   * abajo: todos los --d-* pasan a 0ms salvo los crossfades, que usan
+   * --d-crossfade (se queda en 120ms).
+   * -------------------------------------------------------------------- */
+  --d-intencion: 100ms; /* retardo de hover con intención */
+  --d-repliegue: 180ms; /* retardo antes de plegar */
+  --d-xs: 120ms;
+  --d-s: 200ms;
+  --d-m: 300ms;
+  --d-l: 700ms; /* vuelo del mapa */
+
+  /* token derivado: duración de los crossfades (titular, transición
+     inversa con movimiento reducido, etc.). En movimiento normal
+     coincide con --d-s; el spec fija su valor bajo reduced-motion en
+     120ms (igual a --d-xs) de forma explícita, así que se separa en su
+     propio token para no depender de que --d-s no se ponga a 0ms. */
+  --d-crossfade: 200ms;
+
+  --ease-salida: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-entrada-salida: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-pop: cubic-bezier(0.34, 1.45, 0.64, 1); /* rebote leve */
+  --ease-lineal: linear; /* solo crossfades */
+}
+
+/* Modo presentación (§10.9, §4.5): todos los tamaños tipográficos se leen
+   siempre como calc(var(--t-*-tam) * var(--escala)) en el resto del CSS;
+   aquí solo se conmuta el token. */
+html.modo-presentacion {
+  --escala: 1.25;
+}
+
+/* --------------------------------------------------------------------
+ * §4.7 prefers-reduced-motion: todas las duraciones a 0ms, salvo el
+ * crossfade dedicado, que se queda en 120ms (nunca en 0, para no perder
+ * el crossfade como sustituto de la animación retirada).
+ * -------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-intencion: 0ms;
+    --d-repliegue: 0ms;
+    --d-xs: 0ms;
+    --d-s: 0ms;
+    --d-m: 0ms;
+    --d-l: 0ms;
+    --d-crossfade: 120ms;
+  }
+}
+
+/* --------------------------------------------------------------------
+ * Utilidad de cifras (§4.5, criterio de aceptación de F5): activa
+ * numerales tabulares y desactiva la "a" de un piso (cv11) en cualquier
+ * cifra de la interfaz (tabla, ficha, titular, leyenda, slider…).
+ * -------------------------------------------------------------------- */
+.cifras {
+  font-feature-settings:
+    "tnum" 1,
+    "cv11" 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------
+ * Utilidad de color de veredicto como texto (§4.2 "-texto"). La CSP del
+ * proyecto es `style-src 'self'` (sin `unsafe-inline`), así que ningún
+ * módulo puede poner `style="color: ..."` con el color que corresponda a
+ * un registro: en vez de eso, cada uno agrega una de estas clases según
+ * `registro.veredicto`. Única fuente de estos 4 colores como texto.
+ * -------------------------------------------------------------------- */
+.color-veredicto--sube { color: var(--sube-texto); }
+.color-veredicto--baja { color: var(--baja-texto); }
+.color-veredicto--se_mantiene { color: var(--mantiene-texto); }
+.color-veredicto--sin_datos { color: var(--tinta-3); }

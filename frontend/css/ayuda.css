@@ -1,0 +1,57 @@
+/*
+ * ayuda.css — sistema de ayuda "?" (plans/frontend_specs.md §10.14, plan F89). El panel se ancla
+ * con CSS puro (`position: absolute` dentro de `.ayuda { position: relative }`), nunca con una
+ * coordenada calculada en JS. Solo variables de tokens.css (CLAUDE.md, spec §4).
+ */
+
+.ayuda {
+  position: relative;
+  display: inline-block;
+}
+
+.ayuda__boton {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--linea-fuerte);
+  background: var(--superficie);
+  color: var(--tinta-2);
+  font-size: calc(var(--t-etiqueta-tam) * var(--escala));
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ayuda__boton:hover {
+  background: var(--superficie-realzada);
+}
+
+.ayuda__boton:focus-visible,
+.ayuda__boton[aria-expanded="true"] {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.ayuda__panel {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + var(--e-1));
+  left: 0;
+  width: max-content;
+  max-width: 280px;
+  padding: var(--e-3);
+  background: var(--superficie);
+  border: 1px solid var(--linea-fuerte);
+  box-shadow: 0 2px 8px rgba(17, 17, 17, 0.12);
+}
+
+.ayuda__parrafo {
+  margin: 0 0 var(--e-2);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  line-height: var(--t-nota-alto);
+  color: var(--tinta-2);
+}
+
+.ayuda__parrafo:last-child {
+  margin-bottom: 0;
+}

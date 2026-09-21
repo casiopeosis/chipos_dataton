@@ -1,0 +1,192 @@
+/*
+ * franja.css — franja lateral (40 px) y drawer modal "Metodología y limitaciones"
+ * (plans/frontend_specs.md §10.5, §14.6). Tarea F80.
+ */
+
+/* ------------------------------------------------------------------------------------------ */
+/* Franja lateral: botón de 40 px a todo lo alto, texto rotado -90°                             */
+/* ------------------------------------------------------------------------------------------ */
+
+.franja {
+  display: flex;
+}
+
+.franja__boton {
+  appearance: none;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: var(--e-4) 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--f-familia);
+  font-size: var(--t-etiqueta-tam);
+  line-height: var(--t-etiqueta-alto);
+  font-weight: var(--t-etiqueta-peso);
+  letter-spacing: var(--t-etiqueta-tracking);
+  text-transform: uppercase;
+  color: var(--tinta-2);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: end;
+}
+
+.franja__boton:hover {
+  color: var(--tinta);
+}
+
+.franja__boton:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: -2px;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Drawer modal (spec §10.5: 560 px en escritorio, 100 % en móvil vía max-width)                */
+/* ------------------------------------------------------------------------------------------ */
+
+dialog.franja__drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: 560px;
+  max-width: 100%;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-left: 1px solid var(--linea);
+  background: var(--superficie);
+  color: var(--tinta);
+  box-sizing: border-box;
+  overflow-y: auto;
+  transform: translateX(100%);
+  /* Duración de salida por defecto (200 ms, --d-s); la clase --entrando la sube a 300 ms
+     (--d-m) mientras se abre. Ver js/franja.js: abrirDialogo()/cerrarDialogo(). */
+  transition: transform var(--d-s) var(--ease-salida);
+}
+
+dialog.franja__drawer.franja__drawer--entrando {
+  transition-duration: var(--d-m);
+}
+
+dialog.franja__drawer.franja__drawer--visible {
+  transform: translateX(0);
+}
+
+/* Fondo --papel al 70 % (spec §10.5), construido a partir del propio token, nunca un color
+   literal fuera de tokens.css. */
+dialog.franja__drawer::backdrop {
+  background: color-mix(in srgb, var(--papel) 70%, transparent);
+  opacity: 0;
+  transition: opacity var(--d-s) var(--ease-salida);
+}
+
+dialog.franja__drawer.franja__drawer--entrando::backdrop {
+  transition-duration: var(--d-m);
+}
+
+dialog.franja__drawer.franja__drawer--visible::backdrop {
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Contenido del drawer                                                                          */
+/* ------------------------------------------------------------------------------------------ */
+
+.franja__cabecera-drawer {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--e-4);
+  padding: var(--e-5) var(--e-6);
+  border-bottom: 1px solid var(--linea);
+  background: var(--superficie);
+}
+
+.franja__titulo {
+  margin: 0;
+  font-size: var(--t-h2-tam);
+  line-height: var(--t-h2-alto);
+  font-weight: var(--t-h2-peso);
+  letter-spacing: var(--t-h2-tracking);
+  color: var(--tinta);
+}
+
+.franja__titulo:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.franja__cerrar {
+  appearance: none;
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  padding: var(--e-1) var(--e-2);
+  cursor: pointer;
+  font-family: var(--f-familia);
+  font-size: var(--t-etiqueta-tam);
+  line-height: var(--t-etiqueta-alto);
+  font-weight: var(--t-etiqueta-peso);
+  letter-spacing: var(--t-etiqueta-tracking);
+  text-transform: uppercase;
+  color: var(--tinta-2);
+}
+
+.franja__cerrar:hover {
+  color: var(--tinta);
+}
+
+.franja__cerrar:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.franja__cuerpo {
+  padding: var(--e-5) var(--e-6) var(--e-8);
+  max-width: 60ch;
+}
+
+.franja__seccion + .franja__seccion {
+  margin-top: var(--e-6);
+}
+
+.franja__seccion-titulo {
+  margin: 0 0 var(--e-2);
+  font-size: var(--t-cuerpo-tam);
+  line-height: var(--t-cuerpo-alto);
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.franja__parrafo {
+  margin: 0 0 var(--e-3);
+  font-size: var(--t-cuerpo-tam);
+  line-height: var(--t-cuerpo-alto);
+  font-weight: var(--t-cuerpo-peso);
+  color: var(--tinta-2);
+}
+
+.franja__parrafo:last-child {
+  margin-bottom: 0;
+}
+
+.franja__lista {
+  margin: 0;
+  padding-left: var(--e-5);
+  font-size: var(--t-cuerpo-tam);
+  line-height: var(--t-cuerpo-alto);
+  color: var(--tinta-2);
+}
+
+.franja__lista li + li {
+  margin-top: var(--e-2);
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Movimiento reducido: tokens.css ya pone --d-m/--d-s a 0 (salvo --d-crossfade), así que la    */
+/* transición del drawer queda instantánea sin necesidad de reglas propias aquí.                */
+/* ------------------------------------------------------------------------------------------ */

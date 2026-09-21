@@ -1,0 +1,156 @@
+/*
+ * cabecera.css — cabecera de 48 px y migas de navegación (plans/frontend_specs.md §5.2, §10.6).
+ * Tarea F25. El contenido lo pinta js/cabecera.js; aquí solo va la presentación.
+ *
+ * `.visualmente-oculto` es una utilidad transversal (usada por el `<h1>` de la cabecera, spec
+ * §13) que en rigor pertenece a css/base.css (F5/F95, aún no creado en este momento del
+ * proyecto). Se define aquí para no dejar el `<h1>` sin estilo; si F5/F95 la define también en
+ * base.css, ambas reglas son idénticas y no chocan.
+ */
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.cabecera {
+  box-sizing: border-box;
+  height: 48px;
+  border-bottom: 1px solid var(--linea);
+  background: var(--papel);
+  display: flex;
+  align-items: stretch;
+}
+
+.cabecera__fila {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--e-5);
+  padding: 0 var(--e-6);
+  min-width: 0;
+}
+
+.cabecera__producto {
+  flex: 0 0 auto;
+  font-size: var(--t-etiqueta-tam);
+  line-height: var(--t-etiqueta-alto);
+  font-weight: var(--t-etiqueta-peso);
+  letter-spacing: var(--t-etiqueta-tracking);
+  text-transform: uppercase;
+  color: var(--tinta);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Migas (spec §10.6): <nav aria-label="Ruta"><ol>…</ol></nav>                                  */
+/* ------------------------------------------------------------------------------------------ */
+
+.cabecera__migas {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cabecera__migas-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.cabecera__migas-lista li {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  min-width: 0;
+}
+
+.cabecera__migas-lista li:not(:first-child)::before {
+  content: "/";
+  color: var(--linea-fuerte);
+}
+
+.cabecera__miga {
+  font-size: var(--t-etiqueta-tam);
+  line-height: var(--t-etiqueta-alto);
+  font-weight: var(--t-etiqueta-peso);
+  letter-spacing: var(--t-etiqueta-tracking);
+  text-transform: uppercase;
+  color: var(--tinta-2);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 28ch;
+}
+
+a.cabecera__miga:hover {
+  color: var(--tinta);
+  text-decoration: underline;
+}
+
+.cabecera__miga--actual {
+  color: var(--tinta);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Selector de vista de mapa (spec §9): el contenedor vive aquí, css/vista-mapa.css lo estiliza */
+/* (vista_mapa.js#montarVistaMapa lo monta dentro).                                             */
+/* ------------------------------------------------------------------------------------------ */
+
+.cabecera__vista-mapa {
+  flex: 0 0 auto;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Acciones a la derecha: modo presentación ⤢                                                  */
+/* ------------------------------------------------------------------------------------------ */
+
+.cabecera__acciones {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--e-4);
+}
+
+.cabecera__boton {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: var(--e-1) var(--e-2);
+  font-family: var(--f-familia);
+  font-size: var(--t-etiqueta-tam);
+  line-height: var(--t-etiqueta-alto);
+  font-weight: var(--t-etiqueta-peso);
+  letter-spacing: var(--t-etiqueta-tracking);
+  text-transform: uppercase;
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.cabecera__boton:hover {
+  color: var(--tinta);
+}
+
+.cabecera__boton--icono {
+  font-size: var(--t-cuerpo-tam);
+  text-transform: none;
+}
+
+.cabecera__miga:focus-visible,
+.cabecera__boton:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}

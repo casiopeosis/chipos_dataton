@@ -1,0 +1,76 @@
+/*
+ * prioridades.css — pesos por rama (plans/frontend_specs.md §10.10, plan F35). Cinco círculos por
+ * rama, cada fila es un `role="slider"` propio. Solo variables de tokens.css (CLAUDE.md, spec §4).
+ */
+
+.prioridades__titulo {
+  margin: 0 0 var(--e-2);
+  font-size: calc(var(--t-subtitulo-tam) * var(--escala));
+  font-weight: var(--t-subtitulo-peso);
+  color: var(--tinta-2);
+}
+
+.prioridades__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e-3);
+  padding: var(--e-1) 0;
+}
+
+.prioridades__nombre {
+  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
+  color: var(--tinta);
+}
+
+.prioridades__slider {
+  cursor: pointer;
+}
+
+.prioridades__slider:focus-visible {
+  outline: 2px solid var(--peso-foco);
+  outline-offset: 2px;
+}
+
+.prioridades__circulos {
+  display: flex;
+  gap: var(--e-1);
+}
+
+.prioridades__circulo {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--peso-relleno);
+  background: transparent;
+}
+
+.prioridades__circulo--lleno {
+  background: var(--peso-relleno);
+}
+
+.prioridades__restablecer {
+  margin-top: var(--e-2);
+  padding: var(--e-1) var(--e-2);
+  background: var(--superficie);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--tinta);
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  cursor: pointer;
+}
+
+.prioridades__restablecer:hover {
+  background: var(--superficie-realzada);
+}
+
+.prioridades__restablecer:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.prioridades__ayuda {
+  margin: var(--e-1) 0 0;
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Habitancia — Pruebas del motor de composición (F16)</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 72ch;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #111;
+        background: #fafaf8;
+      }
+      h1 {
+        font-size: 1.25rem;
+      }
+      .resumen {
+        font-weight: 600;
+      }
+      .lista-pruebas {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .lista-pruebas li {
+        padding: 0.35rem 0.5rem;
+        border-bottom: 1px solid #d9d9d5;
+        font-size: 0.9rem;
+      }
+      .prueba-ok {
+        color: #245a88;
+      }
+      .prueba-fallo {
+        color: #8f4712;
+        font-weight: 600;
+      }
+      .prueba-fallo pre {
+        white-space: pre-wrap;
+        font-size: 0.8rem;
+        margin: 0.25rem 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Pruebas del motor de composición cliente (F16): js/composicion.js</h1>
+    <p>
+      Pruebas en navegador, sin framework (plans/frontend_specs.md §17.5): oferta cero, rama sin
+      dato, invariantes [0,1], independencia de pesos, rendimiento &lt; 80 ms.
+    </p>
+    <div id="resultados" aria-live="polite">Ejecutando pruebas…</div>
+    <script type="module" src="./pruebas_composicion.js"></script>
+  </body>
+</html>

@@ -1,0 +1,56 @@
+/*
+ * vista-mapa.css — selector de vista de mapa (plans/frontend_specs.md §9, plan F65).
+ * `role="radiogroup"` con `<input type="radio">` estilizados como pastillas; mismo patrón visual
+ * que tenía el control de capas retirado (`capas.css`, ver git log), adaptado a 5 opciones.
+ */
+
+.vista-mapa {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--linea);
+  border-radius: 2px;
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.vista-mapa__entrada {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.vista-mapa__opcion {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 var(--e-2);
+  border-radius: 2px;
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  line-height: var(--t-nota-alto);
+  color: var(--tinta-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.vista-mapa__entrada:checked + .vista-mapa__opcion {
+  background: var(--tinta);
+  color: var(--papel);
+  font-weight: 600;
+}
+
+.vista-mapa__entrada:focus-visible + .vista-mapa__opcion {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.vista-mapa__opcion:hover {
+  color: var(--tinta);
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Habitancia — Pruebas del mapa (corrección de devanado de AGEB)</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 72ch;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #111;
+        background: #fafaf8;
+      }
+      h1 {
+        font-size: 1.25rem;
+      }
+      .resumen {
+        font-weight: 600;
+      }
+      .lista-pruebas {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .lista-pruebas li {
+        padding: 0.35rem 0.5rem;
+        border-bottom: 1px solid #d9d9d5;
+        font-size: 0.9rem;
+      }
+      .prueba-ok {
+        color: #245a88;
+      }
+      .prueba-fallo {
+        color: #8f4712;
+        font-weight: 600;
+      }
+      .prueba-fallo pre {
+        white-space: pre-wrap;
+        font-size: 0.8rem;
+        margin: 0.25rem 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Pruebas del mapa: js/mapa.js — devanado de anillos y clasificación por quintiles</h1>
+    <p>
+      Regresión del defecto "AGEB con color uniforme al enfocar una alcaldía"
+      (correccion/solucion_agebs.md): corrección de orientación de anillos y robustez del
+      clasificador de quintiles ante empates masivos.
+    </p>
+    <div id="resultados" aria-live="polite">Ejecutando pruebas…</div>
+    <script type="module" src="./pruebas_mapa.js"></script>
+  </body>
+</html>

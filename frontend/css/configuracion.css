@@ -1,0 +1,99 @@
+/*
+ * configuracion.css — flujo de configuración del escenario (plans/frontend_specs.md §5.3, §5.5,
+ * §10.12, plan F31/F35): población objetivo, tipo de búsqueda, filtro de nivel de riesgo.
+ * (Las prioridades por rama, §10.10, tienen su propio archivo: prioridades.css.)
+ * Solo variables de tokens.css (CLAUDE.md, spec §4).
+ */
+
+.panel-configuracion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-5);
+  margin-bottom: var(--e-6);
+  padding-bottom: var(--e-5);
+  border-bottom: 1px solid var(--linea);
+}
+
+/* --------------------------------------------------------------------
+ * Población objetivo (§5.3): radiogroup de 6 opciones.
+ * -------------------------------------------------------------------- */
+
+.poblacion__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  margin-bottom: var(--e-2);
+  font-size: calc(var(--t-subtitulo-tam) * var(--escala));
+  color: var(--tinta-2);
+}
+
+.poblacion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2);
+}
+
+.poblacion__entrada {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.poblacion__opcion {
+  padding: var(--e-1) var(--e-3);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--tinta-2);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  cursor: pointer;
+}
+
+.poblacion__entrada:checked + .poblacion__opcion {
+  background: var(--tinta);
+  border-color: var(--tinta);
+  color: var(--papel);
+}
+
+.poblacion__entrada:focus-visible + .poblacion__opcion {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.poblacion__nota {
+  margin: var(--e-1) 0 0;
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}
+
+/* --------------------------------------------------------------------
+ * Filtro de nivel de riesgo (§10.12): 3 escalones (baja/media/alta confianza).
+ * -------------------------------------------------------------------- */
+
+.riesgo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e-2);
+}
+
+.riesgo__etiqueta {
+  font-size: calc(var(--t-subtitulo-tam) * var(--escala));
+  color: var(--tinta-2);
+}
+
+.riesgo__control {
+  accent-color: var(--tinta);
+}
+
+.riesgo__valor {
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta);
+}
+
+.riesgo__ayuda {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}

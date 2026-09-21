@@ -1,0 +1,36 @@
+﻿identifier: MEX-INEGI.ESD2.01-CPV-2020
+
+title: Principales resultados por AGEB y manzana urbana del Censo de Población y Vivienda 2020. Datos oportunos
+
+description: 
+INEGI. Censo de Población y Vivienda 2020. SNIEG. Información de Interés Nacional.
+Conjunto de indicadores de población y vivienda a nivel AGEB y manzana urbana de la entidad federativa de Ciudad de México, provenientes del Censo de Población y Vivienda 2020.
+
+NOTA:
+El 16 de marzo de 2021, se reemplazó el archivo del Conjunto de datos, debido a que se incorporó la variable Total de viviendas particulares habitadas con características y se adicionaron las cabeceras municipales con menos de 2 500 habitantes y áreas deshabitadas. Asimismo, en el archivo Diccionario de datos se hizo una revisión para mejorar la redacción de la descripción de los indicadores.
+
+El 16 de abril de 2021, se reemplazó el archivo del Diccionario de datos, debido a que se mejoró la redacción de algunos indicadores.
+
+El 26 de julio de 2021, se reemplazó el archivo del Conjunto de datos, debido a que se agregaron las AGEB y manzanas de localidades urbanas de menos de 2 500 habitantes, con lo que se completó el universo de AGEB y manzanas urbanas de acuerdo con el Marco Geoestadístico. Además, se sustituyó el archivo del Diccionario de datos, ya que el nombre del mnemónico del indicador Población masculina de 3 años y más que habla alguna lengua indígena y no habla español, decía IP3HLINHE_M y debe decir P3HLINHE_M.
+
+modified: 2021-07-26
+
+publisher: Instituto Nacional de Estadística y Geografía, INEGI
+
+mbox: atencion.usuarios@inegi.org.mx
+
+license: https://www.inegi.org.mx/inegi/terminos.html
+
+dataDictionary: https://www.inegi.org.mx/rnm/index.php/catalog/632/data_dictionary?idPro=
+
+keyword: "vivienda", "personas", "censo", "iter", "localidad", "población", "hogar",  "indicadores", "fecundidad", "migración", "indígena", "discapacidad", "educación", "económicas", "salud", "conyugal", "religión"
+
+contactPoint: Mtro. J. Armando Aguiar Rodríguez, 800 111 4634
+
+temporal: 2020-03-15-2020-03-15
+
+spatial: Ciudad de México
+
+accrualPeriodicity: Decenalmente
+
+distribution: https://www.inegi.org.mx/programas/ccpv/2020/

@@ -1,0 +1,118 @@
+/*
+ * layout.css — reparto de escritorio (plans/frontend_specs.md §5.1). Tarea F25.
+ *
+ * Solo define la retícula macro de la página (cabecera / columna / mapa / franja / pie) y
+ * los tres anchos de columna izquierda de §5.1. El contenido de cada región (titular, tabla,
+ * mapa SVG, leyenda, control de horizonte, franja/drawer) lo pintan sus propias tareas
+ * (F35-F80) dentro de los contenedores que deja `index.html`; sus propios archivos CSS
+ * (mapa.css, leyenda.css, horizonte.css, franja.css, tabla.css…) resuelven el posicionamiento
+ * fino dentro de cada región, no este archivo.
+ *
+ * El layout móvil (< 1024 px, hoja inferior) es F90 (css/movil.css), que se importa después de
+ * este archivo en index.html y sobreescribe estas reglas en su rango de anchos.
+ */
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: 48px 1fr auto;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--f-familia);
+}
+
+body > header {
+  grid-row: 1;
+  min-height: 0;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Retícula principal: columna izquierda | mapa | franja (spec §5.1)                            */
+/* ------------------------------------------------------------------------------------------ */
+
+.app-layout {
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: var(--ancho-columna-izquierda, 480px) 1fr 40px;
+  grid-template-areas: "panel mapa franja";
+  column-gap: 0;
+  min-height: 0;
+}
+
+.panel-datos {
+  grid-area: panel;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--e-6) var(--e-6) var(--e-6) var(--e-6);
+  border-right: 1px solid var(--linea);
+  box-sizing: border-box;
+}
+
+.contenedor-mapa {
+  grid-area: mapa;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  background: var(--papel);
+}
+
+.franja {
+  grid-area: franja;
+  min-height: 0;
+  border-left: 1px solid var(--linea);
+  box-sizing: border-box;
+}
+
+body > footer {
+  grid-row: 3;
+  min-height: 0;
+  padding: var(--e-2) var(--e-4);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}
+
+body > footer p {
+  margin: 0 0 var(--e-1);
+}
+
+.pie__advertencia {
+  max-width: 60ch;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Anchos de columna izquierda por ancho de ventana (spec §5.1)                                 */
+/* ------------------------------------------------------------------------------------------ */
+
+/* < 1024px: layout móvil/tableta (F90, css/movil.css) reemplaza esta retícula por completo. */
+@media (max-width: 1023px) {
+  .app-layout {
+    display: block;
+  }
+
+  .panel-datos {
+    border-right: none;
+  }
+
+  .franja {
+    border-left: none;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  :root {
+    --ancho-columna-izquierda: 480px;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --ancho-columna-izquierda: clamp(480px, 34vw, 560px);
+  }
+}

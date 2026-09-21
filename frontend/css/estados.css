@@ -1,0 +1,39 @@
+/*
+ * estados.css — estados de carga, error y vacío (plans/frontend_specs.md §15). Tarea F100.
+ * Solo variables de tokens.css, sin `!important`.
+ */
+
+.estado-carga {
+  padding: var(--e-4, 24px);
+  color: var(--tinta-3);
+  font-size: var(--t-cuerpo-tam);
+}
+
+.estado-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e-3, 16px);
+  padding: var(--e-4, 24px);
+  color: var(--tinta);
+}
+
+.estado-error__boton {
+  padding: 8px 16px;
+  background: var(--tinta);
+  color: var(--papel);
+  border: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.estado-error__boton:hover,
+.estado-error__boton:focus-visible {
+  background: var(--tinta-2);
+}
+
+.estado-vacio {
+  padding: var(--e-4, 24px);
+  color: var(--tinta-3);
+  font-size: var(--t-cuerpo-tam);
+}

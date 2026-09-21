@@ -1,0 +1,16 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
+    volumes:
+      # Código del frontend: montado en vivo, no requiere rebuild al editarlo.
+      - ./frontend:/usr/share/nginx/html:ro
+      # Salidas del pipeline y geometría de referencia: se sirven directo desde
+      # data/, nunca se copian ni se editan (CLAUDE.md → data/processed y
+      # data/reference son de solo lectura).
+      - ./data/outputs:/data-outputs:ro
+      - ./data/reference:/data-reference:ro
+    restart: unless-stopped

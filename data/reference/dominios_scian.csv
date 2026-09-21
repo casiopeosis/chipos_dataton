@@ -1,0 +1,11 @@
+scian,dominio,subcategoria,en_serie_armonizada,nota
+713941,adultos_mayores,deporte,true,Clubes deportivos y de acondicionamiento fisico; presente en Gen A y Gen B
+713942,adultos_mayores,deporte,true,Clubes deportivos y de acondicionamiento fisico; presente en Gen A y Gen B
+713943,adultos_mayores,deporte,true,Clubes deportivos y de acondicionamiento fisico; presente en Gen A y Gen B
+713944,adultos_mayores,deporte,true,Clubes deportivos y de acondicionamiento fisico; presente en Gen A y Gen B
+611621,adultos_mayores,deporte,false,"Escuelas de deporte; solo Gen B (2022+), no comparable contra Gen A"
+611622,adultos_mayores,deporte,false,"Escuelas de deporte; solo Gen B (2022+), no comparable contra Gen A"
+623311,adultos_mayores,residencias,true,Asilos y residencias para adultos mayores
+623312,adultos_mayores,residencias,true,Asilos y residencias para adultos mayores
+624121,adultos_mayores,cuidado_diurno,true,"Centros de cuidado diurno; marcar revision_manual=true (mezcla poblaciones, README Gen B)"
+624122,adultos_mayores,cuidado_diurno,true,"Centros de cuidado diurno; marcar revision_manual=true (mezcla poblaciones, README Gen B)"
