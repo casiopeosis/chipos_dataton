@@ -10,8 +10,10 @@
 // validar sin conocer esos módulos: vista, cve_mun, cvegeo, vistaMapa, población, horizonte,
 // búsqueda, pesos, umbral de riesgo y comparar.
 //
-// Formato del hash (plans/frontend_plan.md §1):
-// "#/alcaldia/007/ageb/0900700011234?vista=salud&h=h3&pob=primaria&busqueda=oportunidad&
+// Formato del hash (plans/frontend_plan.md §1; el selector de "¿qué buscar?" -oportunidad/
+// disponibilidad- se retiró del frontend: ya no hay `busqueda=` en el hash, la sesión siempre
+// busca oportunidad, `ESTADO_POR_DEFECTO.busqueda` es una constante que ningún flujo cambia):
+// "#/alcaldia/007/ageb/0900700011234?vista=salud&h=h3&pob=primaria&
 // pesos=4.5.3.2&filtros=educacion:guarderia__publico,preescolar__publico|salud:...&riesgo=0.8&
 // orden=oportunidad&info=1&comparar=007.010". Se parsea al cargar el módulo (incluida una recarga
 // directa con cualquier hash) y se actualiza el hash cuando cambia el estado, con
@@ -90,7 +92,6 @@ export const ACCIONES = Object.freeze({
   CAMBIAR_VISTA_MAPA: "cambiar_vista_mapa",
   CAMBIAR_POBLACION: "cambiar_poblacion",
   CAMBIAR_HORIZONTE: "cambiar_horizonte",
-  CAMBIAR_BUSQUEDA: "cambiar_busqueda",
   CAMBIAR_PESO: "cambiar_peso",
   RESTABLECER_PESOS: "restablecer_pesos",
   CAMBIAR_FILTRO_RAMA: "cambiar_filtro_rama",
@@ -134,10 +135,6 @@ function esVistaMapaValida(valor) {
 
 function esPoblacionValida(valor) {
   return SEGMENTOS_DEMANDA.includes(valor);
-}
-
-function esBusquedaValida(valor) {
-  return Object.values(BUSQUEDA).includes(valor);
 }
 
 function esPesoValido(valor) {
@@ -205,9 +202,6 @@ export function analizarHash(hashCrudo) {
 
   const horizonte = parametros.get("h");
   if (esHorizonteValido(horizonte)) estado.horizonte = horizonte;
-
-  const busqueda = parametros.get("busqueda");
-  if (esBusquedaValida(busqueda)) estado.busqueda = busqueda;
 
   const pesosCrudo = parametros.get("pesos");
   if (typeof pesosCrudo === "string") {
@@ -279,7 +273,6 @@ export function serializarHash(estado) {
   parametros.set("vista", estado.vistaMapa);
   parametros.set("h", estado.horizonte);
   parametros.set("pob", estado.poblacion);
-  parametros.set("busqueda", estado.busqueda);
   parametros.set("pesos", RAMAS.map((r) => estado.pesos[r]).join("."));
 
   const bloquesFiltros = RAMAS.filter((r) => estado.filtros[r]?.length > 0).map(
@@ -335,11 +328,6 @@ export function reducir(estado, accion) {
     case ACCIONES.CAMBIAR_HORIZONTE: {
       if (!esHorizonteValido(accion.horizonte)) return estado;
       return { ...estado, horizonte: accion.horizonte };
-    }
-
-    case ACCIONES.CAMBIAR_BUSQUEDA: {
-      if (!esBusquedaValida(accion.busqueda)) return estado;
-      return { ...estado, busqueda: accion.busqueda };
     }
 
     case ACCIONES.CAMBIAR_PESO: {

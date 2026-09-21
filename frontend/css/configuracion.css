@@ -67,35 +67,6 @@
 }
 
 /* --------------------------------------------------------------------
- * Tipo de búsqueda (§5.5): radiogroup de 2 opciones con ayuda visible.
- * -------------------------------------------------------------------- */
-
-.busqueda__item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--e-2);
-  margin-bottom: var(--e-1);
-}
-
-.busqueda__entrada {
-  flex: 0 0 auto;
-}
-
-.busqueda__opcion {
-  font-size: calc(var(--t-cuerpo-tam) * var(--escala));
-  color: var(--tinta);
-  cursor: pointer;
-}
-
-.busqueda__ayuda {
-  flex-basis: 100%;
-  margin: 0;
-  font-size: calc(var(--t-nota-tam) * var(--escala));
-  color: var(--tinta-3);
-}
-
-/* --------------------------------------------------------------------
  * Filtro de nivel de riesgo (§10.12): 3 escalones (baja/media/alta confianza).
  * -------------------------------------------------------------------- */
 

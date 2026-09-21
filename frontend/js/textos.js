@@ -626,9 +626,6 @@ const tooltip = {
   vecina: (nombre) => interpolar('Ir a {nombre}', { nombre }),
   ageb: (v) => interpolar('Zona {cvegeo}', v),
   agebSinDatos: (motivo) => interpolar('Sin datos: {motivo}', { motivo }),
-  // Colonia asociada por mayor área de intersección (docs/perfil_datos.md → "Colonias"), no un
-  // dato oficial de AGEB: mismo criterio "(aprox.)" que `ficha.colonia`.
-  colonia: (v) => interpolar('Colonia {colonia}', v),
 };
 
 // ---------------------------------------------------------------------------------------------

@@ -554,15 +554,20 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
     const entrada = obtenerRegistroCveMun(registrosAgeb, feature.properties.cvegeo);
     const tercil = entrada?.tercil ?? "sin_datos";
     // Colonia asociada (join por mayor área de intersección, `docs/perfil_datos.md` →
-    // "Colonias"), no un dato oficial de AGEB en sí -- por eso "aprox." como en la ficha
-    // (`ficha.js`), nunca presentada como si viniera del contrato. Vale tanto en la vista general
-    // (índice compuesto) como en cualquier rama: es el mismo tooltip para las dos, no hay dos
-    // rutas de código distintas que mantener en sync.
+    // "Colonias"), no un dato oficial de AGEB en sí (la ficha, `ficha.js`, sí trae el matiz
+    // "(aprox.)" con más espacio para explicarlo; aquí, en un tooltip angosto, alcanza con el
+    // nombre). Vale tanto en la vista general (índice compuesto) como en cualquier rama: es el
+    // mismo tooltip para las dos, no hay dos rutas de código distintas que mantener en sync.
     const colonia = coloniasAgebLookup?.[feature.properties.cvegeo]?.colonia ?? null;
     limpiar(tooltipEl);
-    tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-nombre cifras" }, [feature.properties.cvegeo]));
+    // Encabezado: colonia en grande y en negritas si se conoce -- más reconocible que una clave
+    // AGEB para quien no se las memoriza; la clave sigue mostrándose siempre, como texto
+    // secundario más pequeño debajo (nunca se pierde, solo deja de ser lo primero que se lee).
     if (colonia) {
-      tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-colonia" }, [cadena("tooltip.colonia", { colonia })]));
+      tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-nombre" }, [colonia]));
+      tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-secundario cifras" }, [feature.properties.cvegeo]));
+    } else {
+      tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-nombre cifras" }, [feature.properties.cvegeo]));
     }
     tooltipEl.appendChild(
       crear("p", { clase: "mapa__tooltip-veredicto" }, [

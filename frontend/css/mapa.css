@@ -139,7 +139,7 @@
   font-family: var(--f-familia);
   font-size: calc(var(--t-cuerpo-tam) * var(--escala));
   line-height: var(--t-cuerpo-alto);
-  font-weight: 500;
+  font-weight: 700;
   color: var(--tinta);
 }
 
@@ -151,9 +151,9 @@
   color: var(--tinta-2);
 }
 
-/* Colonia asociada (hover de AGEB, ver `mapa.js#crearTooltipAgeb`): un dato aproximado, no
- * oficial de AGEB -- un tono más apagado que el nombre, igual que `.ficha__colonia`. */
-.mapa__tooltip-colonia {
+/* Clave AGEB debajo del nombre de colonia (hover de AGEB, `mapa.js#crearTooltipAgeb`): texto
+ * secundario más chico y más apagado que el encabezado, igual que `.ficha__colonia`. */
+.mapa__tooltip-secundario {
   margin: 0;
   font-family: var(--f-familia);
   font-size: calc(var(--t-nota-tam) * var(--escala));
