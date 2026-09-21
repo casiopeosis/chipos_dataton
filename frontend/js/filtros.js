@@ -9,17 +9,11 @@
 // (backend `panel.CELDAS_EDUCACION`/`CELDAS_SALUD`) o las usa tal cual para comercio/verde (sin
 // sector, backend `panel.CELDAS_COMERCIO`/`CELDAS_VERDE`).
 //
-// LÍMITE DE ALCANCE deliberado (F40 es XL): la "sugerencia automática" de nivel según población
-// objetivo (spec §10.11.1: "si la población objetivo es 6-11, sugiere 'Primaria'... el usuario
-// puede modificarlo") NO está implementada en esta primera versión -- requeriría rastrear si el
-// usuario ya tocó el filtro para no pisar su elección, y no bloquea el resto del flujo (los
-// filtros funcionan igual de bien sin la sugerencia, solo no se preseleccionan solos). Se deja
-// documentado aquí en vez de fingerse terminado.
-
 import { crear, reemplazarContenido } from "./dom.js";
 import { textos } from "./textos.js";
 import { RAMAS } from "./composicion.js";
 import { despachar, suscribir, obtenerEstado, ACCIONES } from "./estado.js";
+import { crearAyuda } from "./ayuda.js";
 
 const SECTORES = Object.freeze(["todos", "publico", "privado"]);
 /** Ramas con cruce de sector (§10.11.1/§10.11.2); comercio/verde no lo tienen. */
@@ -32,6 +26,16 @@ const COMERCIO_PRIMERA_NECESIDAD = Object.freeze([
   "frutas_verduras",
   "carnes_otros_alimentos",
 ]);
+
+const SUGERENCIAS_EDUCACION = Object.freeze({
+  primaria: Object.freeze(["primaria"]),
+  adolescencia: Object.freeze(["media_superior_tecnica"]),
+});
+
+export function sugerenciaEducacionParaPoblacion(poblacion) {
+  const sugerencia = SUGERENCIAS_EDUCACION[poblacion];
+  return sugerencia ? [...sugerencia] : null;
+}
 
 function nivelesDeRama(rama) {
   return Object.keys(textos.filtros[rama].nivel);
@@ -84,7 +88,7 @@ function seleccionDeCeldas(rama, celdas) {
   return { niveles: niveles.size === todosLosNiveles.length ? new Set() : niveles, sector };
 }
 
-function crearSubpanel(rama, estadoInicial) {
+function crearSubpanel(rama, estadoInicial, onInteraccionUsuario) {
   const config = textos.filtros[rama];
   const { niveles: nivelesIniciales, sector: sectorInicial } = seleccionDeCeldas(rama, estadoInicial.filtros[rama]);
   let niveles = nivelesIniciales;
@@ -106,6 +110,7 @@ function crearSubpanel(rama, estadoInicial) {
       clase: "filtros__casilla",
       checked: niveles.size === 0 || niveles.has(claveNivel),
       onchange: (evento) => {
+        onInteraccionUsuario(rama);
         // `niveles` vacío representa "todas" implícitamente (todas las casillas nacen marcadas
         // sin que ningún nivel esté explícito, spec §5.6: "sin filtros activos"). Antes de tocar
         // una sola casilla hay que materializar ese "todas" en el conjunto explícito completo, o
@@ -133,6 +138,7 @@ function crearSubpanel(rama, estadoInicial) {
         type: "button",
         clase: "filtros__preset",
         onclick: () => {
+          onInteraccionUsuario(rama);
           niveles = new Set(COMERCIO_PRIMERA_NECESIDAD);
           for (const [clave, casilla] of casillas) casilla.checked = niveles.has(clave);
           emitir();
@@ -154,6 +160,7 @@ function crearSubpanel(rama, estadoInicial) {
         clase: "filtros__radio",
         checked: claveSector === sector,
         onchange: () => {
+          onInteraccionUsuario(rama);
           sector = claveSector;
           emitir();
         },
@@ -181,7 +188,15 @@ function crearSubpanel(rama, estadoInicial) {
     for (const [clave, radio] of radiosSector) radio.checked = clave === sector;
   }
 
-  return { raiz, reflejar };
+  function aplicarSugerencia(nivelesSugeridos) {
+    niveles = new Set(nivelesSugeridos);
+    sector = "todos";
+    for (const [clave, casilla] of casillas) casilla.checked = niveles.has(clave);
+    for (const [clave, radio] of radiosSector) radio.checked = clave === sector;
+    emitir();
+  }
+
+  return { rama, raiz, reflejar, aplicarSugerencia };
 }
 
 /**
@@ -193,12 +208,29 @@ function crearSubpanel(rama, estadoInicial) {
 export function montarFiltros(contenedor) {
   const estadoInicial = obtenerEstado();
   const raiz = crear("section", { clase: "filtros", "aria-label": "Filtros por rama" });
-  const subpaneles = RAMAS.map((rama) => crearSubpanel(rama, estadoInicial));
+  let educacionTocada = estadoInicial.filtros.educacion.length > 0;
+  let poblacionAnterior = null;
+  const marcarInteraccion = (rama) => {
+    if (rama === "educacion") educacionTocada = true;
+  };
+  const subpaneles = RAMAS.map((rama) => crearSubpanel(rama, estadoInicial, marcarInteraccion));
   for (const { raiz: nodoSubpanel } of subpaneles) raiz.appendChild(nodoSubpanel);
+
+  raiz.prepend(crear("div", { clase: "filtros__cabecera" }, [
+    crear("span", { clase: "filtros__titulo" }, ["Filtros"]),
+    crearAyuda("filtros", "Filtros por rama"),
+  ]));
 
   const botonRestablecer = crear(
     "button",
-    { type: "button", clase: "filtros__restablecer", onclick: () => despachar({ tipo: ACCIONES.RESTABLECER_FILTROS }) },
+    {
+      type: "button",
+      clase: "filtros__restablecer",
+      onclick: () => {
+        educacionTocada = true;
+        despachar({ tipo: ACCIONES.RESTABLECER_FILTROS });
+      },
+    },
     [textos.filtros.restablecer],
   );
   raiz.appendChild(botonRestablecer);
@@ -207,8 +239,18 @@ export function montarFiltros(contenedor) {
   reemplazarContenido(contenedor, [raiz]);
 
   function reflejarTodo(estado) {
+    const cambioPoblacion = estado.poblacion !== poblacionAnterior;
+    poblacionAnterior = estado.poblacion;
+    if (cambioPoblacion && !educacionTocada) {
+      const sugerencia = sugerenciaEducacionParaPoblacion(estado.poblacion);
+      if (sugerencia) {
+        subpaneles.find((subpanel) => subpanel.rama === "educacion")?.aplicarSugerencia(sugerencia);
+        return;
+      }
+    }
     for (const subpanel of subpaneles) subpanel.reflejar(estado);
   }
 
+  reflejarTodo(estadoInicial);
   return suscribir(reflejarTodo);
 }
