@@ -69,7 +69,7 @@ const navegacion = {
 // ---------------------------------------------------------------------------------------------
 
 const buscadorAlcaldia = {
-  etiqueta: 'Selecciona una alcaldía en el mapa o búscala por nombre.',
+  etiqueta: 'Selecciona o busca una alcaldía.',
   sinResultados: (v) => interpolar('Ninguna alcaldía coincide con «{texto}».', v),
 };
 
@@ -94,15 +94,13 @@ const vista = {
 
 const busqueda = {
   nombre: {
-    oportunidad: 'Oportunidad de expansión',
-    disponibilidad: 'Disponibilidad para familias',
+    oportunidad: 'Dónde ampliar servicios',
+    disponibilidad: 'Cobertura actual',
   },
-  controlEtiqueta: '¿Qué quieres explorar?',
+  controlEtiqueta: '¿Qué quieres consultar?',
   ayuda: {
-    oportunidad: 'Zonas donde la oferta actual y proyectada cubre relativamente poco frente a la '
-      + 'población objetivo -- posibles prioridades de expansión.',
-    disponibilidad: 'Zonas donde ya existe relativamente más oferta disponible para las familias '
-      + 'que viven ahí hoy.',
+    oportunidad: 'Zonas con menor cobertura relativa y posible prioridad de expansión.',
+    disponibilidad: 'Zonas con mayor cobertura relativa en la actualidad.',
   },
 };
 
@@ -111,7 +109,7 @@ const busqueda = {
 // ---------------------------------------------------------------------------------------------
 
 const poblacion = {
-  controlEtiqueta: '¿Qué población objetivo quieres explorar?',
+  controlEtiqueta: 'Elige la población objetivo',
   nombre: {
     todas: '0 a 17 años (todas)',
     primera_infancia: 'Primera infancia · 0 a 2 años',
@@ -120,8 +118,7 @@ const poblacion = {
     secundaria: 'Secundaria · 12 a 14 años',
     adolescencia: 'Adolescencia · 15 a 17 años',
   },
-  notaAdolescencia: 'Este rango se apoya en menos establecimientos con datos (categoría '
-    + '"Complementario" del DENUE): su confianza máxima es media.',
+  notaAdolescencia: 'Este rango tiene menos datos disponibles; su confianza máxima es media.',
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -135,8 +132,8 @@ const horizonte = {
   ariaValuetext: (v) => interpolar('{h} años, a mediados de {anio}', v),
   nota: {
     1: 'Proyección a corto plazo.',
-    3: 'Horizonte de referencia: el más equilibrado entre certeza y utilidad para planear.',
-    5: 'El rango probable se amplía con el plazo: úselo como orientación, no como cifra exacta.',
+    3: 'Equilibrio entre certeza y utilidad para planear.',
+    5: 'A mayor plazo, mayor incertidumbre.',
   },
   // Ramas con proyección (educación/salud/comercio) solo reportan h1/h3 -- verde ninguno.
   deshabilitadoRama: (v) => interpolar(
@@ -202,21 +199,19 @@ const rama = {
 };
 
 const prioridades = {
-  titulo: '¿Qué tan prioritaria es cada rama para ti?',
+  titulo: 'Prioridad por rama',
   circuloAriaLabel: (v) => interpolar('{rama}: prioridad {peso} de 5', v),
   restablecer: 'Restablecer prioridades',
-  ayuda: 'Los círculos indican qué tan importante es cada rama para tu búsqueda (1 a 5). No '
-    + 'cambian los datos originales: solo reordenan el ranking y el índice compuesto del mapa.',
+  ayuda: 'Asigna de 1 a 5. Esto solo cambia el orden de los resultados.',
 };
 
 const filtros = {
   restablecer: 'Restablecer filtros',
   resumenActivo: (texto) => texto, // ya viene armado por filtros.js con nombres de textos.js.
   todos: 'Todos',
-  ayuda: 'Los filtros deciden qué establecimientos o espacios cuentan como oferta de esa rama. No '
-    + 'cambian los datos originales, solo qué se suma.',
+  ayuda: 'Elige qué servicios incluir en el análisis.',
   educacion: {
-    pregunta: '¿Qué servicios de educación y cultura quieres considerar?',
+    pregunta: 'Educación y cultura',
     nivel: {
       guarderia: 'Guarderías y estancias infantiles',
       preescolar: 'Preescolar',
@@ -227,22 +222,20 @@ const filtros = {
       media_superior_tecnica: 'Media superior o técnica',
       recreacion_cultura: 'Recreación o cultura infantil',
     },
-    ayuda: 'Estos filtros indican qué tipos de servicios educativos o culturales quieres incluir '
-      + 'en el análisis de esta rama.',
+    ayuda: 'Selecciona los servicios que quieres analizar.',
   },
   salud: {
-    pregunta: '¿Qué instalaciones de salud quieres considerar?',
+    pregunta: 'Salud',
     nivel: {
       clinicas: 'Clínicas o consultorios',
       hospitales: 'Hospitales',
       salud_mental: 'Salud mental o psicológica',
       farmacias: 'Farmacias',
     },
-    ayuda: 'Habitancia utiliza únicamente los tipos de instalaciones que selecciones para calcular '
-      + 'la disponibilidad de servicios de salud.',
+    ayuda: 'Solo se contabilizan las instalaciones seleccionadas.',
   },
   comercio: {
-    pregunta: '¿Qué comercios quieres considerar?',
+    pregunta: 'Comercio',
     primeraNecesidad: 'Comercios de primera necesidad',
     nivel: {
       supermercados_minisupers: 'Supermercados y minisúpers',
@@ -251,28 +244,24 @@ const filtros = {
       carnes_otros_alimentos: 'Carnes y otros alimentos',
       farmacias: 'Farmacias',
     },
-    ayuda: 'Este filtro permite decidir qué tipos de comercios cotidianos deben considerarse al '
-      + 'analizar la disponibilidad de productos de primera necesidad.',
+    ayuda: 'Selecciona los comercios que quieres contabilizar.',
   },
   verde: {
-    pregunta: '¿Qué tipo de espacio quieres considerar?',
+    pregunta: 'Áreas verdes y espacio público',
     nivel: {
       cobertura_verde: 'Cobertura verde',
       areas_recreativas: 'Áreas recreativas',
       espacios_publicos: 'Espacios públicos',
     },
-    ayuda: 'No toda superficie verde funciona como espacio recreativo. Este filtro permite '
-      + 'diferenciar entre cobertura verde general y espacios que pueden tener una función de '
-      + 'convivencia o recreación.',
+    ayuda: 'Distingue cobertura verde, recreación y espacio público.',
   },
   sector: { todos: 'Todos', publico: 'Público', privado: 'Privado' },
   sectorEtiqueta: 'Sector',
 };
 
 const riesgo = {
-  etiqueta: 'Nivel de riesgo aceptable',
-  ayuda: 'Mueve el umbral para mostrar solo zonas cuya demanda tiene, al menos, esta confianza de '
-    + 'pronóstico. No cambia los datos, solo filtra el ranking.',
+  etiqueta: 'Confianza mínima',
+  ayuda: 'Oculta resultados con menor confianza; no modifica los datos.',
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -300,8 +289,7 @@ const resumen = {
 const explicacion = {
   titulo: '¿Qué explica este resultado?',
   circuloAriaLabel: (v) => interpolar('{rama}: señal {valor} de 5', v),
-  ayuda: 'Estos círculos no se editan: muestran, para cada rama, qué tan fuerte es la señal de '
-    + 'oportunidad o disponibilidad detrás del resultado combinado.',
+  ayuda: 'Los círculos muestran cuánto influye cada rama en el resultado.',
   peso: (peso) => interpolar('Peso {peso}/5', { peso }),
   contribucion: (pct) => interpolar('{pct}% del resultado combinado', { pct }),
 };
@@ -333,6 +321,7 @@ const ranking = {
     confianza: 'Ordenar por confianza',
   },
   verMas: (n) => interpolar('Ver más ({n})', { n }),
+  verSiguientes: (v) => interpolar('Mostrar {n} zonas más ({restantes} restantes)', v),
   topN: (n) => interpolar('Mostrando las {n} zonas con mayor prioridad', { n }),
   buscador: {
     etiqueta: 'Buscar AGEB por clave',
@@ -399,11 +388,8 @@ const graficas = {
 const confiabilidad = {
   titulo: '¿Qué tan confiable es la estimación?',
   parrafo:
-    'La demanda se validó contra el pasado y le ganó a "suponer que nada cambia" (error de 0.46 '
-    + 'puntos porcentuales por año, contra 2.34 del método ingenuo). La oferta no le ganó: acierta '
-    + 'la dirección del cambio (0.67 de 1.00) mejor que el método ingenuo (0.20), pero se equivoca '
-    + 'más en la magnitud (error de 5.45 contra 3.61). Por eso toda proyección de oferta muestra '
-    + 'como máximo confianza "media", nunca "alta". Detalle completo en docs/backtest.md.',
+    'La demanda mostró buen desempeño al compararse con datos pasados. La oferta identifica mejor '
+    + 'la dirección que el tamaño del cambio; por eso su confianza máxima es media.',
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -416,96 +402,46 @@ const metodologia = {
   tituloDrawer: 'Metodología y limitaciones',
   tituloEntenderZona: 'Entender esta zona',
   cerrar: 'Cerrar',
-  // §14.6, texto íntegro del drawer, en el orden del spec.
+  // Versión resumida para lectura rápida; conserva método, fuentes y límites esenciales.
   secciones: (generado) => [
     {
-      titulo: 'Qué mide Habitancia',
+      titulo: 'Qué muestra Habitancia',
       parrafos: [
-        'Identifica zonas de la Ciudad de México donde, de acuerdo con la evolución de la '
-        + 'población infantil y adolescente y la disponibilidad de servicios en cuatro ramas '
-        + '(educación y cultura, salud, comercio, áreas verdes y espacio público), podría existir '
-        + 'una mayor oportunidad relativa de ampliar o fortalecer infraestructura para infancias.',
+        'Identifica zonas de la CDMX donde podría ser útil ampliar servicios para niñas, niños y '
+        + 'adolescentes.',
       ],
     },
     {
-      titulo: 'Población objetivo y oferta',
+      titulo: 'Cómo leer los resultados',
       parrafos: [
-        'La población objetivo es el número de niñas, niños o adolescentes del rango de edad '
-        + 'elegido que viven en cada zona. La oferta de cada rama es el número de establecimientos '
-        + 'o espacios de ese tipo registrados en fuentes oficiales. Son cosas distintas: que la '
-        + 'población baje no implica que la oferta deba bajar, y viceversa.',
+        'La oportunidad compara población y servicios entre zonas. Sirve para investigar dónde '
+        + 'prestar atención; no es una recomendación automática de inversión.',
       ],
     },
     {
-      titulo: 'Oportunidad relativa, no una certeza',
+      titulo: 'Cómo se calcula',
       parrafos: [
-        'Indica qué tan prioritaria aparece una zona frente a otras, bajo los criterios que '
-        + 'elegiste -- no que sea obligatorio abrir un negocio ahí, ni que exista una necesidad de '
-        + 'mercado comprobada, ni que el modelo esté recomendando una inversión.',
+        'Se compara la oferta con la población proyectada. Las zonas con menor cobertura relativa '
+        + 'aparecen primero. Pesos y filtros ajustan el análisis, no los datos originales.',
       ],
     },
     {
-      titulo: 'De dónde vienen los datos',
+      titulo: 'Fuentes',
       lista: [
-        'Censos de Población y Vivienda 2010 y 2020 del INEGI, por AGEB urbana.',
-        'Proyecciones de población por municipio del Consejo Nacional de Población (CONAPO).',
-        'DENUE (INEGI): educación, salud y comercio, varios levantamientos entre 2016 y 2026.',
-        'Áreas verdes y espacio público: Datos Abiertos de la Ciudad de México.',
-        'Marco Geoestadístico 2020 del INEGI.',
+        'Censos 2010 y 2020 y Marco Geoestadístico 2020 del INEGI.',
+        'Proyecciones de población de CONAPO.',
+        'DENUE del INEGI para educación, salud y comercio.',
+        'Datos Abiertos CDMX para áreas verdes y espacio público.',
       ],
     },
     {
-      titulo: 'Cómo se decide si una zona tiene mayor oportunidad relativa',
-      parrafos: [
-        'Para cada rama se compara la oferta proyectada con la población objetivo proyectada, y se '
-        + 'ordena esa relación entre todas las zonas de la CDMX: las zonas con menor cobertura '
-        + 'relativa quedan arriba del ranking. Los pesos que elegiste combinan las cuatro ramas en '
-        + 'un solo orden; los filtros deciden qué establecimientos cuentan en cada rama. Ninguno de '
-        + 'los dos cambia los datos originales.',
-      ],
-    },
-    {
-      titulo: 'Qué tan bien acertó el modelo en el pasado',
-      parrafos: [
-        'Se probó el método comparando lo que habría predicho en el pasado contra lo que realmente '
-        + 'ocurrió después, y contra la opción de "suponer que nada cambia". La demanda superó esa '
-        + 'comparación (error de 0.46 puntos porcentuales por año, frente a 2.34 de "suponer que nada '
-        + 'cambia"). La oferta, en cambio, no la superó: predice mejor la dirección del cambio '
-        + '(acierta 0.67 de 1.00 en esa clasificación, contra 0.20 del método ingenuo) pero se '
-        + 'equivoca más en la magnitud exacta (error de 5.45 frente a 3.61 del método ingenuo), sobre '
-        + 'todo tras el levantamiento DENUE de 2024 (ver más abajo). Por eso las ramas de oferta '
-        + 'llevan siempre un tope de confianza "media", nunca "alta". El detalle completo, con la '
-        + 'discusión de qué se hace con ese resultado, está en docs/backtest.md del repositorio.',
-      ],
-    },
-    {
-      titulo: 'AGEB rurales y sin datos',
-      parrafos: [
-        'El censo no publica la población infantil por AGEB rural, así que se muestran como "Sin '
-        + 'datos". Nunca se inventa un valor donde falta información -- y la ausencia de datos '
-        + 'nunca significa ausencia de necesidad.',
-      ],
-    },
-    {
-      titulo: 'El levantamiento del DENUE de 2024',
-      parrafos: [
-        'Entre 2020 y 2023 el DENUE casi no se actualizó en campo; al volver en 2024 registró de '
-        + 'golpe varios cierres acumulados en esos años, sobre todo en preescolares y guarderías '
-        + 'privadas. Por eso la rama de educación tiene su confianza máxima limitada. Se trata como '
-        + 'una hipótesis razonable, no como un hecho comprobado.',
-      ],
-    },
-    {
-      titulo: 'Advertencias',
+      titulo: 'Confiabilidad y límites',
       lista: [
-        'Las proyecciones son estimaciones condicionadas a los datos y escenarios usados, no '
-        + 'certezas.',
-        'Una asociación histórica no implica causalidad.',
-        'La ausencia de datos no equivale a ausencia de necesidad.',
-        'Un establecimiento registrado no mide su capacidad, calidad ni matrícula.',
-        'Los datos disponibles no cubren igual todas las zonas; usar esta herramienta para decidir '
-        + 'dónde invertir o vivir sin considerar otros factores (seguridad, vivienda, movilidad, '
-        + 'precios) podría reforzar exclusión existente en vez de reducirla.',
+        'Las proyecciones orientan; no son certezas.',
+        'La oferta predice mejor la dirección que la magnitud del cambio.',
+        '“Sin datos” no significa “sin necesidad”.',
+        'El registro de un establecimiento no mide su capacidad ni calidad.',
+        'Antes de invertir, se requiere investigación adicional de la zona.',
         interpolar('Datos generados el {generado}.', { generado }),
       ],
     },
@@ -522,8 +458,7 @@ const comparar = {
   seleccionA: 'Primera alcaldía',
   seleccionB: 'Segunda alcaldía',
   quitar: 'Dejar de comparar',
-  nota: 'La comparación conserva la población objetivo, el horizonte, la búsqueda, los pesos y '
-    + 'los filtros activos. No declara una ganadora.',
+  nota: 'Usa la configuración activa y no elige una ganadora.',
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -533,61 +468,49 @@ const comparar = {
 const ayuda = {
   abrir: (concepto) => interpolar('Ayuda: {concepto}', { concepto }),
   poblacionObjetivo: {
-    queEs: 'El número de niñas, niños o adolescentes del rango de edad elegido que viven en la zona.',
-    porQueImporta: 'Es el punto de partida: sin población objetivo no hay demanda que comparar '
-      + 'contra la oferta.',
-    comoInterpretar: 'Un rango con más población no es "mejor" ni "peor": solo cambia a quién '
-      + 'describe el resto de la información.',
+    queEs: 'Niñas, niños o adolescentes del rango elegido que viven en la zona.',
+    porQueImporta: 'Permite comparar población y servicios.',
+    comoInterpretar: 'El rango cambia la población analizada, no la calidad de la zona.',
   },
   oportunidad: {
-    queEs: 'Un ranking relativo de qué tan poca oferta proyectada hay frente a la población '
-      + 'objetivo proyectada, comparado con el resto de la CDMX.',
-    porQueImporta: 'Ayuda a priorizar dónde explorar primero, entre cientos de zonas.',
-    comoInterpretar: 'Alta oportunidad no es una recomendación de inversión: es una señal relativa '
-      + 'para seguir explorando.',
+    queEs: 'Compara la cobertura proyectada de cada zona con el resto de la CDMX.',
+    porQueImporta: 'Ayuda a decidir qué zonas investigar primero.',
+    comoInterpretar: 'Una oportunidad alta es una señal, no una recomendación de inversión.',
   },
   disponibilidad: {
-    queEs: 'Un ranking relativo de qué tanta oferta ya existe hoy frente a la población objetivo '
-      + 'de la zona.',
-    porQueImporta: 'Es la vista útil para familias que buscan dónde ya hay servicios.',
-    comoInterpretar: 'Nunca se combina con oportunidad: una zona puede representar una oportunidad '
-      + 'de expansión y, al mismo tiempo, tener baja disponibilidad actual.',
+    queEs: 'Compara los servicios actuales con la población de cada zona.',
+    porQueImporta: 'Muestra dónde existe mayor cobertura actualmente.',
+    comoInterpretar: 'Cobertura actual y oportunidad de expansión se consultan por separado.',
   },
   prioridades: {
-    queEs: 'Un peso de 1 a 5 por rama que decides tú.',
-    porQueImporta: 'Cambia cómo se combinan las cuatro ramas en un solo orden.',
-    comoInterpretar: 'No altera los datos originales de ninguna rama, solo el orden final.',
+    queEs: 'La importancia que asignas a cada rama, de 1 a 5.',
+    porQueImporta: 'Define cómo se combinan las ramas.',
+    comoInterpretar: 'Cambia el orden, no los datos originales.',
   },
   filtros: {
-    queEs: 'Qué tipos de establecimientos o espacios cuentan como oferta de cada rama.',
-    porQueImporta: 'Permite enfocar el análisis en el tipo de servicio que te interesa.',
-    comoInterpretar: 'Cambiar un filtro puede cambiar la cobertura calculada, no los datos '
-      + 'publicados originalmente.',
+    queEs: 'Los servicios que se incluyen en cada rama.',
+    porQueImporta: 'Enfocan el análisis en lo que te interesa.',
+    comoInterpretar: 'Cambian la cobertura calculada, no los datos originales.',
   },
   riesgo: {
-    queEs: 'Un umbral sobre la confianza del pronóstico de demanda.',
-    porQueImporta: 'Permite excluir zonas cuyo pronóstico es poco confiable.',
-    comoInterpretar: 'Solo filtra qué se muestra; no cambia el cálculo de ninguna zona.',
+    queEs: 'La confianza mínima aceptada para mostrar un resultado.',
+    porQueImporta: 'Oculta estimaciones menos firmes.',
+    comoInterpretar: 'Filtra resultados; no cambia los cálculos.',
   },
   confianza: {
-    queEs: 'Qué tan firme es el resultado frente a distintos supuestos del modelo.',
-    porQueImporta: 'Una oportunidad "alta" con confianza baja merece más cautela que una con '
-      + 'confianza alta.',
-    comoInterpretar: 'Alta: se sostiene con supuestos distintos. Media: el sentido es probable, el '
-      + 'tamaño es incierto. Baja: los datos no alcanzan para afirmar el sentido del cambio.',
+    queEs: 'Qué tan firme es el resultado ante distintos supuestos.',
+    porQueImporta: 'Una señal con baja confianza requiere más cautela.',
+    comoInterpretar: 'Alta: firme. Media: probable. Baja: insuficiente para concluir.',
   },
   horizonte: {
-    queEs: 'El plazo del pronóstico: 1, 3 o 5 años desde mediados de 2026.',
-    porQueImporta: 'Entre más lejano el horizonte, más incertidumbre acumula la proyección.',
-    comoInterpretar: 'El veredicto y la confianza no cambian entre horizontes: solo cambia la '
-      + 'magnitud proyectada.',
+    queEs: 'El plazo del pronóstico: 1, 3 o 5 años.',
+    porQueImporta: 'Los plazos largos acumulan más incertidumbre.',
+    comoInterpretar: 'El horizonte cambia la magnitud proyectada.',
   },
   equivalenciaAgebZona: {
-    queEs: '"Zona" es el nombre que usa Habitancia para una AGEB (Área Geoestadística Básica, la '
-      + 'unidad de conteo del INEGI).',
-    porQueImporta: 'Es la unidad mínima que colorea el mapa y ordena el ranking.',
-    comoInterpretar: 'La alcaldía agrupa muchas zonas; el color y el ranking siempre se calculan '
-      + 'por zona, nunca solo por alcaldía.',
+    queEs: 'Una zona corresponde a una AGEB, unidad geográfica del INEGI.',
+    porQueImporta: 'Es la unidad que colorea el mapa y ordena el ranking.',
+    comoInterpretar: 'Cada alcaldía agrupa varias zonas.',
   },
 };
 
@@ -721,11 +644,9 @@ const presentacion = {
 };
 
 const pie = {
-  fuentes: 'Fuentes: INEGI, CONAPO, DENUE, Datos Abiertos CDMX',
-  datosGenerados: (fecha) => interpolar('Datos: {fecha}', { fecha }),
-  advertenciaSesgos: 'Habitancia mide oportunidad relativa y disponibilidad relativa, no '
-    + 'recomienda dónde vivir ni garantiza éxito comercial. Los datos disponibles no cubren igual '
-    + 'todas las zonas.',
+  fuentes: 'Fuentes: INEGI, CONAPO y Datos Abiertos CDMX.',
+  datosGenerados: (fecha) => interpolar('Actualización: {fecha}', { fecha }),
+  advertenciaSesgos: 'Consulta orientativa; valida antes de invertir.',
 };
 
 // ---------------------------------------------------------------------------------------------

@@ -17,6 +17,10 @@ import { despachar as despacharEstado, ACCIONES } from "./estado.js";
 
 const ALTO_DETALLE_PX = 136;
 const TOP_N_DEFECTO = 20;
+// Crear cientos de filas y sus paneles de detalle en un solo clic bloquea el hilo principal
+// (Iztapalapa puede superar 450 AGEB). El ranking crece en lotes pequeños; el buscador sigue
+// consultando el universo completo.
+const TAMANIO_LOTE = 20;
 /** Debounce del buscador de AGEB (§7.3: "buscador de AGEB por clave... debounce 120 ms"). */
 const DEBOUNCE_BUSCADOR_MS = 120;
 
@@ -479,17 +483,18 @@ export function montarRanking(contenedor, filasIniciales, opciones = {}) {
   function renderPie(totalOrdenado) {
     limpiar(pieRaiz);
     if (totalOrdenado <= topN) return;
+    const siguientes = Math.min(TAMANIO_LOTE, totalOrdenado - topN);
     const boton = crear(
       "button",
       {
         clase: "ranking__ver-mas",
         type: "button",
         onclick: () => {
-          topN = totalOrdenado;
+          topN = Math.min(topN + TAMANIO_LOTE, totalOrdenado);
           renderCuerpo({ conFlip: false });
         },
       },
-      [config.enAlcaldia ? textos.ranking.verTodos({ n: totalOrdenado }) : textos.ranking.verMas(totalOrdenado - topN)],
+      [textos.ranking.verSiguientes({ n: siguientes, restantes: totalOrdenado - topN })],
     );
     pieRaiz.appendChild(boton);
   }
