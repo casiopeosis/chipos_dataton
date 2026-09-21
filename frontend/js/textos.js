@@ -73,6 +73,14 @@ const buscadorAlcaldia = {
   sinResultados: (v) => interpolar('No encontramos «{texto}». Revisa cómo lo escribiste.', v),
 };
 
+// Buscador de colonia (`colonia.js`): asociación AGEB↔colonia derivada por mayor área de
+// intersección (docs/perfil_datos.md → "Colonias"), no un dato oficial de AGEB en sí.
+const buscadorColonia = {
+  etiqueta: 'Busca una colonia por nombre:',
+  opcion: (v) => interpolar('{colonia} · {alcaldia}', v),
+  sinResultados: (v) => interpolar('No encontramos «{texto}». Revisa cómo lo escribiste.', v),
+};
+
 // ---------------------------------------------------------------------------------------------
 // §9 Vista de mapa (vista general + 4 ramas)
 // ---------------------------------------------------------------------------------------------
@@ -346,6 +354,9 @@ const ficha = {
   // zona además es sin_datos) -- no hay una columna que lo dé siempre, así que la ubicación usa
   // la clave AGEB en su lugar, dato que sí siempre existe (CLAUDE.md: no inventar datos).
   ubicacion: (v) => interpolar('{alcaldia} · Zona {cvegeo}', v),
+  // Colonia asociada por mayor área de intersección (docs/perfil_datos.md → "Colonias"), no un
+  // dato oficial de AGEB: se etiqueta como "aprox." para no presentarla como si lo fuera.
+  colonia: (v) => interpolar('Colonia {colonia}', v),
   oportunidadLabel: 'Qué tanto hace falta',
   disponibilidadLabel: 'Qué tanto ya hay',
   confianzaLabel: 'Qué tan seguro es esto',
@@ -615,6 +626,9 @@ const tooltip = {
   vecina: (nombre) => interpolar('Ir a {nombre}', { nombre }),
   ageb: (v) => interpolar('Zona {cvegeo}', v),
   agebSinDatos: (motivo) => interpolar('Sin datos: {motivo}', { motivo }),
+  // Colonia asociada por mayor área de intersección (docs/perfil_datos.md → "Colonias"), no un
+  // dato oficial de AGEB: mismo criterio "(aprox.)" que `ficha.colonia`.
+  colonia: (v) => interpolar('Colonia {colonia}', v),
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -726,6 +740,7 @@ export const textos = {
   producto,
   navegacion,
   buscadorAlcaldia,
+  buscadorColonia,
   vista,
   busqueda,
   poblacion,

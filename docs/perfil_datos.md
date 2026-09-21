@@ -364,5 +364,28 @@ bbox: [-99.3649, 19.0482, -98.9403, 19.5928]
 Claves de properties (2): cve_alc, nombre
 1er feature: `{"cve_alc": "002", "nombre": "Azcapotzalco"}`
 
+## Colonias (`data/reference/colonias_cdmx*.geojson`, `data/interim/ageb_colonia.parquet`)
+No hay tabla oficial "AGEB → colonia" (dos delimitaciones independientes, INEGI vs. autoridad
+municipal). Fuente: delimitación de colonias del IECM 2022, tal como la publica el catálogo de
+`datos.cdmx.gob.mx` — descargada de un espejo en GitHub porque el portal oficial no respondió
+desde esta red (detalle y alternativa descartada, INEGI DCAH, en `docs/data_manifest.md`).
+
+### `data/reference/colonias_cdmx.geojson` (y `_simplificado`, mismas propiedades)
+Features: **1,837** · tipos: Polygon/MultiPolygon · CRS: EPSG:4326
+Claves de properties (3): colonia, alcaldia, cveut
+1er feature: `{"colonia": "SAN MARCOS (AMPL)", "alcaldia": "XOCHIMILCO", "cveut": "13-054"}`
+Las colonias de esta fuente se traslapan entre sí (no son una partición limpia como los AGEB):
+2,282 de 2,453 AGEB intersectan más de una colonia. `alcaldia` es un texto libre de la fuente, sin
+normalizar contra `alcaldias.csv`; no se usa para el join (se usa `cve_mun` del propio AGEB).
+
+### `data/interim/ageb_colonia.parquet` (`tools/build_colonias.py`)
+Por cada AGEB, la colonia con **mayor área de intersección** (no el centroide: falla con colonias
+traslapadas o bordes que no coinciden). Columnas: `cvegeo`, `cveut`, `colonia`, `cobertura_pct`
+(fracción del área del AGEB cubierta por esa colonia), `n_colonias_interseccion`.
+Filas: **2,453** (una por AGEB) · sin colonia asociada (sin intersección): **2** (AGEB rurales de
+Milpa Alta) · cobertura promedio de la colonia elegida: **76.6 %**.
+También se exporta como `data/outputs/colonias_ageb.json` (mismo lookup, `{cvegeo: {cveut,
+colonia, cobertura_pct}}`), fuera del contrato versionado de `prediccion_*.json`.
+
 ### Brecha
 - `data/reference/ageb_cdmx.geojson` **no existe**: no hay geometría AGEB (ver docs/problemas_datos.md).

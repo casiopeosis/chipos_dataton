@@ -519,7 +519,11 @@ export function montarRanking(contenedor, filasIniciales, opciones = {}) {
   // ------------------------------------------------------------------------------------------
 
   function actualizar(nuevasFilas, nuevasOpciones = {}) {
-    if (Array.isArray(nuevasFilas)) filas = nuevasFilas.map(normalizarFila);
+    // Reordenar por un recalculo de valores (p. ej. el slider de prioridades cambiando los pesos
+    // por rama) debe verse igual de claro que reordenar por encabezado (`cambiarOrden`): mismo FLIP.
+    // Sin esto las filas saltan de golpe y el efecto del slider parece no existir.
+    const huboFilasNuevas = Array.isArray(nuevasFilas);
+    if (huboFilasNuevas) filas = nuevasFilas.map(normalizarFila);
     const cambioDeUniverso = typeof nuevasOpciones.enAlcaldia === "boolean" && nuevasOpciones.enAlcaldia !== config.enAlcaldia;
     if (typeof nuevasOpciones.enAlcaldia === "boolean") config.enAlcaldia = nuevasOpciones.enAlcaldia;
     if (Object.prototype.hasOwnProperty.call(nuevasOpciones, "cveMun")) {
@@ -536,7 +540,7 @@ export function montarRanking(contenedor, filasIniciales, opciones = {}) {
     }
     if (cambioDeUniverso) renderBuscador();
     renderEncabezado();
-    renderCuerpo({ conFlip: false });
+    renderCuerpo({ conFlip: huboFilasNuevas && !cambioDeUniverso });
   }
 
   function destruir() {

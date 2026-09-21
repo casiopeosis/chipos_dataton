@@ -100,6 +100,17 @@
 }
 
 /* --------------------------------------------------------------------
+ * Resaltado del contorno completo de una colonia (búsqueda por colonia, `colonia.js`): un trazo
+ * grueso sin relleno, distinguible del contorno fino de AGEB/alcaldía -- no es una escala de
+ * datos (§4.2), solo un localizador temporal, por eso usa --tinta en vez de --prioridad-*.
+ * -------------------------------------------------------------------- */
+.mapa__colonia-resaltada {
+  fill: none;
+  stroke: var(--tinta);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------
  * Tooltip (spec §10.1): mínimo, a 12px del puntero (posicionado en JS),
  * fade de --d-intencion (100ms, el más cercano al "100ms" del spec).
  * Único elemento del sitio con contorno de 1px --tinta y sin sombra
@@ -138,6 +149,16 @@
   font-size: calc(var(--t-nota-tam) * var(--escala));
   line-height: var(--t-nota-alto);
   color: var(--tinta-2);
+}
+
+/* Colonia asociada (hover de AGEB, ver `mapa.js#crearTooltipAgeb`): un dato aproximado, no
+ * oficial de AGEB -- un tono más apagado que el nombre, igual que `.ficha__colonia`. */
+.mapa__tooltip-colonia {
+  margin: 0;
+  font-family: var(--f-familia);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  line-height: var(--t-nota-alto);
+  color: var(--tinta-3);
 }
 
 /* --------------------------------------------------------------------

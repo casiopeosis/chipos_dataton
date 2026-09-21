@@ -73,6 +73,10 @@ const TRAZO_BASE_CONTORNO_EXTERIOR = 1;
 const TRAZO_BASE_AGEB = 0.75;
 const TRAZO_BASE_CONFIANZA_BAJA = 1.2;
 const TRAZO_BASE_CONFIANZA_BAJA_GUION = [1.2, 5];
+// Resaltado del contorno completo de una colonia (búsqueda por colonia, `colonia.js`): un trazo
+// bien distinguible del resto (AGEB 0.75px, alcaldía 1px), sin relleno -- no es una escala de
+// datos (§4.2 la reserva a oportunidad/tendencia), solo un localizador temporal.
+const TRAZO_BASE_COLONIA = 3;
 
 /**
  * Clase CSS de relleno por QUINTIL de un índice continuo (spec §4.2: el mapa se pinta con los 5
@@ -236,6 +240,12 @@ function trazarSegmentosProyectados(segmentos, proyeccion) {
  *   puede llegar después con `actualizarAgeb` (carga diferida/prefetch, spec §10.2).
  * @param {Map<string, {valor: number, tercil: string}>|Object} [opciones.registrosAgebPorCvegeo]
  *   mismo formato que `registrosPorCveMun` pero indexado por `CVEGEO` (13 dígitos).
+ * @param {GeoJSON.FeatureCollection|null} [opciones.coloniasGeoJSON] -
+ *   `data/colonias_cdmx_simplificado.geojson` (propiedades `cveut`, `colonia`, `alcaldia`); solo
+ *   se usa para `resaltarColonia`, nunca se colorea ni participa en el hover/clic de AGEB.
+ * @param {Record<string, {cveut: string, colonia: string, cobertura_pct: number}|null>|null}
+ *   [opciones.coloniasAgebLookup] - `data/colonias_ageb.json` (cvegeo -> colonia asociada); si
+ *   viene, el tooltip de AGEB (`crearTooltipAgeb`) añade una línea con el nombre de colonia.
  * @returns {{
  *   actualizarRegistros(nuevo: Map|Object): void,
  *   actualizarAgeb(agebGeoJSON: GeoJSON.FeatureCollection, registrosAgebPorCvegeo: Map|Object): void,
@@ -252,11 +262,14 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   let vistaActiva = obtenerEstado().vistaMapa;
   let agebGeoJSON = repararAgebGeoJSON(opciones.agebGeoJSON ?? null);
   let registrosAgeb = opciones.registrosAgebPorCvegeo ?? new Map();
+  let coloniasGeoJSON = repararAgebGeoJSON(opciones.coloniasGeoJSON ?? null);
+  const coloniasAgebLookup = opciones.coloniasAgebLookup ?? null;
   let cveMunEnfocado = null;
   let transformEnfoque = { escala: 1, tx: 0, ty: 0 };
   let comportamientoZoom = null;
   let botonReencuadrar = null;
   let tooltipAgebFeature = null;
+  let featureColoniaResaltada = null;
 
   limpiar(contenedor);
   contenedor.classList.add("mapa");
@@ -296,6 +309,10 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   const gAgebs = gEscenario.append("g").attr("class", "agebs"); // F70: polígonos AGEB en foco
   const gConfianzaBaja = gEscenario.append("g").attr("class", "confianza-baja"); // F70: punteado sobre AGEB
   const gAlcaldias = gEscenario.append("g").attr("class", "alcaldias"); // esta tarea: 16 alcaldías
+  // Resaltado del contorno completo de UNA colonia (búsqueda por colonia, `colonia.js`): encima
+  // de las 4 capas anteriores dentro del mismo `g.escenario` (se panea/zoomea con ellas), nunca
+  // dentro de `g.agebs` (no es un AGEB, no participa en su hover/clic/tooltip).
+  const gColoniaResaltada = gEscenario.append("g").attr("class", "colonia-resaltada").attr("aria-hidden", "true");
   const gRealce = svg.append("g").attr("class", "realce"); // hover/foco
 
   let rutaContornoExterior = null;
@@ -466,6 +483,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
     gAlcaldias.selectAll("path.mapa__alcaldia").attr("d", generadorRuta);
     rutaContornoExterior?.attr("d", trazarSegmentosProyectados(segmentosExteriores, proyeccion));
     actualizarRealceTrasReproyeccion();
+    if (featureColoniaResaltada) gColoniaResaltada.select("path").attr("d", generadorRuta);
   }
 
   function recalcularProyeccion() {
@@ -501,6 +519,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
       .selectAll("path.mapa__ageb-confianza-baja")
       .attr("stroke-width", TRAZO_BASE_CONFIANZA_BAJA / k)
       .attr("stroke-dasharray", TRAZO_BASE_CONFIANZA_BAJA_GUION.map((v) => v / k).join(" "));
+    gColoniaResaltada.select("path").attr("stroke-width", TRAZO_BASE_COLONIA / k);
   }
 
   function aplicarTransform(t, { animar = false, duracion = DURACION_ENFOQUE_MS } = {}) {
@@ -534,8 +553,17 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
     if (!tooltipEl) crearTooltip();
     const entrada = obtenerRegistroCveMun(registrosAgeb, feature.properties.cvegeo);
     const tercil = entrada?.tercil ?? "sin_datos";
+    // Colonia asociada (join por mayor área de intersección, `docs/perfil_datos.md` →
+    // "Colonias"), no un dato oficial de AGEB en sí -- por eso "aprox." como en la ficha
+    // (`ficha.js`), nunca presentada como si viniera del contrato. Vale tanto en la vista general
+    // (índice compuesto) como en cualquier rama: es el mismo tooltip para las dos, no hay dos
+    // rutas de código distintas que mantener en sync.
+    const colonia = coloniasAgebLookup?.[feature.properties.cvegeo]?.colonia ?? null;
     limpiar(tooltipEl);
     tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-nombre cifras" }, [feature.properties.cvegeo]));
+    if (colonia) {
+      tooltipEl.appendChild(crear("p", { clase: "mapa__tooltip-colonia" }, [cadena("tooltip.colonia", { colonia })]));
+    }
     tooltipEl.appendChild(
       crear("p", { clase: "mapa__tooltip-veredicto" }, [
         cadena("tooltip.vistaTercil", {
@@ -615,6 +643,27 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   function limpiarAgebs() {
     gAgebs.selectAll("path.mapa__ageb").remove();
     gConfianzaBaja.selectAll("path.mapa__ageb-confianza-baja").remove();
+  }
+
+  /** Dibuja (o reemplaza) el contorno completo de una colonia por su `cveut` (búsqueda por
+   * colonia, `colonia.js`). No cambia la vista: quien llama ya despachó `IR_A_ALCALDIA`/
+   * `IR_A_AGEB` antes, si corresponde -- este método solo dibuja el trazo. */
+  function resaltarColonia(cveut) {
+    const feature = (coloniasGeoJSON?.features ?? []).find((f) => f.properties.cveut === cveut);
+    featureColoniaResaltada = feature ?? null;
+    gColoniaResaltada.selectAll("path").remove();
+    if (!feature) return;
+    gColoniaResaltada
+      .append("path")
+      .datum(feature)
+      .attr("class", "mapa__colonia-resaltada")
+      .attr("d", generadorRuta)
+      .attr("stroke-width", TRAZO_BASE_COLONIA / escalaTrazo);
+  }
+
+  function quitarResaltadoColonia() {
+    featureColoniaResaltada = null;
+    gColoniaResaltada.selectAll("path").remove();
   }
 
   function crearBotonReencuadrar() {
@@ -711,6 +760,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   /** Transición inversa (spec §10.7): vuelve a la vista general, sin dejar zoom/AGEB residuales. */
   function volverAVistaGeneral() {
     cveMunEnfocado = null;
+    quitarResaltadoColonia();
     desactivarZoomUsuario();
     gAlcaldias
       .selectAll("path.mapa__alcaldia")
@@ -779,6 +829,16 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
       if (nuevosRegistrosAgeb) registrosAgeb = nuevosRegistrosAgeb;
       if (cveMunEnfocado !== null) pintarAgebs();
     },
+    /** Entrega (o reemplaza) el GeoJSON de colonias (`data/colonias_cdmx_simplificado.geojson`);
+     * puede llegar después del montaje, igual que `actualizarAgeb`. */
+    actualizarColonias(nuevoColoniasGeoJSON) {
+      coloniasGeoJSON = repararAgebGeoJSON(nuevoColoniasGeoJSON) ?? coloniasGeoJSON;
+      if (featureColoniaResaltada) resaltarColonia(featureColoniaResaltada.properties.cveut);
+    },
+    /** Dibuja el contorno completo de la colonia `cveut` (búsqueda por colonia, `colonia.js`). */
+    resaltarColonia,
+    /** Quita el resaltado de colonia, si lo hay (p. ej. al iniciar una nueva búsqueda). */
+    quitarResaltadoColonia,
     /** Libera observadores/listeners/suscripciones y vacía el contenedor. */
     destruir() {
       if (temporizadorResize !== null) clearTimeout(temporizadorResize);

@@ -35,11 +35,17 @@ RUTA_ALCALDIAS_CSV: Path = DIR_REFERENCE / "alcaldias.csv"
 RUTA_ALCALDIAS_GEOJSON: Path = DIR_REFERENCE / "alcaldias.geojson"
 RUTA_DOMINIOS_SCIAN: Path = DIR_REFERENCE / "dominios_scian.csv"
 
+# Colonias (IECM 2022, ver tools/build_colonias.py y docs/data_manifest.md; no se reescriben)
+RUTA_COLONIAS_RAW: Path = DIR_PROCESSED / "colonias" / "colonias_iecm_2022.geojson"
+RUTA_COLONIAS_GEOJSON: Path = DIR_REFERENCE / "colonias_cdmx.geojson"
+RUTA_COLONIAS_GEOJSON_SIMPLIFICADO: Path = DIR_REFERENCE / "colonias_cdmx_simplificado.geojson"
+
 # Derivados de `data/interim/` (ver plan §3)
 RUTA_CENSO_PANEL: Path = DIR_INTERIM / "censo_ageb_panel.parquet"
 RUTA_CONAPO_MUN_0A14: Path = DIR_INTERIM / "conapo_mun_0a14.parquet"
 RUTA_EQUIVALENCIA_AGEB: Path = DIR_INTERIM / "equivalencia_ageb_2010_2020.parquet"
 RUTA_PROYECCION_AGEB: Path = DIR_INTERIM / "proyeccion_ageb.parquet"
+RUTA_AGEB_COLONIA: Path = DIR_INTERIM / "ageb_colonia.parquet"
 
 # Salidas del contrato (plan §7 y CLAUDE.md)
 RUTA_PREDICCION_AGEB: Path = DIR_OUTPUTS / "prediccion_ageb.json"
@@ -47,6 +53,8 @@ RUTA_PREDICCION_ALCALDIA: Path = DIR_OUTPUTS / "prediccion_alcaldia.json"
 RUTA_DIAGNOSTICO: Path = DIR_OUTPUTS / "diagnostico.json"
 RUTA_BACKTEST_JSON: Path = DIR_OUTPUTS / "backtest.json"
 RUTA_BACKTEST_MD: Path = DIR_DOCS / "backtest.md"
+# Fuera del contrato versionado (como diagnostico.json): lookup AGEB -> colonia para el frontend.
+RUTA_COLONIAS_AGEB_JSON: Path = DIR_OUTPUTS / "colonias_ageb.json"
 
 # ---------------------------------------------------------------------------
 # Semilla global (reproducibilidad; CLAUDE.md regla 5, plan §0)

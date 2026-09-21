@@ -44,6 +44,7 @@ import { montarPrioridades } from "./prioridades.js";
 import { montarRiesgo, FACTOR_CONFIANZA_RIESGO } from "./riesgo.js";
 import { montarFiltros } from "./filtros.js";
 import { montarAlcaldia } from "./alcaldia.js";
+import { montarColonia } from "./colonia.js";
 import { montarComparar } from "./comparar.js";
 import { montarMovil } from "./movil.js";
 import { montarFicha } from "./ficha.js";
@@ -55,6 +56,12 @@ import { formatoEntero } from "./formato.js";
 // data/reference/ y data/outputs/ (data/ es solo lectura, CLAUDE.md).
 const RUTA_ALCALDIAS_GEOJSON = "data/alcaldias.geojson";
 const RUTA_AGEB_GEOJSON = "data/ageb_cdmx_simplificado.geojson";
+// Colonias (búsqueda + resaltado en el mapa, `colonia.js`/`mapa.js#resaltarColonia`): asociación
+// AGEB↔colonia derivada por join espacial, no parte del contrato versionado (`docs/perfil_datos.md`
+// → "Colonias"). Si faltan (entorno sin `tools/build_colonias.py` corrido), la búsqueda de colonia
+// simplemente no se monta -- degradación explícita, nunca un error que bloquee el resto de la UI.
+const RUTA_COLONIAS_GEOJSON = "data/colonias_cdmx_simplificado.geojson";
+const RUTA_COLONIAS_AGEB_JSON = "data/colonias_ageb.json";
 
 // ---------------------------------------------------------------------------------------------
 // Referencias a los contenedores que ya deja index.html.
@@ -332,14 +339,14 @@ function ramaPrincipalDeFila(oPorRama, pesos) {
 // alcaldía contenedora, degradación explícita hasta que `ficha.js` exista.
 // ---------------------------------------------------------------------------------------------
 
-function pintarVistaPrincipal(instancias, composicion, datos, nombresAlcaldia, estado) {
+function pintarVistaPrincipal(instancias, composicion, datos, nombresAlcaldia, estado, coloniasAgebLookup) {
   const esFicha = estado.vista === VISTA.AGEB && Boolean(estado.cvegeo);
   instancias.resumenHost.hidden = esFicha;
   instancias.rankingHost.hidden = esFicha;
   instancias.fichaHost.hidden = !esFicha;
 
   if (esFicha) {
-    pintarFicha(instancias.ficha, composicion, datos, nombresAlcaldia, estado);
+    pintarFicha(instancias.ficha, composicion, datos, nombresAlcaldia, estado, coloniasAgebLookup);
     return;
   }
 
@@ -401,7 +408,7 @@ function pintarVistaPrincipal(instancias, composicion, datos, nombresAlcaldia, e
 }
 
 /** Ficha de zona (§7.4): Nivel 1 de UNA sola AGEB (nunca agregado, a diferencia de §6.1/§6.3). */
-function pintarFicha(fichaInstancia, composicion, datos, nombresAlcaldia, estado) {
+function pintarFicha(fichaInstancia, composicion, datos, nombresAlcaldia, estado, coloniasAgebLookup) {
   const registro = composicion.porClave.get(estado.cvegeo);
   const registroDatos = datos.capas.demanda[estado.cvegeo];
   const cveMun = registroDatos?.cve_mun ?? estado.cve_mun;
@@ -424,6 +431,7 @@ function pintarFicha(fichaInstancia, composicion, datos, nombresAlcaldia, estado
   fichaInstancia.actualizar({
     cvegeo: estado.cvegeo,
     alcaldiaNombre: nombreAlcaldia,
+    coloniaNombre: coloniasAgebLookup?.[estado.cvegeo]?.colonia ?? null,
     motivoSinDatosCodigo,
     resumen: {
       titulo: textos.resumen.tituloAlcaldia({ alcaldia: nombreAlcaldia, poblacion: poblacionTexto, h: anios }),
@@ -620,6 +628,13 @@ async function iniciar() {
     return;
   }
 
+  // Colonias: opcionales (no forman parte del contrato v1.4), así que un 404/red no bloquea el
+  // arranque -- se degrada a "sin búsqueda de colonia" (`[null, null]`), no a un estado de error.
+  const [coloniasGeoJSON, coloniasAgebLookup] = await Promise.all([
+    fetch(RUTA_COLONIAS_GEOJSON).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    fetch(RUTA_COLONIAS_AGEB_JSON).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+  ]);
+
   const nombresAlcaldia = new Map(
     (alcaldiasGeoJSON.features ?? []).map((f) => [f.properties.cve_alc, f.properties.nombre]),
   );
@@ -627,15 +642,84 @@ async function iniciar() {
 
   if (cabecera) montarVistaMapa(cabecera.contenedorVistaMapa);
 
-  montarInterfaz({ cabecera, alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAgeb, nombresAlcaldia });
+  montarInterfaz({
+    cabecera,
+    alcaldiasGeoJSON,
+    agebGeoJSON,
+    datosAlcaldia,
+    datosAgeb,
+    nombresAlcaldia,
+    coloniasGeoJSON,
+    coloniasAgebLookup,
+  });
 }
 
-function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAgeb, nombresAlcaldia }) {
+/**
+ * De la colección de colonias + el `cve_mun` de cada AGEB (ya en `datosAgeb`), arma las entradas
+ * del buscador (`colonia.js`): por `cveut`, el nombre de colonia y la alcaldía MÁS FRECUENTE entre
+ * sus AGEB (moda, ver nota de cabecera de `colonia.js`) -- nunca inventa una alcaldía única cuando
+ * la colonia en realidad cruza el límite de dos.
+ */
+function construirEntradasColonia(coloniasGeoJSON, coloniasAgebLookup, datosAgeb, nombresAlcaldia) {
+  if (!coloniasGeoJSON || !coloniasAgebLookup) return [];
+
+  const cveMunPorCveut = new Map(); // cveut -> Map<cve_mun, conteo>
+  for (const [cvegeo, entrada] of Object.entries(coloniasAgebLookup)) {
+    if (!entrada) continue;
+    const cveMun = datosAgeb?.capas?.demanda?.[cvegeo]?.cve_mun ?? null;
+    if (!cveMun) continue;
+    if (!cveMunPorCveut.has(entrada.cveut)) cveMunPorCveut.set(entrada.cveut, new Map());
+    const conteo = cveMunPorCveut.get(entrada.cveut);
+    conteo.set(cveMun, (conteo.get(cveMun) ?? 0) + 1);
+  }
+
+  function cveMunMasFrecuente(cveut) {
+    const conteo = cveMunPorCveut.get(cveut);
+    if (!conteo) return null;
+    let mejor = null;
+    let mejorConteo = -1;
+    for (const [cveMun, n] of conteo) {
+      if (n > mejorConteo) {
+        mejor = cveMun;
+        mejorConteo = n;
+      }
+    }
+    return mejor;
+  }
+
+  return (coloniasGeoJSON.features ?? [])
+    .map((f) => f.properties)
+    .filter((p) => typeof p?.cveut === "string" && typeof p?.colonia === "string")
+    .map((p) => {
+      const cveMun = cveMunMasFrecuente(p.cveut);
+      return {
+        cveut: p.cveut,
+        colonia: p.colonia,
+        cveMun,
+        alcaldiaNombre: (cveMun && nombresAlcaldia.get(cveMun)) ?? p.alcaldia ?? "",
+      };
+    });
+}
+
+function montarInterfaz({
+  alcaldiasGeoJSON,
+  agebGeoJSON,
+  datosAlcaldia,
+  datosAgeb,
+  nombresAlcaldia,
+  coloniasGeoJSON,
+  coloniasAgebLookup,
+}) {
   let instanciaMapa = null;
   let instanciaLeyenda = null;
 
   if (mapaHost) {
-    instanciaMapa = montarMapa(mapaHost, alcaldiasGeoJSON, new Map(), { agebGeoJSON, registrosAgebPorCvegeo: new Map() });
+    instanciaMapa = montarMapa(mapaHost, alcaldiasGeoJSON, new Map(), {
+      agebGeoJSON,
+      registrosAgebPorCvegeo: new Map(),
+      coloniasGeoJSON,
+      coloniasAgebLookup,
+    });
   }
   if (leyendaHost) {
     instanciaLeyenda = montarLeyenda(leyendaHost, { registros: [], nombresAlcaldia });
@@ -663,6 +747,7 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
   if (panelConfiguracion) {
     limpiar(panelConfiguracion);
     const alcaldiaHost = crear("div", { clase: "panel-configuracion__alcaldia" });
+    const coloniaHost = crear("div", { clase: "panel-configuracion__colonia" });
     const poblacionHost = crear("div", { clase: "panel-configuracion__poblacion" });
     const busquedaHost = crear("div", { clase: "panel-configuracion__busqueda" });
     const prioridadesHost = crear("div", { clase: "panel-configuracion__prioridades" });
@@ -670,6 +755,7 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
     const riesgoHost = crear("div", { clase: "panel-configuracion__riesgo" });
     const compararHost = crear("div", { clase: "panel-configuracion__comparar" });
     panelConfiguracion.appendChild(alcaldiaHost);
+    panelConfiguracion.appendChild(coloniaHost);
     panelConfiguracion.appendChild(poblacionHost);
     panelConfiguracion.appendChild(busquedaHost);
     panelConfiguracion.appendChild(prioridadesHost);
@@ -677,6 +763,10 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
     panelConfiguracion.appendChild(riesgoHost);
     panelConfiguracion.appendChild(compararHost);
     montarAlcaldia(alcaldiaHost, nombresAlcaldia);
+    const entradasColonia = construirEntradasColonia(coloniasGeoJSON, coloniasAgebLookup, datosAgeb, nombresAlcaldia);
+    if (entradasColonia.length > 0) {
+      montarColonia(coloniaHost, entradasColonia, { resaltar: (cveut) => instanciaMapa?.resaltarColonia(cveut) });
+    }
     montarPoblacion(poblacionHost);
     montarBusqueda(busquedaHost);
     montarPrioridades(prioridadesHost);
@@ -751,7 +841,7 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
       });
     }
 
-    pintarVistaPrincipal(instanciasVistaPrincipal, composicion, datosVista, nombresAlcaldia, estado);
+    pintarVistaPrincipal(instanciasVistaPrincipal, composicion, datosVista, nombresAlcaldia, estado, coloniasAgebLookup);
   }
 
   recalcularYPintar(obtenerEstado());

@@ -33,6 +33,12 @@ FUENTES = {
     "mg2010v5_nacional.zip": f"{INEGI_MG}/marc_geo/702825292812_s.zip",
     # CONAPO, población a mitad de año por municipio y grupo quinquenal 1990-2040 (datos.gob.mx)
     "pobproy_quinq1.csv": "https://www.datos.gob.mx/dataset/f2b9b220-3ef7-4e3a-bde6-87e1dac78c6a/resource/3c3092be-583e-4490-8c23-67ef9a64b198/download/pobproy_quinq1.csv",
+    # Colonias de la CDMX, delimitación del Instituto Electoral de la Ciudad de México (IECM)
+    # 2022, tal como la publica el catálogo de datos abiertos de la CDMX (datos.cdmx.gob.mx,
+    # "Catálogo de colonias"). El portal oficial no respondió desde esta red (timeout); se usa
+    # el espejo en GitHub que declara la misma fuente ("proyectados a partir de la misma capa
+    # del IECM"). Ver docs/data_manifest.md para el detalle de la decisión.
+    "colonias_iecm_2022.geojson": "https://raw.githubusercontent.com/planeacionterritorialmx/geoparticipa-cdmx/main/data/colonias.geojson",
 }
 
 
@@ -131,6 +137,11 @@ def main() -> None:
     if not conapo.exists():
         conapo.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(DESCARGAS / "pobproy_quinq1.csv", conapo)
+
+    colonias = PROCESADOS / "colonias" / "colonias_iecm_2022.geojson"
+    if not colonias.exists():
+        colonias.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(DESCARGAS / "colonias_iecm_2022.geojson", colonias)
 
     (DESCARGAS / "registro.json").write_text(json.dumps(registro, indent=1), encoding="utf-8")
 

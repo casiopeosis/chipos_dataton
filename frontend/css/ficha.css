@@ -10,6 +10,17 @@
   color: var(--tinta-2);
 }
 
+.ficha__colonia {
+  margin: 0 0 var(--e-2);
+  font-size: calc(var(--t-nota-tam) * var(--escala));
+  color: var(--tinta-3);
+}
+
+.ficha__colonia:empty {
+  display: none;
+  margin: 0;
+}
+
 .ficha__motivo {
   margin: 0 0 var(--e-4);
   font-size: calc(var(--t-nota-tam) * var(--escala));

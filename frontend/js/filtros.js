@@ -27,8 +27,16 @@ const COMERCIO_PRIMERA_NECESIDAD = Object.freeze([
   "carnes_otros_alimentos",
 ]);
 
+// Nivel educativo que corresponde a cada población objetivo específica (todas las que no son
+// "todas": esa no sugiere nada porque no hay un solo nivel que la represente). Antes solo cubría
+// primaria/adolescencia -- bebés, preescolar y secundaria se quedaban sin sugerencia alguna, lo
+// que dejaba más fácilmente un nivel ajeno pegado al cambiar de población (ver nota de
+// `montarFiltros` más abajo, el bug reportado de "guarderías" afectando la vista 15-17).
 const SUGERENCIAS_EDUCACION = Object.freeze({
+  primera_infancia: Object.freeze(["guarderia"]),
+  preescolar: Object.freeze(["preescolar"]),
   primaria: Object.freeze(["primaria"]),
+  secundaria: Object.freeze(["secundaria"]),
   adolescencia: Object.freeze(["media_superior_tecnica"]),
 });
 
@@ -208,12 +216,25 @@ function crearSubpanel(rama, estadoInicial, onInteraccionUsuario) {
 export function montarFiltros(contenedor) {
   const estadoInicial = obtenerEstado();
   const raiz = crear("section", { clase: "filtros", "aria-label": "Filtros por rama" });
-  let educacionTocada = estadoInicial.filtros.educacion.length > 0;
-  let poblacionAnterior = null;
-  const marcarInteraccion = (rama) => {
-    if (rama === "educacion") educacionTocada = true;
-  };
-  const subpaneles = RAMAS.map((rama) => crearSubpanel(rama, estadoInicial, marcarInteraccion));
+
+  // Corrección de un bug reportado: antes, tocar UNA vez el filtro de educación (p. ej. marcar
+  // "Guarderías" mientras se veía la población de bebés) desactivaba la sugerencia automática
+  // PARA SIEMPRE -- ese filtro quedaba pegado sin avisar al cambiar a cualquier otra población,
+  // incluidas las que no tienen nada que ver (p. ej. "15-17 años" seguía comparándose solo contra
+  // guarderías; "secundaria" se quedaba pegado al ver "bebés"). Ahora el nivel educativo elegido
+  // se recuerda POR POBLACIÓN (`Map<poblacion, celdas[]>`), nunca globalmente: cambiar de
+  // población siempre aplica lo último que el usuario eligió PARA ESA población si lo hay, si no
+  // la sugerencia de `SUGERENCIAS_EDUCACION`, y si tampoco hay sugerencia (p. ej. "todas las
+  // edades"), sin filtro -- nunca el nivel que quedó de la población anterior.
+  const personalizacionEducacionPorPoblacion = new Map();
+  if (estadoInicial.filtros.educacion.length > 0) {
+    personalizacionEducacionPorPoblacion.set(estadoInicial.poblacion, estadoInicial.filtros.educacion);
+  }
+  let poblacionAnterior = estadoInicial.poblacion;
+  let filtrosEducacionAnterior = estadoInicial.filtros.educacion;
+  let aplicandoAutomatico = false; // evita registrar como "elección del usuario" nuestros propios ajustes.
+
+  const subpaneles = RAMAS.map((rama) => crearSubpanel(rama, estadoInicial, () => {}));
   for (const { raiz: nodoSubpanel } of subpaneles) raiz.appendChild(nodoSubpanel);
 
   raiz.prepend(crear("div", { clase: "filtros__cabecera" }, [
@@ -227,7 +248,9 @@ export function montarFiltros(contenedor) {
       type: "button",
       clase: "filtros__restablecer",
       onclick: () => {
-        educacionTocada = true;
+        // Reinicio completo: también se olvida lo recordado por población, o "Quitar filtros"
+        // solo limpiaría la población activa y el resto seguiría con su nivel pegado.
+        personalizacionEducacionPorPoblacion.clear();
         despachar({ tipo: ACCIONES.RESTABLECER_FILTROS });
       },
     },
@@ -238,17 +261,32 @@ export function montarFiltros(contenedor) {
 
   reemplazarContenido(contenedor, [raiz]);
 
+  function mismasCeldas(a, b) {
+    return a.length === b.length && a.every((c, i) => c === b[i]);
+  }
+
   function reflejarTodo(estado) {
     const cambioPoblacion = estado.poblacion !== poblacionAnterior;
-    poblacionAnterior = estado.poblacion;
-    if (cambioPoblacion && !educacionTocada) {
-      const sugerencia = sugerenciaEducacionParaPoblacion(estado.poblacion);
-      if (sugerencia) {
-        subpaneles.find((subpanel) => subpanel.rama === "educacion")?.aplicarSugerencia(sugerencia);
-        return;
-      }
+
+    // El usuario (o la restauración de un enlace compartido) cambió el filtro de educación a mano
+    // mientras esta MISMA población seguía activa: se recuerda para ella, nunca para otra.
+    if (!cambioPoblacion && !aplicandoAutomatico && !mismasCeldas(estado.filtros.educacion, filtrosEducacionAnterior)) {
+      personalizacionEducacionPorPoblacion.set(estado.poblacion, estado.filtros.educacion);
     }
+    filtrosEducacionAnterior = estado.filtros.educacion;
+
     for (const subpanel of subpaneles) subpanel.reflejar(estado);
+
+    if (!cambioPoblacion || aplicandoAutomatico) return;
+    poblacionAnterior = estado.poblacion;
+
+    const recordado = personalizacionEducacionPorPoblacion.get(estado.poblacion);
+    const objetivo = recordado ?? sugerenciaEducacionParaPoblacion(estado.poblacion) ?? [];
+    if (mismasCeldas(estado.filtros.educacion, objetivo)) return;
+
+    aplicandoAutomatico = true;
+    despachar({ tipo: ACCIONES.CAMBIAR_FILTRO_RAMA, rama: "educacion", celdas: objetivo });
+    aplicandoAutomatico = false;
   }
 
   reflejarTodo(estadoInicial);

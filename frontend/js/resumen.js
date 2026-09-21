@@ -12,7 +12,6 @@
 
 import { crear, reemplazarContenido } from "./dom.js";
 import { textos } from "./textos.js";
-import { despachar as despacharEstado, ACCIONES } from "./estado.js";
 
 const DURACION_CROSSFADE_MS = 120;
 
@@ -52,50 +51,21 @@ function crearValorRamasIncidencia(ramas) {
   return crear("span", {}, [ramas.map((r) => textos.rama.nombre[r] ?? r).join(" / ")]);
 }
 
-/** §6.4: "{rama}: disponibilidad relativa {tercil}" (o "oportunidad", según la búsqueda activa), una línea por rama. */
-function crearMotivos(motivos, etiquetaNivel) {
-  const lista = crear(
-    "ul",
-    { clase: "resumen__motivos" },
-    motivos.map((m) => crear("li", { clase: "resumen__motivo" }, [
-      `${textos.rama.nombre[m.rama] ?? m.rama}: ${etiquetaNivel.toLowerCase()} ${textos.tercil.palabra[m.tercil]?.toLowerCase() ?? textos.tercil.palabra.sin_datos.toLowerCase()}`,
-    ])),
-  );
-  return lista;
-}
-
 /**
  * Monta el resumen estructurado Nivel 1 dentro de `contenedor`.
  *
  * @param {HTMLElement} contenedor
- * @param {{despachar?: (accion: object) => void}} [opciones]
  * @returns {{actualizar: (datos: object) => void, destruir: () => void}}
  */
-export function montarResumen(contenedor, opciones = {}) {
+export function montarResumen(contenedor) {
   if (!contenedor) throw new TypeError("montarResumen(contenedor): se requiere un contenedor");
-
-  const despachar = typeof opciones.despachar === "function" ? opciones.despachar : despacharEstado;
 
   const raiz = crear("section", { clase: "resumen-nivel1", "aria-labelledby": "resumen-titulo" });
   const titulo = crear("h2", { id: "resumen-titulo", clase: "resumen__titulo" });
   const dl = crear("dl", { clase: "resumen__campos" });
-  const motivosSeccion = crear("section", { clase: "resumen__motivos-seccion" }, [
-    crear("h3", { clase: "resumen__motivos-titulo" }, []),
-  ]);
-  const botonEntender = crear(
-    "button",
-    {
-      type: "button",
-      clase: "resumen__entender",
-      onclick: () => despachar({ tipo: ACCIONES.ABRIR_DRAWER }),
-    },
-    [textos.navegacion.entenderZona],
-  );
 
   raiz.appendChild(titulo);
   raiz.appendChild(dl);
-  raiz.appendChild(motivosSeccion);
-  raiz.appendChild(botonEntender);
   contenedor.appendChild(raiz);
 
   /**
@@ -123,11 +93,6 @@ export function montarResumen(contenedor, opciones = {}) {
       ...crearFila(datos.etiquetaNivel, crearValorTercil(datos.tercil)),
       ...crearFila(textos.resumen.campo.confianza, crearValorConfianza(datos.confianza)),
       ...crearFila(textos.resumen.campo.ramasIncidencia, crearValorRamasIncidencia(datos.ramasIncidencia)),
-    ]);
-
-    reemplazarContenido(motivosSeccion, [
-      crear("h3", { clase: "resumen__motivos-titulo" }, [textos.explicacion.titulo]),
-      crearMotivos(datos.motivos ?? [], datos.etiquetaNivel),
     ]);
 
     if (crossfade) {

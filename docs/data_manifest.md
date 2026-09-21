@@ -37,6 +37,21 @@ Originales en `data/interim/descargas/` (git-ignorado; `unzip -t` sin errores en
 | `mg2020_09_ciudaddemexico.zip` | https://www.inegi.org.mx/contenidos/productos/prod_serv/contenidos/espanol/bvinegi/productos/geografia/marcogeo/889463807469/09_ciudaddemexico.zip | 2026-09-18 | 83,207,305 | `685b912f5458138a70726cff41aff828473e14264c43289d3b21f86a9df00320` |
 | `mg2010v5_nacional.zip` | https://www.inegi.org.mx/contenidos/productos/prod_serv/contenidos/espanol/bvinegi/productos/geografia/marc_geo/702825292812_s.zip | 2026-09-18 | 100,391,544 | `298d13d6ba8017785006fb0aff9b5a020d7d80f4bfc5fff0afcaeacb6746b4ca` |
 | `pobproy_quinq1.csv` | https://www.datos.gob.mx/dataset/f2b9b220-3ef7-4e3a-bde6-87e1dac78c6a/resource/3c3092be-583e-4490-8c23-67ef9a64b198/download/pobproy_quinq1.csv | 2026-09-18 | 36,658,654 | `1a8f07be08de082a0c33404f0fbce9d9292845a8c8290153a6ad2e1889bab31a` |
+| `colonias_iecm_2022.geojson` | https://raw.githubusercontent.com/planeacionterritorialmx/geoparticipa-cdmx/main/data/colonias.geojson | 2026-09-21 | 717,516 | ver `data/interim/descargas/registro.json` |
+
+**Colonias (2026-09-21):** se buscó la delimitación de colonias de la CDMX para asociarla a cada
+AGEB (pedido del equipo: "estudia si es posible... e implementarlo en el frontend"). No existe una
+tabla oficial "AGEB → colonia": son dos delimitaciones independientes (INEGI vs. autoridad
+municipal/IECM) que no anidan. La fuente primaria natural, `datos.cdmx.gob.mx` ("Catálogo de
+colonias", delimitación del Instituto Electoral de la Ciudad de México 2022), **no respondió desde
+esta red** (timeout con WebFetch, navegador y `curl` directo). Se usó en su lugar el espejo en
+GitHub `planeacionterritorialmx/geoparticipa-cdmx` (`data/colonias.geojson`), que su propio README
+declara "proyectados a partir de la misma capa del IECM" y coincide en conteo (1,837 colonias de
+las 16 alcaldías) con la descripción del catálogo oficial. Decisión del equipo: usar este espejo
+por ahora; si `datos.cdmx.gob.mx` vuelve a responder, re-descargar de ahí y comparar antes de
+reemplazar (`tools/descargar_datos.py` ya tiene la URL del espejo documentada con esta salvedad).
+INEGI también publica una delimitación de colonias federal, la DCAH (`inegi.org.mx/programas/dcah/`),
+pero es un producto aparte, de cobertura incompleta y sin relación directa con AGEB: se descartó.
 
 Productos: MG 2020 = *Marco Geoestadístico, Censo de Población y Vivienda 2020* (UPC 889463807469);
 MG 2010 = *Marco Geoestadístico 2010 versión 5.0, Censo 2010* (UPC 702825292812; solo se publica
@@ -57,6 +72,8 @@ grupos quinquenales de edad (1990-2040)*, conjunto "Proyecciones de población" 
 | `marco_geo/mg2010v5/municipios_2010_09.gpkg` | `18f8b0727df998d6` | filtro `CVE_ENT = 09` de `Municipios_2010_5.shp` |
 | `reference/ageb_cdmx.geojson` | `ffa74ecffe3b6750` | `tools/build_geo.py` (09a + 09ar, EPSG:4326, make_valid) |
 | `reference/ageb_cdmx_simplificado.geojson` | `8a83338552ea2469` | mapshaper 0.6, 25 % de vértices, keep-shapes, 5 decimales |
+| `reference/colonias_cdmx.geojson` | `fd049747bb55917c` | `tools/build_colonias.py` (colonias IECM 2022, EPSG:4326, make_valid, deduplicado por `cveut`) |
+| `reference/colonias_cdmx_simplificado.geojson` | `a01c3f7ef05c53b8` | `shapely.simplify` 0.00005°, `preserve_topology=True` (no mapshaper: las colonias se traslapan entre sí, no son una partición, y `keep-shapes` no repara esas ~2 956 intersecciones) |
 
 ## Superseded
 
@@ -83,3 +100,4 @@ El xlsx se conserva sin cambios; `tools/convertir_censo.py` lo sigue leyendo sol
 | `censo_xlsx_ageb_{2010,2020}.parquet` (contraste) | `tools/convertir_censo.py` |
 | `conapo_mun_quinq.parquet`, `conapo_mun_0a14.parquet` | `tools/build_conapo.py` |
 | `equivalencia_ageb_2010_2020.parquet` | `tools/build_geo.py` |
+| `ageb_colonia.parquet` (por `cvegeo`: `cveut`, `colonia`, `cobertura_pct`, `n_colonias_interseccion`) | `tools/build_colonias.py` (además escribe `data/outputs/colonias_ageb.json`, mismo lookup en JSON para el frontend, fuera del contrato versionado) |

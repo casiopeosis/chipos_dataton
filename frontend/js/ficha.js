@@ -25,10 +25,12 @@ export function montarFicha(contenedor) {
 
   const raiz = crear("div", { clase: "ficha" });
   const ubicacionEl = crear("p", { clase: "ficha__ubicacion" });
+  const coloniaEl = crear("p", { clase: "ficha__colonia" });
   const motivoEl = crear("p", { clase: "ficha__motivo" });
   const resumenHost = crear("div", { clase: "ficha__resumen" });
 
   raiz.appendChild(ubicacionEl);
+  raiz.appendChild(coloniaEl);
   raiz.appendChild(motivoEl);
   raiz.appendChild(resumenHost);
   contenedor.appendChild(raiz);
@@ -39,6 +41,7 @@ export function montarFicha(contenedor) {
    * @param {{
    *   cvegeo: string,
    *   alcaldiaNombre: string,
+   *   coloniaNombre: string|null,
    *   motivoSinDatosCodigo: string|null,
    *   resumen: Parameters<ReturnType<typeof montarResumen>["actualizar"]>[0],
    * }} datos
@@ -47,6 +50,10 @@ export function montarFicha(contenedor) {
     reemplazarContenido(ubicacionEl, [
       textos.ficha.ubicacion({ alcaldia: datos.alcaldiaNombre, cvegeo: datos.cvegeo }),
     ]);
+    reemplazarContenido(
+      coloniaEl,
+      datos.coloniaNombre ? [textos.ficha.colonia({ colonia: datos.coloniaNombre })] : [],
+    );
     reemplazarContenido(
       motivoEl,
       datos.motivoSinDatosCodigo

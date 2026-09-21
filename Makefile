@@ -8,11 +8,12 @@ PUERTO ?= 8000
 descargas:
 	$(PY) tools/descargar_datos.py
 
-# Derivados en data/interim/ y data/reference/ageb_cdmx*.geojson
+# Derivados en data/interim/ y data/reference/ageb_cdmx*.geojson (+ colonias_cdmx*.geojson)
 datos: censo
 	$(PY) tools/build_censo.py
 	$(PY) tools/build_conapo.py
 	$(PY) tools/build_geo.py
+	$(PY) tools/build_colonias.py
 
 # xlsx del equipo → parquet (solo contraste; el 2010 está truncado)
 censo:
@@ -80,3 +81,5 @@ frontend-datos:
 	@cp data/outputs/prediccion_alcaldia.json frontend/data/ 2>/dev/null || true
 	cp data/reference/alcaldias.geojson frontend/data/
 	cp data/reference/ageb_cdmx_simplificado.geojson frontend/data/
+	cp data/reference/colonias_cdmx_simplificado.geojson frontend/data/
+	@cp data/outputs/colonias_ageb.json frontend/data/ 2>/dev/null || true
