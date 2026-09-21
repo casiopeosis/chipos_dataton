@@ -175,8 +175,11 @@ function calcularComposicion(datos, estado) {
     const tasaS = esVerde ? null : new Float64Array(nD);
     claves.forEach((clave, i) => {
       const n = niveles.get(clave);
-      nivelOferta[i] = n?.nivelHorizonte ?? 0;
-      if (tasaS) tasaS[i] = n?.tasaAnual ?? 0;
+      // Rama ausente = sin dato, no oferta cero. Solo un registro publicado cuyo nivel sea 0
+      // representa oferta cero válida y, por tanto, oportunidad máxima. NaN permite que
+      // indiceCompuesto() renormalice los pesos entre las ramas realmente disponibles.
+      nivelOferta[i] = n ? n.nivelHorizonte : NaN;
+      if (tasaS) tasaS[i] = n ? n.tasaAnual : NaN;
     });
 
     const coberturas = new Float64Array(nD);
