@@ -700,6 +700,26 @@ def _formato_pct(valor: float | None) -> str:
     return "n/d" if valor is None else f"{valor:.2f}"
 
 
+def _razon_no_adopcion(adopcion: dict) -> str:
+    """Describe qué validación falló, en vez de una frase fija (corrección F-2 / punto 12).
+
+    El paréntesis de la línea 5 del resumen solo tenía sentido en el caso
+    positivo ("supera al baseline en las 3 validaciones"); cuando el modelo
+    no se adopta, listamos exactamente qué falló para no decir dos cosas
+    contradictorias en la misma línea.
+    """
+    if adopcion["modelo_se_adopta"]:
+        return "supera al baseline en las 3 validaciones (demanda, LOAO, oferta)"
+    fallas = []
+    if not adopcion["demanda_supera_baseline"]:
+        fallas.append("demanda no supera al baseline en MAE/F1")
+    if not adopcion["loao_cobertura_en_rango"]:
+        fallas.append("LOAO fuera de [0.90, 0.97]")
+    if not adopcion["oferta_supera_baseline"]:
+        fallas.append("oferta no supera al baseline en MAE/F1")
+    return "; ".join(fallas) if fallas else "criterio no alcanzado"
+
+
 def _resumen_md(resultados: dict) -> str:
     """Resumen de <= 5 líneas + tabla (metodología §4.3, action_plan.md #13)."""
     adopcion = resultados["adopcion"]
@@ -726,7 +746,7 @@ def _resumen_md(resultados: dict) -> str:
         f"oferta `sigma_min={piso['oferta']['elegido']}` "
         f"(cobertura {_formato_pct(piso['oferta']['cobertura_lograda'])}).",
         f"5. **Modelo {'SE ADOPTA' if adopcion['modelo_se_adopta'] else 'NO SE ADOPTA'}** "
-        "según el criterio de CLAUDE.md (supera al baseline en las 3 validaciones).",
+        f"según el criterio de CLAUDE.md ({_razon_no_adopcion(adopcion)}).",
         "",
         "## Adelgazamiento binomial (Censo 2020, nunca el futuro)",
         "",
@@ -760,6 +780,33 @@ def _resumen_md(resultados: dict) -> str:
         )
 
     lineas += [
+        "",
+        "## Decisión sobre la capa de oferta (F-2 / punto 12)",
+        "",
+        "El modelo Poisson de oferta (origen 2016-10+2019-11 -> predice 2024-11) "
+        f"**{'supera' if adopcion['oferta_supera_baseline'] else 'no supera'}** al baseline "
+        "'S constante' en esta validación. `CLAUDE.md` exige no adoptar un modelo que no supere "
+        "al baseline; aun así las ramas de oferta se publican en el contrato, degradadas: "
+        "**tope de confianza `media`** en toda proyección de oferta (nunca `alta`), la rama "
+        "`verde` se reporta sin proyección (`horizontes_disponibles: []`, solo nivel actual) y "
+        "las demás ramas (`educacion`, `salud`, `comercio`) llevan la limitación anterior escrita "
+        "en el frontend (F-7). Se publica con esta etiqueta, en vez de ocultarla, porque el nivel "
+        "observado de establecimientos sigue siendo información útil para un usuario que sabe "
+        "leer la salvedad; lo que no se hace es presentar la proyección de oferta con la misma "
+        "confianza que la de demanda.",
+        "",
+        "## Banda de cobertura del IC95 (F-3 / punto 21)",
+        "",
+        "La *Definición de terminado* pedía cobertura empírica del IC95 en `[0.90, 0.97]`. Hoy "
+        "LOAO cubre 1.00 y los pisos calibrados de demanda y oferta ya sobrecubren en "
+        "`sigma_min=0.000` (ver tabla de calibración abajo): el procedimiento del punto 19 solo "
+        "puede **ensanchar** el intervalo con un piso, nunca estrecharlo, así que no hay piso que "
+        "cierre este hueco. Decisión (a) tomada: se acepta la sobrecobertura como conservadora y "
+        "se marca este criterio de la DoD como **relajado explícitamente**, no silenciado -- un "
+        "intervalo que sobrecubre falla del lado seguro (nunca declara más certeza de la que "
+        "tiene), a diferencia de uno que subcubre. No se implementó un factor de estrechamiento "
+        "(opción b) porque arriesgaba empeorar la calibración real a cambio de cumplir un número "
+        "de la DoD sin validación adicional.",
         "",
         "## Comparación censo-CONAPO 2010-2020 (NO es un backtest)",
         "",

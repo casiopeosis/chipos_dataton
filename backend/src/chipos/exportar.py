@@ -42,6 +42,7 @@ import pandas as pd
 from chipos.config import (
     HORIZONTES,
     HORIZONTES_OFERTA,
+    RUTA_DIAGNOSTICO,
     RUTA_PREDICCION_AGEB,
     RUTA_PREDICCION_ALCALDIA,
     SEMILLA,
@@ -910,6 +911,19 @@ def main() -> None:
     verificar_suma_ageb_alcaldia(salida_ageb, salida_alcaldia)
     escribir_json(salida_alcaldia, RUTA_PREDICCION_ALCALDIA)
     print(f"chipos.exportar: {RUTA_PREDICCION_ALCALDIA} escrito (16 alcaldías).")
+
+    print("chipos.exportar: sensibilidad K del índice de oportunidad (diagnostico.json)...")
+    from chipos.features import construir_sensibilidad_oportunidad, escribir_diagnostico
+
+    demanda_todas = {cve: reg["segmentos"]["todas"] for cve, reg in capa_demanda.items()}
+    sensibilidad = construir_sensibilidad_oportunidad(
+        demanda_todas, {r: capas_ramas_ageb[r] for r in RAMAS_CON_PROYECCION},
+    )
+    escribir_diagnostico({
+        "generado": generado,
+        "sensibilidad_oportunidad": sensibilidad,
+    })
+    print(f"chipos.exportar: {RUTA_DIAGNOSTICO} actualizado con sensibilidad_oportunidad.")
 
 
 if __name__ == "__main__":

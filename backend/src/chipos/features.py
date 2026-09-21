@@ -242,6 +242,77 @@ def sensibilidad_indice_oportunidad(
     }
 
 
+def construir_sensibilidad_oportunidad(
+    capa_demanda_todas: dict,
+    capas_ramas: dict[str, dict],
+    horizonte: str = "h3",
+    anios_horizonte: float = 3.0,
+    ks: tuple[float, ...] = K_SENSIBILIDAD,
+) -> dict:
+    """Sensibilidad obligatoria de `O` a `K` (punto 30), sobre el universo real de AGEB.
+
+    Antes esta sensibilidad solo tenía prueba unitaria y nunca se calculaba sobre datos
+    reales (F-4 de `correccion/avance_plan.md`): `sensibilidad_indice_oportunidad` existía
+    pero nada la llamaba fuera de `test_features.py`. Se calcula aquí a partir de
+    `nivel_base` + `delta_pct` YA PUBLICADOS por segmento/celda -- no de las réplicas Monte
+    Carlo crudas, que en este punto del pipeline (`exportar.py`, después de `resumir()`) ya
+    se colapsaron a percentiles. Es la MISMA aproximación que usa
+    `frontend/js/composicion.js` del lado del cliente (desviación documentada del punto 28
+    en `docs/metodologia.md` §10.1-§10.3: el intervalo "gratis" sobre réplicas que pedía el
+    plan no sobrevive a la agregación cliente-lado por celda/segmento filtrado, así que se
+    prefiere una sola aproximación consistente en ambos lados a mantener dos).
+
+    `capa_demanda_todas`: `capas.demanda[<CVEGEO>].segmentos.todas` ya construido (dict por
+    AGEB, segmento `todas` -- el mismo que ve un usuario sin filtrar población objetivo).
+    `capas_ramas`: `{rama: capas.ramas[rama]}` para las ramas con proyección
+    (`educacion`, `salud`, `comercio`; `verde` no tiene horizonte y se excluye).
+    """
+    claves = sorted(capa_demanda_todas.keys())
+    n = len(claves)
+    nivel_demanda = np.full(n, np.nan)
+    tasa_d = np.full(n, np.nan)
+    for i, cve in enumerate(claves):
+        registro = capa_demanda_todas[cve]
+        nivel_base = registro.get("nivel_base")
+        bloque = (registro.get("h") or {}).get(horizonte)
+        if nivel_base is None or bloque is None or bloque.get("delta_pct") is None:
+            continue
+        nivel_demanda[i] = nivel_base * (1.0 + bloque["delta_pct"] / 100.0)
+        tasa_d[i] = bloque["tasa_anual_pct"]
+
+    resultado: dict = {}
+    for rama, capa_rama in capas_ramas.items():
+        nivel_oferta_base = np.zeros(n)
+        nivel_oferta_h = np.zeros(n)
+        for i, cve in enumerate(claves):
+            for celda in (capa_rama.get(cve) or {}).get("celdas", {}).values():
+                nb = celda.get("nivel_base") or 0.0
+                nivel_oferta_base[i] += nb
+                bloque = (celda.get("h") or {}).get(horizonte)
+                if bloque is not None and bloque.get("delta_pct") is not None:
+                    nivel_oferta_h[i] += nb * (1.0 + bloque["delta_pct"] / 100.0)
+                else:
+                    nivel_oferta_h[i] += nb
+
+        # Tasa anual implícita de la rama por log-razón de los niveles ya sumados (mismo
+        # principio que `modelos.agregar_alcaldia`; espejo exacto de
+        # `composicion.tasaAnualImplicita`): 0 si ambos niveles son 0 (sin cambio, no error);
+        # -100 si toda la oferta desaparece.
+        tasa_s = np.zeros(n)
+        for i in range(n):
+            if nivel_oferta_base[i] <= 0:
+                tasa_s[i] = 0.0
+            elif nivel_oferta_h[i] <= 0:
+                tasa_s[i] = -100.0
+            else:
+                tasa_s[i] = 100.0 * np.log(nivel_oferta_h[i] / nivel_oferta_base[i]) / anios_horizonte
+
+        cobertura = cobertura_proyectada(nivel_oferta_h, nivel_demanda)
+        resultado[rama] = sensibilidad_indice_oportunidad(cobertura, tasa_d, tasa_s, pd.Index(claves), ks)
+
+    return resultado
+
+
 def indice_disponibilidad(
     cobertura_mediana: np.ndarray,
     tasa_s: np.ndarray,

@@ -18,6 +18,7 @@ import {
   tercilDeQuintil,
   RAMAS,
 } from "../js/composicion.js";
+import { FIXTURE_PARIDAD_OPORTUNIDAD } from "./fixtures/paridad_oportunidad.js";
 
 const pruebas = [];
 function prueba(nombre, fn) {
@@ -165,6 +166,25 @@ prueba("indiceOportunidad: tasaOferta=null (verde) no lanza y no ajusta", () => 
   const rango = rangoPercentilPromediado(coberturas);
   for (let i = 0; i < coberturas.length; i++) {
     afirmarCercano(o[i], 1 - rango[i], 1e-9, "sin tasaOferta, O debe ser solo el término de nivel");
+  }
+});
+
+// ------------------------------------------------------------------
+// Paridad Python↔JS (F-4, correccion/avance_plan.md punto 30.iii): mismos vectores que
+// backend/tests/test_features.py::TestParidadIndiceOportunidadPythonJs deben dar el mismo
+// resultado en las dos implementaciones de indice_oportunidad/indiceOportunidad.
+// ------------------------------------------------------------------
+
+prueba("indiceOportunidad: paridad con features.indice_oportunidad (fixture compartido)", () => {
+  const f = FIXTURE_PARIDAD_OPORTUNIDAD;
+  const o = indiceOportunidad(f.cobertura, f.tasaDemanda, f.tasaOferta, f.k);
+  afirmar(o.length === f.esperado.length, "longitud del resultado no coincide con el fixture");
+  for (let i = 0; i < f.esperado.length; i++) {
+    if (Number.isNaN(f.esperado[i])) {
+      afirmar(Number.isNaN(o[i]), `posición ${i}: se esperaba NaN, se obtuvo ${o[i]}`);
+    } else {
+      afirmarCercano(o[i], f.esperado[i], 1e-9, `posición ${i} del fixture de paridad`);
+    }
   }
 });
 

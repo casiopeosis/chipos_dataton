@@ -23,6 +23,7 @@ from chipos.features import (
     cobertura_proyectada,
     construir_diagnostico,
     construir_escenarios_oferta,
+    construir_sensibilidad_oportunidad,
     escribir_diagnostico,
     indice_disponibilidad,
     indice_oportunidad,
@@ -430,6 +431,34 @@ class TestSensibilidadIndiceOportunidad:
         assert resultado["n_con_cambio"] == 0
 
 
+class TestParidadIndiceOportunidadPythonJs:
+    """Fixture compartido con `frontend/tests/fixtures/paridad_oportunidad.js`, consumido por
+    `frontend/tests/pruebas_composicion.js` (F-4, `correccion/avance_plan.md` punto 30.iii).
+
+    Los vectores de entrada y `esperado` de abajo deben ser LITERALMENTE iguales a los del
+    fixture JS. Si alguien cambia `features.indice_oportunidad` o
+    `composicion.indiceOportunidad` sin actualizar el otro lado, una de las dos pruebas falla:
+    ese es el propósito. Casos: cobertura 0 (máxima oportunidad), cobertura alta, tasas
+    iguales (ajuste 0), `NaN` propagado, y ajuste saturado (`clip` a ±0.15) en ambos sentidos.
+    """
+
+    def test_mismos_vectores_que_el_fixture_js(self) -> None:
+        cobertura = np.array([0.0, 1000.0, 500.0, np.nan, 250.0, 4000.0, 0.0])
+        tasa_d = np.array([-3.0, -3.0, 2.0, -3.0, 0.0, -5.0, 1.0])
+        tasa_s = np.array([-1.0, -1.0, 2.0, -1.0, 5.0, -6.0, -4.0])
+        k = 5.0
+        esperado = [0.75, 0.05, 0.4, None, 0.45, 0.15, 1.0]
+
+        o = indice_oportunidad(cobertura, tasa_d, tasa_s, k)
+
+        assert len(o) == len(esperado)
+        for valor, esp in zip(o, esperado):
+            if esp is None:
+                assert np.isnan(valor)
+            else:
+                assert valor == pytest.approx(esp, abs=1e-9)
+
+
 class TestIndiceDisponibilidad:
     def test_cobertura_alta_da_disponibilidad_alta(self) -> None:
         """A diferencia de indice_oportunidad, NO se invierte el rango: cobertura alta =
@@ -455,6 +484,45 @@ class TestIndiceDisponibilidad:
         confianza = rng.choice(["alta", "media", "baja"], n)
         f = indice_disponibilidad(cobertura, tasa_s, confianza)
         assert np.all((f >= 0.0) & (f <= 1.0))
+
+
+class TestConstruirSensibilidadOportunidad:
+    """`exportar.py` llama esto sobre el contrato v1.4 ya construido (F-4, punto 30): antes
+    nadie llamaba `sensibilidad_indice_oportunidad` fuera de los tests, y `diagnostico.json`
+    nunca traía la sensibilidad obligatoria a `K`."""
+
+    def _capa_demanda_todas(self) -> dict:
+        return {
+            "0900200010010": {"nivel_base": 100.0, "h": {"h3": {"delta_pct": -10.0, "tasa_anual_pct": -3.5}}},
+            "0900200010020": {"nivel_base": 50.0, "h": {"h3": {"delta_pct": 5.0, "tasa_anual_pct": 1.6}}},
+            "0900200010030": {"nivel_base": 0.0, "h": {"h3": {"delta_pct": None, "tasa_anual_pct": None}}},
+        }
+
+    def _capa_rama(self, niveles: dict[str, float]) -> dict:
+        return {
+            cve: {"celdas": {"celda_a": {"nivel_base": nb, "h": {"h3": {"delta_pct": -5.0}}}}}
+            for cve, nb in niveles.items()
+        }
+
+    def test_estructura_por_rama(self) -> None:
+        capa_demanda_todas = self._capa_demanda_todas()
+        capas_ramas = {
+            "educacion": self._capa_rama({"0900200010010": 3.0, "0900200010020": 1.0, "0900200010030": 0.0}),
+            "salud": self._capa_rama({"0900200010010": 0.0, "0900200010020": 2.0, "0900200010030": 0.0}),
+        }
+        resultado = construir_sensibilidad_oportunidad(capa_demanda_todas, capas_ramas)
+        assert set(resultado.keys()) == {"educacion", "salud"}
+        for bloque in resultado.values():
+            assert bloque["k_candidatos"] == [3.0, 5.0, 8.0]
+            assert isinstance(bloque["claves_con_cambio_sustancial"], list)
+
+    def test_ageb_con_demanda_invalida_no_se_evalua(self) -> None:
+        """`0900200010030` no tiene `delta_pct` (demanda inválida) -> `D̂` inválido -> `sin_datos`
+        -> se excluye de `n_evaluado` (cobertura NaN, metodología §10.1)."""
+        capa_demanda_todas = self._capa_demanda_todas()
+        capas_ramas = {"educacion": self._capa_rama({"0900200010010": 3.0, "0900200010020": 1.0, "0900200010030": 5.0})}
+        resultado = construir_sensibilidad_oportunidad(capa_demanda_todas, capas_ramas)
+        assert resultado["educacion"]["n_evaluado"] == 2
 
 
 @pytest.mark.datos

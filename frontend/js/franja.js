@@ -124,6 +124,11 @@ function pintarContenidoZona(dialogo, datosZona) {
       ])),
   ]);
 
+  const seccionConfiabilidad = crear("section", { clase: "franja__seccion" }, [
+    crear("h3", { clase: "franja__seccion-titulo" }, [textos.confiabilidad.titulo]),
+    crear("p", { clase: "franja__parrafo" }, [textos.confiabilidad.parrafo]),
+  ]);
+
   reemplazarContenido(dialogo, [
     cabeceraDrawer,
     crear("div", { clase: "franja__cuerpo" }, [
@@ -131,6 +136,7 @@ function pintarContenidoZona(dialogo, datosZona) {
       seccionServicios,
       seccionCobertura,
       datosZona.explicacionNodo,
+      seccionConfiabilidad,
     ]),
   ]);
 

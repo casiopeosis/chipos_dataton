@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
-"""Genera los mocks deterministas del frontend (contratos v1.1 y v1.2).
+"""Genera los mocks deterministas del frontend (contratos v1.1 y v1.4).
 
 Lee UNICAMENTE las propiedades (cvegeo, cve_mun, ambito) de
 ``data/reference/ageb_cdmx_simplificado.geojson`` -- nunca geometrias -- para
 obtener el universo real de AGEB y alcaldias, y con eso escribe:
 
 - ``prediccion_ageb.json`` / ``prediccion_alcaldia.json``
-  Contrato v1.2 (plans/frontend_specs.md §17): ``fecha_base``, 3 horizontes
-  (``h1``/``h3``/``h5``), ``serie``/``nivel_base`` por registro y, en el
-  archivo de alcaldia, ``distribucion_ageb``/``agregado_cdmx``. Es el mock
-  "base" (``?mock=1``/sin parametro), fixture principal de desarrollo.
+  Contrato v1.4 (plans/frontend_specs.md §17-18, CLAUDE.md "Contrato de
+  salida"): ``fecha_base``, 3 horizontes (``h1``/``h3``/``h5``), 6 segmentos
+  de demanda (``segmentos.<segmento>``) y 4 ramas de oferta
+  (``ramas.{educacion,salud,comercio,verde}.celdas.<celda>``), con
+  ``distribucion_ageb``/``agregado_cdmx`` en el archivo de alcaldia. Es el
+  mock "base" (``?mock=1``/sin parametro), fixture principal de desarrollo.
+  Actualizado en F-5 de `correccion/avance_plan.md` -- antes se quedaba en
+  v1.2 (a medias de la migracion real de `exportar.py`).
 - ``prediccion_ageb_v11.json`` / ``prediccion_alcaldia_v11.json``
   Contrato v1.1 (un solo horizonte), para probar la degradacion del slider
   (``?mock=v11``, js/config.js).
@@ -40,26 +44,24 @@ DIR_SALIDA = pathlib.Path(__file__).resolve().parent
 
 SEMILLA = "chipos-dataton-mock-v1"
 VERSION_CONTRATO_V11 = "1.1"
-VERSION_CONTRATO_V12 = "1.2"
 VERSION_INVALIDA = "1.9"
 HORIZONTE = "2027-06"  # v1.1: horizonte unico (decision previa, ver CLAUDE.md).
 
-# v1.2 (horizontes 1/3/5 anios, correccion/action_plan.md Fase 1: cumple
-# correccion/rubrica.md §5 "uno, tres o cinco anios"; version del contrato se
-# queda en 1.2 hasta que las Fases 4-6 completen el salto a 1.4).
-FECHA_BASE_V12 = "2026-06"
-HORIZONTES_V12 = (
+# Horizontes 1/3/5 anios (correccion/action_plan.md Fase 1: cumple
+# correccion/rubrica.md §5 "uno, tres o cinco anios"), version del contrato v1.4 (Fase 6).
+FECHA_BASE_V14 = "2026-06"
+HORIZONTES_V14 = (
     {"clave": "h1", "anios": 1, "fecha": "2027-06"},
     {"clave": "h3", "anios": 3, "fecha": "2029-06"},
     {"clave": "h5", "anios": 5, "fecha": "2031-06"},
 )
-_ANIOS_POR_CLAVE = {h["clave"]: h["anios"] for h in HORIZONTES_V12}
+_ANIOS_POR_CLAVE = {h["clave"]: h["anios"] for h in HORIZONTES_V14}
 # La oferta reporta h1 y h3, no h5 (metodologia §6.3): sin control externo,
 # 3 anios sigue siendo el techo defendible pero 1 anio si es reportable.
-HORIZONTES_OFERTA_V12 = ("h1", "h3")
+HORIZONTES_OFERTA_V14 = ("h1", "h3")
 T_2010 = 2010.44
 T_2020 = 2020.20
-T_BASE_V12 = 2026.5
+T_BASE_V14 = 2026.5
 
 VEREDICTOS_VALIDOS = ("sube", "se_mantiene", "baja")  # sin_datos se trata aparte
 CONFIANZAS = ("alta", "media", "baja")
@@ -290,6 +292,225 @@ def generar_capa_alcaldia(universo: list[dict]) -> tuple[dict, dict]:
 
 
 # -------------------------------------------------------------------------------------------
+# Contrato v1.4 (Fase 6 de correccion/action_plan.md; horizontes 1/3/5 anios, 6 segmentos de
+# demanda, 4 ramas de oferta -- F-5 de correccion/avance_plan.md: los mocks se habian quedado en
+# v1.2, a medias de la migracion real de exportar.py).
+# -------------------------------------------------------------------------------------------
+
+VERSION_CONTRATO_V14 = "1.4"
+
+# 6 segmentos de poblacion objetivo (metodologia §1.1, backend/src/chipos/panel.py
+# SEGMENTOS_DEMANDA). Se repite aqui como constante literal, no como import de chipos.panel:
+# generar_mock.py se mantiene "solo biblioteca estandar" (ver docstring del modulo) para poder
+# correr sin backend/venv instalado; si `panel.SEGMENTOS_DEMANDA` cambia, esta lista debe
+# actualizarse a mano (test_generar_mock verifica que coincidan si el backend esta disponible).
+SEGMENTOS_DEMANDA = (
+    "todas",
+    "primera_infancia",
+    "preescolar",
+    "primaria",
+    "secundaria",
+    "adolescencia",
+)
+
+# Celdas por rama, espejo literal de `panel.CELDAS_EDUCACION`/`CELDAS_SALUD`/`CELDAS_COMERCIO`/
+# `CELDAS_VERDE` (mismo comentario de arriba: constante duplicada a proposito).
+_SECTORES_CELDA = ("publico", "privado", "no_especificado")
+_NIVELES_EDUCACION = (
+    "guarderia",
+    "preescolar",
+    "primaria",
+    "secundaria",
+    "educacion_especial",
+    "varios_niveles",
+    "media_superior_tecnica",
+    "recreacion_cultura",
+)
+CELDAS_EDUCACION = tuple(f"{nivel}__{sector}" for nivel in _NIVELES_EDUCACION for sector in _SECTORES_CELDA)
+_TIPOS_SALUD = ("clinicas", "hospitales", "salud_mental", "farmacias")
+CELDAS_SALUD = tuple(f"{tipo}__{sector}" for tipo in _TIPOS_SALUD for sector in _SECTORES_CELDA)
+CELDAS_COMERCIO = (
+    "supermercados_minisupers",
+    "abarrotes",
+    "frutas_verduras",
+    "carnes_otros_alimentos",
+    "farmacias",
+)
+CELDAS_VERDE = ("cobertura_verde", "areas_recreativas", "espacios_publicos")
+
+RAMAS_CON_PROYECCION = ("educacion", "salud", "comercio")
+_CELDAS_POR_RAMA_CON_PROYECCION = {
+    "educacion": CELDAS_EDUCACION,
+    "salud": CELDAS_SALUD,
+    "comercio": CELDAS_COMERCIO,
+}
+
+
+def generar_capa_demanda_ageb_v14(universo: list[dict]) -> dict:
+    """`capas.demanda[cvegeo] = {cve_mun, segmentos: {segmento: {...}}}` (metodología §1.1)."""
+    resultado: dict[str, dict] = {}
+    for indice, ageb in enumerate(universo):
+        cvegeo, cve_mun, ambito = ageb["cvegeo"], ageb["cve_mun"], ageb["ambito"]
+        if ambito == "urbano" and indice % PASO_AUSENCIA == 0:
+            continue  # ausencia deliberada, igual que v1.1/v1.2.
+
+        segmentos: dict[str, dict] = {}
+        for segmento in SEGMENTOS_DEMANDA:
+            rng_d = _rng(f"demanda-v14:{segmento}:{cvegeo}")
+            forzar_vacio = cve_mun == ALCALDIA_CASI_VACIA and rng_d.random() < PROPORCION_VACIA
+            if ambito == "rural":
+                segmentos[segmento] = _registro_demanda_sin_datos_v12(rng_d, None, "rural")
+            elif forzar_vacio:
+                segmentos[segmento] = _registro_demanda_sin_datos_v12(rng_d, None, "n_insuficiente")
+            else:
+                segmentos[segmento] = _registro_demanda_v12(rng_d, None)
+        resultado[cvegeo] = {"cve_mun": cve_mun, "segmentos": segmentos}
+    return resultado
+
+
+def generar_capa_demanda_alcaldia_v14(universo: list[dict]) -> dict:
+    alcaldias = sorted({a["cve_mun"] for a in universo})
+    resultado: dict[str, dict] = {}
+    for cve_mun in alcaldias:
+        segmentos: dict[str, dict] = {}
+        for segmento in SEGMENTOS_DEMANDA:
+            rng_d = _rng(f"alcaldia-demanda-v14:{segmento}:{cve_mun}")
+            if cve_mun == ALCALDIA_CASI_VACIA:
+                segmentos[segmento] = _registro_demanda_sin_datos_v12(rng_d, None, "n_insuficiente")
+            else:
+                segmentos[segmento] = _registro_demanda_v12(rng_d, None)
+        resultado[cve_mun] = {"cve_mun": cve_mun, "segmentos": segmentos}
+    return resultado
+
+
+def generar_capa_rama_ageb_v14(universo: list[dict], rama: str) -> dict:
+    """`capas.ramas.<rama>[cvegeo] = {cve_mun, horizontes_disponibles, celdas: {...}}`
+    (metodología §10.6), para una rama CON proyección (educación/salud/comercio)."""
+    celdas_rama = _CELDAS_POR_RAMA_CON_PROYECCION[rama]
+    resultado: dict[str, dict] = {}
+    for indice, ageb in enumerate(universo):
+        cvegeo, cve_mun = ageb["cvegeo"], ageb["cve_mun"]
+        if ageb["ambito"] == "urbano" and indice % PASO_AUSENCIA == 0:
+            continue
+
+        celdas_registro: dict[str, dict] = {}
+        for celda in celdas_rama:
+            rng_o = _rng(f"oferta-v14:{rama}:{celda}:{cvegeo}")
+            registro = _registro_oferta_v12(rng_o, None)
+            registro.pop("horizontes_disponibles", None)  # vive a nivel rama, no celda.
+            celdas_registro[celda] = registro
+        resultado[cvegeo] = {
+            "cve_mun": cve_mun,
+            "horizontes_disponibles": list(HORIZONTES_OFERTA_V14),
+            "celdas": celdas_registro,
+        }
+    return resultado
+
+
+def generar_capa_rama_alcaldia_v14(universo: list[dict], rama: str) -> dict:
+    celdas_rama = _CELDAS_POR_RAMA_CON_PROYECCION[rama]
+    alcaldias = sorted({a["cve_mun"] for a in universo})
+    resultado: dict[str, dict] = {}
+    for cve_mun in alcaldias:
+        celdas_registro: dict[str, dict] = {}
+        for celda in celdas_rama:
+            rng_o = _rng(f"alcaldia-oferta-v14:{rama}:{celda}:{cve_mun}")
+            registro = _registro_oferta_v12(rng_o, None)
+            registro.pop("horizontes_disponibles", None)
+            celdas_registro[celda] = registro
+        resultado[cve_mun] = {
+            "cve_mun": cve_mun,
+            "horizontes_disponibles": list(HORIZONTES_OFERTA_V14),
+            "celdas": celdas_registro,
+        }
+    return resultado
+
+
+def _registro_celda_verde(rng: random.Random, es_rural: bool) -> dict:
+    if es_rural:
+        return {"nivel_base": None, "area_m2": None, "motivo_sin_datos": "rural"}
+    return {
+        "nivel_base": rng.randint(0, 12),
+        "area_m2": _redondear(rng.uniform(0.0, 50000.0), 1),
+        "motivo_sin_datos": None,
+    }
+
+
+def generar_capa_verde_ageb_v14(universo: list[dict]) -> dict:
+    """`capas.ramas.verde[cvegeo]`: un solo corte, sin proyección (metodología §10.1) --
+    `horizontes_disponibles: []`, celdas sin `h`/`serie`. Nunca se omite una clave del universo
+    aquí (a diferencia de las demás capas): verde no depende de DENUE/censo, así que no hay
+    ausencia deliberada que simular."""
+    resultado: dict[str, dict] = {}
+    for ageb in universo:
+        cvegeo, cve_mun = ageb["cvegeo"], ageb["cve_mun"]
+        es_rural = ageb["ambito"] == "rural"
+        celdas_registro = {
+            celda: _registro_celda_verde(_rng(f"verde-v14:{celda}:{cvegeo}"), es_rural)
+            for celda in CELDAS_VERDE
+        }
+        resultado[cvegeo] = {"cve_mun": cve_mun, "horizontes_disponibles": [], "celdas": celdas_registro}
+    return resultado
+
+
+def generar_capa_verde_alcaldia_v14(universo: list[dict]) -> dict:
+    alcaldias = sorted({a["cve_mun"] for a in universo})
+    resultado: dict[str, dict] = {}
+    for cve_mun in alcaldias:
+        celdas_registro = {
+            celda: _registro_celda_verde(_rng(f"alcaldia-verde-v14:{celda}:{cve_mun}"), False)
+            for celda in CELDAS_VERDE
+        }
+        resultado[cve_mun] = {"cve_mun": cve_mun, "horizontes_disponibles": [], "celdas": celdas_registro}
+    return resultado
+
+
+def calcular_distribucion_demanda_v14(capa_demanda_ageb: dict, claves_horizonte: tuple[str, ...]) -> dict:
+    """`distribucion_ageb` por alcaldía y horizonte (spec §17 P4), leyendo el veredicto del
+    segmento `todas` (metodología §10.6: "distribucion_ageb se publica solo para demanda,
+    segmento todas")."""
+    resultado: dict[str, dict] = {}
+    for registro in capa_demanda_ageb.values():
+        cve_mun = registro["cve_mun"]
+        bucket = resultado.setdefault(
+            cve_mun,
+            {h: {"sube": 0, "se_mantiene": 0, "baja": 0, "sin_datos": 0} for h in claves_horizonte},
+        )
+        registro_todas = registro["segmentos"]["todas"]
+        for h in claves_horizonte:
+            veredicto = registro_todas["h"][h]["veredicto"]
+            bucket[h][veredicto] += 1
+    return resultado
+
+
+def calcular_agregado_cdmx_v14(rng_semilla: str = "agregado-cdmx-v14") -> dict:
+    """`agregado_cdmx` (P2, generalizado a v1.4): un registro sintético "CDMX" por segmento de
+    demanda y por celda de cada rama, con la misma semilla determinista que el resto -- no es un
+    promedio real de las 16 alcaldías, es solo un mock de desarrollo."""
+    demanda = {
+        segmento: _registro_demanda_v12(_rng(f"{rng_semilla}:demanda:{segmento}"), None)
+        for segmento in SEGMENTOS_DEMANDA
+    }
+    ramas: dict = {}
+    for rama in RAMAS_CON_PROYECCION:
+        celdas = {
+            celda: _registro_oferta_v12(_rng(f"{rng_semilla}:{rama}:{celda}"), None)
+            for celda in _CELDAS_POR_RAMA_CON_PROYECCION[rama]
+        }
+        for registro in celdas.values():
+            registro.pop("horizontes_disponibles", None)
+        ramas[rama] = {"celdas": celdas}
+    ramas["verde"] = {
+        "horizontes_disponibles": [],
+        "celdas": {
+            celda: _registro_celda_verde(_rng(f"{rng_semilla}:verde:{celda}"), False)
+            for celda in CELDAS_VERDE
+        },
+    }
+    return {"demanda": {"segmentos": demanda}, "ramas": ramas}
+
+
+# -------------------------------------------------------------------------------------------
 # Contrato v1.2 (horizontes 3/5/7 anios, plans/frontend_specs.md §17).
 # -------------------------------------------------------------------------------------------
 
@@ -313,7 +534,7 @@ def _horizontes_demanda_v12(rng: random.Random, veredicto: str, confianza: str, 
         margen_bajo, margen_alto = margen_alto, margen_bajo
 
     h = {}
-    for entrada in HORIZONTES_V12:
+    for entrada in HORIZONTES_V14:
         clave, anios = entrada["clave"], entrada["anios"]
         factor = anios / 3
         delta_pct = _redondear(delta_pct_h3 * factor)
@@ -333,10 +554,10 @@ def _horizontes_demanda_v12(rng: random.Random, veredicto: str, confianza: str, 
 
 def _serie_demanda_v12(rng: random.Random, tasa_anual_pct: float) -> tuple[dict, float]:
     """Serie censal 2010/2020 (2 puntos) coherente con `tasa_anual_pct`, mas `nivel_base`
-    (nivel proyectado en `T_BASE_V12`, spec §17 P3)."""
+    (nivel proyectado en `T_BASE_V14`, spec §17 P3)."""
     nivel_2020 = rng.randint(50, 3000)
     nivel_2010 = max(0, round(nivel_2020 * (1 - tasa_anual_pct / 100 * (T_2020 - T_2010))))
-    nivel_base = max(0, round(nivel_2020 * (1 + tasa_anual_pct / 100 * (T_BASE_V12 - T_2020))))
+    nivel_base = max(0, round(nivel_2020 * (1 + tasa_anual_pct / 100 * (T_BASE_V14 - T_2020))))
     serie = {"t": [T_2010, T_2020], "valor": [nivel_2010, nivel_2020]}
     return serie, nivel_base
 
@@ -374,7 +595,7 @@ def _registro_demanda_sin_datos_v12(rng: random.Random, cve_mun: str | None, mot
             "ic95": None,
             "confianza": "baja",
         }
-        for entrada in HORIZONTES_V12
+        for entrada in HORIZONTES_V14
     }
     registro = {
         "n_obs": rng.choice([0, 1]),
@@ -396,14 +617,14 @@ def _registro_oferta_v12(rng: random.Random, cve_mun: str | None) -> dict:
     if veredicto == "sin_datos":
         h_sin_datos = {
             clave: {"veredicto": "sin_datos", "delta_pct": None, "tasa_anual_pct": None, "ic95": None, "confianza": "baja"}
-            for clave in HORIZONTES_OFERTA_V12
+            for clave in HORIZONTES_OFERTA_V14
         }
         registro = {
             "n_obs": rng.choice([0, 1]),
             "motivo_sin_datos": "cobertura_denue",
             "serie": None,
             "nivel_base": None,
-            "horizontes_disponibles": list(HORIZONTES_OFERTA_V12),
+            "horizontes_disponibles": list(HORIZONTES_OFERTA_V14),
             "h": h_sin_datos,
         }
         if cve_mun is not None:
@@ -421,7 +642,7 @@ def _registro_oferta_v12(rng: random.Random, cve_mun: str | None) -> dict:
     tasa_anual_pct = _redondear(delta_pct_h3 / 3)
 
     h = {}
-    for clave in HORIZONTES_OFERTA_V12:
+    for clave in HORIZONTES_OFERTA_V14:
         factor = _ANIOS_POR_CLAVE[clave] / 3
         delta_pct = _redondear(delta_pct_h3 * factor)
         h[clave] = {
@@ -440,92 +661,12 @@ def _registro_oferta_v12(rng: random.Random, cve_mun: str | None) -> dict:
         "motivo_sin_datos": None,
         "serie": {"t": t_denue, "valor": [nivel_2016, nivel_2019, nivel_2024]},
         "nivel_base": nivel_2024,
-        "horizontes_disponibles": list(HORIZONTES_OFERTA_V12),
+        "horizontes_disponibles": list(HORIZONTES_OFERTA_V14),
         "h": h,
     }
     if cve_mun is not None:
         registro = {"cve_mun": cve_mun, **registro}
     return registro
-
-
-def generar_capa_ageb_v12(universo: list[dict]) -> tuple[dict, dict]:
-    demanda: dict[str, dict] = {}
-    oferta: dict[str, dict] = {}
-
-    for indice, ageb in enumerate(universo):
-        cvegeo = ageb["cvegeo"]
-        cve_mun = ageb["cve_mun"]
-        ambito = ageb["ambito"]
-
-        if ambito == "urbano" and indice % PASO_AUSENCIA == 0:
-            continue  # ausencia deliberada, igual que v1.1 (degrada a sin_datos en el cliente).
-
-        rng_d = _rng(f"demanda-v12:{cvegeo}")
-        forzar_vacio = cve_mun == ALCALDIA_CASI_VACIA and rng_d.random() < PROPORCION_VACIA
-        if ambito == "rural":
-            demanda[cvegeo] = _registro_demanda_sin_datos_v12(rng_d, cve_mun, "rural")
-        elif forzar_vacio:
-            demanda[cvegeo] = _registro_demanda_sin_datos_v12(rng_d, cve_mun, "n_insuficiente")
-        else:
-            demanda[cvegeo] = _registro_demanda_v12(rng_d, cve_mun)
-
-        rng_o = _rng(f"oferta-v12:{cvegeo}")
-        oferta[cvegeo] = _registro_oferta_v12(rng_o, cve_mun)
-
-    return demanda, oferta
-
-
-def generar_capa_alcaldia_v12(universo: list[dict]) -> tuple[dict, dict]:
-    alcaldias = sorted({ageb["cve_mun"] for ageb in universo})
-    demanda: dict[str, dict] = {}
-    oferta: dict[str, dict] = {}
-
-    for cve_mun in alcaldias:
-        rng_d = _rng(f"alcaldia-demanda-v12:{cve_mun}")
-        if cve_mun == ALCALDIA_CASI_VACIA:
-            demanda[cve_mun] = _registro_demanda_sin_datos_v12(rng_d, None, "n_insuficiente")
-        else:
-            demanda[cve_mun] = _registro_demanda_v12(rng_d, None)
-
-        rng_o = _rng(f"alcaldia-oferta-v12:{cve_mun}")
-        oferta[cve_mun] = _registro_oferta_v12(rng_o, None)
-
-    return demanda, oferta
-
-
-def calcular_distribucion_ageb(
-    registros_capa: dict, universo: list[dict], claves_horizonte: tuple[str, ...]
-) -> dict[str, dict]:
-    """`distribucion_ageb` por alcaldia y horizonte (spec §17 P4), para UNA capa (demanda u
-    oferta: cada una lleva la suya, "en cada alcaldia de demanda y oferta"). El veredicto no
-    cambia entre horizontes de demanda (docs/metodologia.md §3), asi que sus 3 distribuciones por
-    alcaldia son iguales; oferta trae `h1`/`h3`, nunca `h5` (metodologia §6.3)."""
-    alcaldias = sorted({ageb["cve_mun"] for ageb in universo})
-    resultado: dict[str, dict] = {}
-    for cve_mun in alcaldias:
-        cvegeos_alcaldia = [a["cvegeo"] for a in universo if a["cve_mun"] == cve_mun]
-        por_horizonte: dict[str, dict] = {}
-        for clave in claves_horizonte:
-            conteo = {"sube": 0, "se_mantiene": 0, "baja": 0, "sin_datos": 0}
-            for cvegeo in cvegeos_alcaldia:
-                registro = registros_capa.get(cvegeo)
-                veredicto = registro["h"][clave]["veredicto"] if registro else "sin_datos"
-                conteo[veredicto] += 1
-            por_horizonte[clave] = conteo
-        resultado[cve_mun] = por_horizonte
-    return resultado
-
-
-def calcular_agregado_cdmx(demanda_alc: dict, oferta_alc: dict) -> dict:
-    """`agregado_cdmx` en la raiz de prediccion_alcaldia.json (spec §17 P2): un registro "CDMX"
-    generado con la misma semilla determinista que el resto (rng propio, no un promedio de las
-    16 alcaldias: es solo un mock de desarrollo, no una cifra real)."""
-    rng_d = _rng("agregado-cdmx-demanda")
-    rng_o = _rng("agregado-cdmx-oferta")
-    return {
-        "demanda": _registro_demanda_v12(rng_d, None),
-        "oferta": _registro_oferta_v12(rng_o, None),
-    }
 
 
 def escribir_json(ruta: pathlib.Path, contenido: dict) -> None:
@@ -567,39 +708,43 @@ def main() -> None:
     }
     escribir_json(DIR_SALIDA / "prediccion_ageb_v11_invalido.json", prediccion_invalida)
 
-    # --- v1.2 (horizontes 1/3/5 anios): mock "base", `?mock=1`/sin parametro (js/config.js). ---
-    demanda_ageb_v12, oferta_ageb_v12 = generar_capa_ageb_v12(universo)
-    prediccion_ageb_v12 = {
-        "version": VERSION_CONTRATO_V12,
-        "generado": generado,
-        "fecha_base": FECHA_BASE_V12,
-        "horizontes": list(HORIZONTES_V12),
-        "capas": {"demanda": demanda_ageb_v12, "oferta": oferta_ageb_v12},
+    # --- v1.4 (6 segmentos de demanda, 4 ramas de oferta): mock "base", `?mock=1`/sin
+    # parametro (js/config.js). F-5 de correccion/avance_plan.md: reemplaza al mock v1.2. ---
+    demanda_ageb_v14 = generar_capa_demanda_ageb_v14(universo)
+    capas_ramas_ageb_v14: dict[str, dict] = {
+        rama: generar_capa_rama_ageb_v14(universo, rama) for rama in RAMAS_CON_PROYECCION
     }
-    escribir_json(DIR_SALIDA / "prediccion_ageb.json", prediccion_ageb_v12)
+    capas_ramas_ageb_v14["verde"] = generar_capa_verde_ageb_v14(universo)
+    prediccion_ageb_v14 = {
+        "version": VERSION_CONTRATO_V14,
+        "generado": generado,
+        "fecha_base": FECHA_BASE_V14,
+        "horizontes": list(HORIZONTES_V14),
+        "capas": {"demanda": demanda_ageb_v14, "ramas": capas_ramas_ageb_v14},
+    }
+    escribir_json(DIR_SALIDA / "prediccion_ageb.json", prediccion_ageb_v14)
 
-    demanda_alc_v12, oferta_alc_v12 = generar_capa_alcaldia_v12(universo)
-    claves_todas = tuple(h["clave"] for h in HORIZONTES_V12)
-    distribucion_demanda = calcular_distribucion_ageb(demanda_ageb_v12, universo, claves_todas)
-    distribucion_oferta = calcular_distribucion_ageb(oferta_ageb_v12, universo, HORIZONTES_OFERTA_V12)
-    demanda_alc_v12_con_distribucion = {
-        cve_mun: {**registro, "distribucion_ageb": distribucion_demanda[cve_mun]}
-        for cve_mun, registro in demanda_alc_v12.items()
+    demanda_alc_v14 = generar_capa_demanda_alcaldia_v14(universo)
+    capas_ramas_alc_v14: dict[str, dict] = {
+        rama: generar_capa_rama_alcaldia_v14(universo, rama) for rama in RAMAS_CON_PROYECCION
     }
-    oferta_alc_v12_con_distribucion = {
-        cve_mun: {**registro, "distribucion_ageb": distribucion_oferta[cve_mun]}
-        for cve_mun, registro in oferta_alc_v12.items()
+    capas_ramas_alc_v14["verde"] = generar_capa_verde_alcaldia_v14(universo)
+    claves_todas = tuple(h["clave"] for h in HORIZONTES_V14)
+    distribucion_demanda_v14 = calcular_distribucion_demanda_v14(demanda_ageb_v14, claves_todas)
+    demanda_alc_v14_con_distribucion = {
+        cve_mun: {**registro, "distribucion_ageb": distribucion_demanda_v14.get(cve_mun, {})}
+        for cve_mun, registro in demanda_alc_v14.items()
     }
-    agregado_cdmx = calcular_agregado_cdmx(demanda_alc_v12, oferta_alc_v12)
-    prediccion_alcaldia_v12 = {
-        "version": VERSION_CONTRATO_V12,
+    agregado_cdmx_v14 = calcular_agregado_cdmx_v14()
+    prediccion_alcaldia_v14 = {
+        "version": VERSION_CONTRATO_V14,
         "generado": generado,
-        "fecha_base": FECHA_BASE_V12,
-        "horizontes": list(HORIZONTES_V12),
-        "capas": {"demanda": demanda_alc_v12_con_distribucion, "oferta": oferta_alc_v12_con_distribucion},
-        "agregado_cdmx": agregado_cdmx,
+        "fecha_base": FECHA_BASE_V14,
+        "horizontes": list(HORIZONTES_V14),
+        "capas": {"demanda": demanda_alc_v14_con_distribucion, "ramas": capas_ramas_alc_v14},
+        "agregado_cdmx": agregado_cdmx_v14,
     }
-    escribir_json(DIR_SALIDA / "prediccion_alcaldia.json", prediccion_alcaldia_v12)
+    escribir_json(DIR_SALIDA / "prediccion_alcaldia.json", prediccion_alcaldia_v14)
 
     print(f"universo AGEB: {conteos['total_universo']} (rural={conteos['rural']})")
     print(f"claves ausentes a proposito: {conteos['ausentes']}")
@@ -613,7 +758,7 @@ def main() -> None:
         f"/{conteos['alcaldia_vacia_ageb_total']}"
     )
     print(
-        "archivos generados: prediccion_ageb.json, prediccion_alcaldia.json (v1.2), "
+        "archivos generados: prediccion_ageb.json, prediccion_alcaldia.json (v1.4), "
         "prediccion_ageb_v11.json, prediccion_alcaldia_v11.json (v1.1), "
         "prediccion_ageb_v11_invalido.json (invalido)"
     )

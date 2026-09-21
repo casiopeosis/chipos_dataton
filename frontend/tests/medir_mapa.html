@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Habitancia — Medición del mapa (F-6)</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 72ch;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #111;
+        background: #fafaf8;
+      }
+      h1 {
+        font-size: 1.25rem;
+      }
+      p.ayuda {
+        color: #555;
+        font-size: 0.9rem;
+      }
+      .resumen {
+        font-weight: 600;
+      }
+      .resumen--bien {
+        color: #1a6b1a;
+      }
+      .resumen--mal {
+        color: #a33;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        border-bottom: 1px solid #d9d9d5;
+        padding: 0.35rem 0.5rem;
+        text-align: right;
+      }
+      th:first-child,
+      td:first-child {
+        text-align: left;
+      }
+      tr.fila--mal {
+        background: #fdecec;
+        color: #a33;
+        font-weight: 600;
+      }
+      td.fila--error {
+        color: #a33;
+        text-align: left;
+      }
+      #contenedor-iframe {
+        margin-top: 1rem;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Habitancia — Medición reproducible del mapa (F-6, correccion/avance_plan.md #46)</h1>
+    <p class="ayuda">
+      Carga la app real (<code>../index.html?mock=1</code>) en un <code>&lt;iframe&gt;</code>, hace
+      clic en el polígono de cada una de las 16 alcaldías (el mismo evento que dispara un usuario
+      real) y mide las tareas largas (<code>PerformanceObserver</code>, entradas
+      <code>longtask</code>) que produce esa animación "pop" + <code>flyToBounds</code>. Objetivo:
+      ninguna tarea &gt; 200 ms. Debe servirse con <code>make serve</code> (no <code>file://</code>).
+    </p>
+    <p id="estado">Iniciando…</p>
+    <div id="resultados"></div>
+    <div id="contenedor-iframe"></div>
+    <script type="module" src="./medir_mapa.js"></script>
+  </body>
+</html>

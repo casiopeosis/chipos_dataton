@@ -640,6 +640,29 @@ parámetro de usuario** en esta fase: es una constante de calibración del backe
 `correccion/rubrica.md` no pide que el usuario la ajuste, y exponerla sin explicación violaría
 `correccion/frontend_requisitos.md` ("no mostrar fórmulas ni parámetros internos del modelo").
 
+**Desviación documentada (F-4 de `correccion/avance_plan.md`, punto 28).** El texto de arriba (§10.1)
+pide calcular la cobertura "sobre las mismas réplicas Monte Carlo, no sobre las medianas — así el
+intervalo sale gratis". En la práctica esto solo ocurre así del lado del **backend puro**, para una
+combinación fija de segmento/rama sin filtros de usuario. El índice de oportunidad que ve la persona
+usuaria en Habitancia se recalcula del lado del **cliente** (`frontend/js/composicion.js`) cada vez
+que cambian los filtros de celda, los pesos o el segmento — y el contrato nunca publica réplicas
+Monte Carlo crudas (impublicable en tamaño, §10.6), solo `nivel_base` + `delta_pct` por horizonte.
+Eso significa que la cobertura efectivamente usada por el índice de oportunidad en producción se
+calcula sobre esos **niveles agregados** (medianas ya colapsadas), nunca sobre las réplicas
+originales; el intervalo "gratis" que preveía el punto 28 no sobrevive a la agregación cliente-lado
+por celda filtrada, y no se reconstruye.
+
+Para que el bloque de sensibilidad `K` de `diagnostico.json` (`features.construir_sensibilidad_oportunidad`,
+punto 30) sea comparable con lo que ve la persona usuaria, el backend usa **la misma aproximación**
+para ese bloque: `nivel_base` + `delta_pct` del segmento `todas` y de las celdas de cada rama con
+proyección (sin filtro), en vez de las réplicas Monte Carlo de `modelos.py`. Es una elección de
+consistencia (una sola fórmula validada en los dos lados) sobre exactitud del intervalo de
+cobertura, documentada aquí en vez de asumida. Existe una prueba de paridad
+(`backend/tests/test_features.py::TestParidadIndiceOportunidadPythonJs`) que alimenta los mismos
+vectores a `features.indice_oportunidad` (Python) y a `composicion.indiceOportunidad` (JS, vía
+`frontend/tests/pruebas_composicion.js`) y exige el mismo resultado, para que las dos
+implementaciones nunca se separen en silencio.
+
 ### 10.3 Índice compuesto (client-side, tiempo real) — vista general de Habitancia
 
 El **índice compuesto** que colorea la "Vista general" del mapa (`correccion/frontend_requisitos.md`

@@ -50,47 +50,67 @@ chipos_dataton/
 - Datos insuficientes → `sin_datos`, nunca un veredicto inventado.
 
 ## Decisiones vigentes (confirmadas por el equipo)
-- **Demanda** = población infantil por AGEB, del Censo 2010 y 2020 (INEGI RESAGEBURB oficial en `data/processed/censo/inegi_{2010,2020}/`; el xlsx del equipo queda superseded, ver `docs/data_manifest.md`), proyectada con tendencia y contracción hacia la alcaldía, ajustada a proyecciones CONAPO por municipio. **Oferta** = establecimientos DENUE con `Alcance = Principal`. Capas separadas; el veredicto principal es de **demanda**; la oferta y la brecha (demanda/oferta) son capas complementarias.
-- Rango de edad: **0–14 años** (confirmado: todos los establecimientos `Principal` atienden esas edades). **Suma simple, sin ponderaciones** (ENUT no se usa para ponderar: solo tiene resolución CDMX; queda como contexto narrativo).
-- DENUE: las 11 ediciones **no son independientes** (levantamientos nuevos en 2019-11 y 2024-11). Usar **un corte por periodo**; nunca tratar los 11 como observaciones. Agrupar siempre por `CVE_MUN` (nombres de alcaldía mal codificados en 2016–2018). La caída de 2024-11 (−11.2 %; privado −22.8 %, preescolar privado −38.7 %; público +1.2 %; solo reaparece el 3 % de las bajas) se trata como **cierres reales acumulados entre 2020 y 2023 y registrados de golpe al volver a campo en 2024**: usar las fechas de levantamiento como eje temporal, no atribuirla a un solo año, y aplicar **tope de confianza `media`** a la capa de oferta.
-- Banda de `se_mantiene`: umbral base ±1 %/año sobre la tasa proyectada; `sube`/`baja` solo si la probabilidad de estar fuera de la banda en ese sentido es **≥ 0.80**; se reporta sensibilidad a ±0.5 y ±2 %/año. Horizonte: fecha base mediados de 2026 (2026.5), horizontes de reporte a 3, 5 y 7 años (2029-06/2031-06/2033-06).
+- **Demanda** = población infantil por AGEB (**0–17 años**, seis segmentos de Habitancia:
+  `todas`, `primera_infancia` 0-2, `preescolar` 3-5, `primaria` 6-11, `secundaria` 12-14,
+  `adolescencia` 15-17; confianza `media` en 15–17), del Censo 2010 y 2020 (INEGI RESAGEBURB
+  oficial en `data/processed/censo/inegi_{2010,2020}/`; el xlsx del equipo queda superseded, ver
+  `docs/data_manifest.md`), proyectada con tendencia y contracción hacia la alcaldía, ajustada a
+  proyecciones CONAPO por municipio. **Oferta** = establecimientos DENUE con `Alcance = Principal`,
+  reportada por **rama** (`educacion`, `salud`, `comercio`, `verde`), cada una con series por
+  **celda** (combinación de tipo de establecimiento × sostenimiento u origen). Se etiqueta siempre
+  como oferta o como demanda; nunca una por la otra. La variable objetivo exacta y la fórmula del
+  índice de oportunidad se documentan en `docs/metodologia.md`.
+- **Suma simple, sin ponderaciones** dentro de cada segmento (ENUT no se usa para ponderar: solo
+  tiene resolución CDMX; queda como contexto narrativo).
+- DENUE: las 11 ediciones **no son independientes** (levantamientos nuevos en 2019-11 y 2024-11). Usar **un corte por periodo**; nunca tratar los 11 como observaciones. Agrupar siempre por `CVE_MUN` (nombres de alcaldía mal codificados en 2016–2018). La caída de 2024-11 (−11.2 %; privado −22.8 %, preescolar privado −38.7 %; público +1.2 %; solo reaparece el 3 % de las bajas) se trata como **cierres reales acumulados entre 2020 y 2023 y registrados de golpe al volver a campo en 2024**: usar las fechas de levantamiento como eje temporal, no atribuirla a un solo año, y aplicar **tope de confianza `media`** a las ramas de oferta.
+- Banda de `se_mantiene`: umbral base ±1 %/año sobre la tasa proyectada; `sube`/`baja` solo si la probabilidad de estar fuera de la banda en ese sentido es **≥ 0.80**; se reporta sensibilidad a ±0.5 y ±2 %/año. Horizonte: fecha base mediados de 2026 (2026.5), horizontes de reporte a **1, 3 y 5 años** (`h1`/`h3`/`h5`: 2027-06/2029-06/2031-06). La rama `verde` no tiene proyección (`horizontes_disponibles: []`; solo nivel actual).
+- **Backtest** (`backend/src/chipos/backtest.py`): validación temporal de origen móvil, sin fuga de futuro, contra baseline ingenuo. La demanda supera al baseline; la capa de oferta **no lo supera** en la validación actual (ver `docs/backtest.md`), lo que se reporta explícitamente y limita la confianza de esa capa — no se oculta ni se maquilla el resultado.
 - AGEB **rurales** → `sin_datos`. Filtrar puntos fuera de CDMX (p. ej. 85 de salud) por clave/bbox, aunque vengan marcados como válidos. No usar `CLEE` para rastrear establecimientos antes de 2020 (vacía).
 
 ## Contrato de salida (versionado; cambiarlo exige actualizar el frontend)
-`data/outputs/prediccion_ageb.json` (`version` 1.2, generado por `backend/src/chipos/exportar.py`;
+`data/outputs/prediccion_ageb.json` (`version` 1.4, generado por `backend/src/chipos/exportar.py`;
 shape completo y decisiones de diseño en `plans/frontend_specs.md` §17-18): `fecha_base` = fecha de
-referencia del cambio (mediados de 2026); `horizontes` = 3 puntos de reporte (3/5/7 años desde
-`fecha_base`); cada registro de AGEB/alcaldía trae `serie` (niveles observados), `nivel_base`
-(proyectado a `fecha_base`) y un objeto `h` con un resultado por horizonte disponible. La capa
-`oferta` solo reporta `h3` (`horizontes_disponibles: ["h3"]`), sin calibración más allá de 3 años
-(ver `docs/metodologia.md` §6). `delta_pct`/`ic95` se miden desde `fecha_base`, no desde el censo
-2020; el veredicto y la confianza no varían entre horizontes (dependen de la tasa anual, no del
-horizonte de reporte) — solo `delta_pct`/`ic95` cambian.
+referencia del cambio (mediados de 2026); `horizontes` = 3 puntos de reporte (`h1`/`h3`/`h5`, 1/3/5
+años desde `fecha_base`); cada registro de AGEB/alcaldía trae `serie` (niveles observados),
+`nivel_base` (proyectado a `fecha_base`) y un objeto `h` con un resultado por horizonte disponible.
+`capas.demanda[<CVEGEO>].segmentos.<segmento>` trae los seis segmentos de población objetivo (ver
+arriba). `capas.ramas.{educacion,salud,comercio,verde}[<CVEGEO>].celdas.<celda>` trae la oferta por
+celda; solo `educacion`, `salud` y `comercio` proyectan (`horizontes_disponibles: ["h1","h3"]`,
+`HORIZONTES_OFERTA` en `config.py`, tope de confianza `media`); `verde` no proyecta
+(`horizontes_disponibles: []`). No existe `capas.brecha` en el contrato (el resumen agregado
+demanda/oferta vive en `data/outputs/diagnostico.json`, no en el contrato versionado).
+`delta_pct`/`ic95` se miden desde `fecha_base`, no desde el censo 2020; el veredicto y la confianza
+no varían entre horizontes (dependen de la tasa anual, no del horizonte de reporte) — solo
+`delta_pct`/`ic95` cambian.
 ```json
-{"version":"1.2","generado":"ISO-8601","fecha_base":"2026-06",
- "horizontes":[{"clave":"h3","anios":3,"fecha":"2029-06"},
-               {"clave":"h5","anios":5,"fecha":"2031-06"},
-               {"clave":"h7","anios":7,"fecha":"2033-06"}],
+{"version":"1.4","generado":"ISO-8601","fecha_base":"2026-06",
+ "horizontes":[{"clave":"h1","anios":1,"fecha":"2027-06"},
+               {"clave":"h3","anios":3,"fecha":"2029-06"},
+               {"clave":"h5","anios":5,"fecha":"2031-06"}],
  "capas":{
-  "demanda":{"<CVEGEO>":{"cve_mun":"002","n_obs":2,"motivo_sin_datos":null,
-     "serie":{"t":[2010.44,2020.20],"valor":[512.0,388.0]},"nivel_base":306.2,
-     "h":{"h3":{"veredicto":"baja","delta_pct":-10.7,"tasa_anual_pct":-3.8,"ic95":[-15.3,-7.3],"confianza":"alta"},
-          "h5":{"veredicto":"baja","delta_pct":-17.1,"tasa_anual_pct":-3.8,"ic95":[-24.2,-11.8],"confianza":"alta"},
-          "h7":{"veredicto":"baja","delta_pct":-23.1,"tasa_anual_pct":-3.8,"ic95":[-32.2,-16.1],"confianza":"alta"}}}},
-  "oferta":{"<CVEGEO>":{"cve_mun":"002","n_obs":3,"motivo_sin_datos":null,
-     "serie":{"t":[2016.79,2019.87,2024.87],"valor":[7,5,5]},"nivel_base":4.8,
-     "horizontes_disponibles":["h3"],
-     "h":{"h3":{"veredicto":"baja","delta_pct":-6.3,"tasa_anual_pct":-2.2,"ic95":[-6.3,-6.3],"confianza":"media"}}}},
-  "brecha":{"<CVEGEO>":{"cve_mun":"002","valor":6.1,"unidad":"establecimientos por 1,000 de 0 a 14 años",
-     "t_oferta":2024.87,"t_demanda":2020.20}}}}
+  "demanda":{"<CVEGEO>":{"cve_mun":"002",
+     "segmentos":{"primaria":{"n_obs":2,"motivo_sin_datos":null,
+        "serie":{"t":[2010.44,2020.20],"valor":[235.0,171.0]},"nivel_base":133.9,
+        "h":{"h1":{"veredicto":"baja","delta_pct":-3.8,"tasa_anual_pct":-3.9,"ic95":[-5.8,-2.5],"confianza":"alta"},
+             "h3":{"veredicto":"baja","delta_pct":-11.0,"tasa_anual_pct":-3.9,"ic95":[-16.5,-7.5],"confianza":"alta"},
+             "h5":{"veredicto":"baja","delta_pct":-17.6,"tasa_anual_pct":-3.9,"ic95":[-25.9,-12.1],"confianza":"alta"}}}}}},
+  "ramas":{
+   "educacion":{"<CVEGEO>":{"cve_mun":"002","horizontes_disponibles":["h1","h3"],
+      "celdas":{"guarderia__publico":{"n_obs":3,"motivo_sin_datos":null,
+         "serie":{"t":[2016.79,2019.87,2024.87],"valor":[7,5,5]},"nivel_base":4.8,
+         "h":{"h1":{"veredicto":"baja","delta_pct":-2.2,"tasa_anual_pct":-2.2,"ic95":[-4.1,-0.3],"confianza":"media"},
+              "h3":{"veredicto":"baja","delta_pct":-6.3,"tasa_anual_pct":-2.2,"ic95":[-11.5,-1.0],"confianza":"media"}}}}}},
+   "verde":{"<CVEGEO>":{"cve_mun":"002","horizontes_disponibles":[],
+      "celdas":{"cobertura_verde":{"nivel_base":3,"area_m2":1200.5,"motivo_sin_datos":null}}}}}}}
 ```
 `prediccion_alcaldia.json`: mismo esquema por `CVE_MUN`, más `distribucion_ageb` (conteo de
 veredictos por horizonte) en cada alcaldía y `agregado_cdmx` (mismo registro a nivel ciudad) en la
 raíz. Veredictos: `sube | se_mantiene | baja | sin_datos`. Confianza: `alta | media | baja`. Nunca
 un veredicto sin `confianza` ni `n_obs`. El frontend conserva un adaptador para leer contrato v1.1
-(un solo horizonte) como camino de degradación (`frontend/js/api.js`).
+(un solo horizonte, esquema `demanda`/`oferta` sin segmentos ni ramas) como camino de degradación
+(`frontend/js/api.js`).
 
-## Frontend
+## Frontend (Habitancia)
 Calidad de producción; detalle vinculante en `plans/frontend_specs.md`. Mínimos:
 - Mapa de alcaldías → clic → animación "pop" + `flyToBounds` → solo los AGEB de esa alcaldía, coloreados por veredicto; tooltip + panel lateral; `Esc`/botón para volver.
 - **Un solo GeoJSON de AGEB** (simplificado; TopoJSON si pesa) unido por `CVEGEO` en cliente, filtrado por `CVE_MUN`. No crear archivos por alcaldía salvo que el único supere ~5 MB tras simplificar.

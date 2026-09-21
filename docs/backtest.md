@@ -8,7 +8,7 @@ Semilla: `20260918`. Marco geoestadístico: MG 2020 censal, UPC 889463807469.
 2. Demanda (LOAO): cobertura del IC95 = 1.00 (FUERA de [0.90, 0.97]).
 3. Oferta (origen 2016+2019 -> predice 2024): NO supera al baseline 'S constante' en MAE y F1 macro.
 4. Piso de incertidumbre calibrado: demanda `sigma_min=0.0` (cobertura 0.99); oferta `sigma_min=0.0` (cobertura 1.00).
-5. **Modelo NO SE ADOPTA** según el criterio de CLAUDE.md (supera al baseline en las 3 validaciones).
+5. **Modelo NO SE ADOPTA** según el criterio de CLAUDE.md (LOAO fuera de [0.90, 0.97]; oferta no supera al baseline en MAE/F1).
 
 ## Adelgazamiento binomial (Censo 2020, nunca el futuro)
 
@@ -33,6 +33,14 @@ MAE: 0.17 pp/año · F1 macro: 0.96 · cobertura IC95: 1.00 · n=2362
 |---|---:|---:|---:|---:|---:|
 | baseline_s_constante | 3.61 | 0.20 | 0.750 | n/d | 2431 |
 | modelo_poisson_2016_2019 | 5.45 | 0.67 | 2.330 | 1.00 | 2431 |
+
+## Decisión sobre la capa de oferta (F-2 / punto 12)
+
+El modelo Poisson de oferta (origen 2016-10+2019-11 -> predice 2024-11) **no supera** al baseline 'S constante' en esta validación. `CLAUDE.md` exige no adoptar un modelo que no supere al baseline; aun así las ramas de oferta se publican en el contrato, degradadas: **tope de confianza `media`** en toda proyección de oferta (nunca `alta`), la rama `verde` se reporta sin proyección (`horizontes_disponibles: []`, solo nivel actual) y las demás ramas (`educacion`, `salud`, `comercio`) llevan la limitación anterior escrita en el frontend (F-7). Se publica con esta etiqueta, en vez de ocultarla, porque el nivel observado de establecimientos sigue siendo información útil para un usuario que sabe leer la salvedad; lo que no se hace es presentar la proyección de oferta con la misma confianza que la de demanda.
+
+## Banda de cobertura del IC95 (F-3 / punto 21)
+
+La *Definición de terminado* pedía cobertura empírica del IC95 en `[0.90, 0.97]`. Hoy LOAO cubre 1.00 y los pisos calibrados de demanda y oferta ya sobrecubren en `sigma_min=0.000` (ver tabla de calibración abajo): el procedimiento del punto 19 solo puede **ensanchar** el intervalo con un piso, nunca estrecharlo, así que no hay piso que cierre este hueco. Decisión (a) tomada: se acepta la sobrecobertura como conservadora y se marca este criterio de la DoD como **relajado explícitamente**, no silenciado -- un intervalo que sobrecubre falla del lado seguro (nunca declara más certeza de la que tiene), a diferencia de uno que subcubre. No se implementó un factor de estrechamiento (opción b) porque arriesgaba empeorar la calibración real a cambio de cumplir un número de la DoD sin validación adicional.
 
 ## Comparación censo-CONAPO 2010-2020 (NO es un backtest)
 

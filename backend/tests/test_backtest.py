@@ -26,6 +26,7 @@ from chipos.backtest import (
     metricas,
     validar_adelgazamiento,
     validar_loao,
+    _razon_no_adopcion,
 )
 
 # ---------------------------------------------------------------------------
@@ -498,6 +499,69 @@ class TestEjecutarYEscribirReporte:
         datos = json.loads(destino_json.read_text(encoding="utf-8"))
         assert datos["semilla"] == SEMILLA
         assert "generado" in datos
+
+
+# ---------------------------------------------------------------------------
+# F-2: el resumen no debe contradecirse a sí mismo cuando el modelo no se adopta
+# ---------------------------------------------------------------------------
+
+
+class TestRazonNoAdopcion:
+    def test_adopcion_positiva_no_lista_fallas(self) -> None:
+        adopcion = {
+            "demanda_supera_baseline": True,
+            "loao_cobertura_en_rango": True,
+            "oferta_supera_baseline": True,
+            "modelo_se_adopta": True,
+        }
+        assert _razon_no_adopcion(adopcion) == (
+            "supera al baseline en las 3 validaciones (demanda, LOAO, oferta)"
+        )
+
+    def test_lista_exactamente_lo_que_fallo(self) -> None:
+        adopcion = {
+            "demanda_supera_baseline": True,
+            "loao_cobertura_en_rango": False,
+            "oferta_supera_baseline": False,
+            "modelo_se_adopta": False,
+        }
+        razon = _razon_no_adopcion(adopcion)
+        assert "LOAO fuera de" in razon
+        assert "oferta no supera" in razon
+        assert "demanda no supera" not in razon
+
+    def test_caso_real_de_la_auditoria_2026_09_20(
+        self,
+        panel_demanda_backtest: pd.DataFrame,
+        panel_oferta_backtest: pd.DataFrame,
+        conapo_backtest: pd.DataFrame,
+    ) -> None:
+        """No debe reaparecer la frase fija "(supera al baseline en las 3
+        validaciones)" cuando `modelo_se_adopta` es `False` (punto 12)."""
+        resultado = ejecutar(panel_demanda_backtest, panel_oferta_backtest, conapo_backtest)
+        razon = _razon_no_adopcion(resultado["adopcion"])
+        if not resultado["adopcion"]["modelo_se_adopta"]:
+            assert razon != "supera al baseline en las 3 validaciones (demanda, LOAO, oferta)"
+
+
+# ---------------------------------------------------------------------------
+# F-3: la banda de cobertura del IC95 se relaja explícitamente, no se calla
+# ---------------------------------------------------------------------------
+
+
+class TestBandaCoberturaRelajada:
+    def test_backtest_json_real_documenta_la_decision(self) -> None:
+        """Afirma la banda que el equipo decidió (opción (a), CLAUDE.md/avance_plan.md
+        F-3): se acepta sobrecobertura como conservadora y se documenta en
+        `docs/backtest.md`, en vez de perseguir `[0.90, 0.97]` a ciegas."""
+        from pathlib import Path
+
+        ruta_md = Path(__file__).resolve().parents[2] / "docs" / "backtest.md"
+        if not ruta_md.exists():
+            pytest.skip("docs/backtest.md no generado en este entorno de pruebas")
+        contenido = ruta_md.read_text(encoding="utf-8").lower()
+        assert "sobrecobertura" in contenido
+        assert "conservador" in contenido
 
 
 # ---------------------------------------------------------------------------

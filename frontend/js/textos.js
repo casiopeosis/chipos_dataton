@@ -393,6 +393,19 @@ const graficas = {
   sinDatos: 'No hay serie disponible para esta selección.',
 };
 
+// Nivel 2 de zona (§10.6): "¿Qué tan confiable es la estimación?" -- cifras reales de
+// docs/backtest.md (F-7 de correccion/avance_plan.md), citadas aquí en vez de recalculadas en
+// cliente. Se actualizan a mano si se corre `make backtest` con datos distintos.
+const confiabilidad = {
+  titulo: '¿Qué tan confiable es la estimación?',
+  parrafo:
+    'La demanda se validó contra el pasado y le ganó a "suponer que nada cambia" (error de 0.46 '
+    + 'puntos porcentuales por año, contra 2.34 del método ingenuo). La oferta no le ganó: acierta '
+    + 'la dirección del cambio (0.67 de 1.00) mejor que el método ingenuo (0.20), pero se equivoca '
+    + 'más en la magnitud (error de 5.45 contra 3.61). Por eso toda proyección de oferta muestra '
+    + 'como máximo confianza "media", nunca "alta". Detalle completo en docs/backtest.md.',
+};
+
 // ---------------------------------------------------------------------------------------------
 // §10.6 Franja lateral y drawer "Entender esta zona / Metodología"
 // ---------------------------------------------------------------------------------------------
@@ -456,9 +469,13 @@ const metodologia = {
       parrafos: [
         'Se probó el método comparando lo que habría predicho en el pasado contra lo que realmente '
         + 'ocurrió después, y contra la opción de "suponer que nada cambia". La demanda superó esa '
-        + 'comparación; la oferta acierta mejor la dirección del cambio que su magnitud exacta, '
-        + 'sobre todo tras el levantamiento DENUE de 2024 (ver más abajo). El detalle completo está '
-        + 'en docs/backtest.md del repositorio.',
+        + 'comparación (error de 0.46 puntos porcentuales por año, frente a 2.34 de "suponer que nada '
+        + 'cambia"). La oferta, en cambio, no la superó: predice mejor la dirección del cambio '
+        + '(acierta 0.67 de 1.00 en esa clasificación, contra 0.20 del método ingenuo) pero se '
+        + 'equivoca más en la magnitud exacta (error de 5.45 frente a 3.61 del método ingenuo), sobre '
+        + 'todo tras el levantamiento DENUE de 2024 (ver más abajo). Por eso las ramas de oferta '
+        + 'llevan siempre un tope de confianza "media", nunca "alta". El detalle completo, con la '
+        + 'discusión de qué se hace con ese resultado, está en docs/backtest.md del repositorio.',
       ],
     },
     {
@@ -735,6 +752,7 @@ export const textos = {
   ranking,
   ficha,
   graficas,
+  confiabilidad,
   metodologia,
   comparar,
   ayuda,
