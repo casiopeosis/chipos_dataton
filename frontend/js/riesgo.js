@@ -12,6 +12,7 @@
 import { crear, reemplazarContenido } from "./dom.js";
 import { textos } from "./textos.js";
 import { despachar, suscribir, obtenerEstado, ACCIONES } from "./estado.js";
+import { crearAyuda } from "./ayuda.js";
 
 /** Mismos 3 escalones que `FACTOR_CONFIANZA` (composicion.js): baja=0, media=0.5, alta=1. */
 const ESCALONES = Object.freeze([
@@ -65,6 +66,7 @@ export function montarRiesgo(contenedor) {
   const valorTexto = crear("span", { clase: "riesgo__valor" });
 
   raiz.appendChild(etiqueta);
+  raiz.appendChild(crearAyuda("riesgo", textos.riesgo.etiqueta));
   raiz.appendChild(control);
   raiz.appendChild(valorTexto);
   raiz.appendChild(crear("p", { clase: "riesgo__ayuda" }, [textos.riesgo.ayuda]));
