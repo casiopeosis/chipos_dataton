@@ -53,10 +53,6 @@ import { formatoEntero } from "./formato.js";
 
 // Rutas planas bajo frontend/data/, que `make frontend-datos` llena con copias de
 // data/reference/ y data/outputs/ (data/ es solo lectura, CLAUDE.md).
-// TEMP-DIAG: `?diag=sinpanel` -> en vista alcaldia/AGEB no se corre composicion ni se repinta
-// resumen/ranking/leyenda/ficha (aisla el coste de JS frente al del SVG). Quitar tras el diagnostico.
-const DIAG_SIN_PANEL = (new URLSearchParams(window.location.search).get("diag") ?? "").split(",").includes("sinpanel");
-
 const RUTA_ALCALDIAS_GEOJSON = "data/alcaldias.geojson";
 const RUTA_AGEB_GEOJSON = "data/ageb_cdmx_simplificado.geojson";
 
@@ -707,10 +703,6 @@ function montarInterfaz({ alcaldiasGeoJSON, agebGeoJSON, datosAlcaldia, datosAge
 
   function recalcularYPintar(estado) {
     const enAlcaldia = estado.vista !== VISTA.CIUDAD;
-    if (DIAG_SIN_PANEL && enAlcaldia) {
-      instanciaMapa?.actualizarAgeb(agebGeoJSON, new Map());
-      return;
-    }
     const datosVista = enAlcaldia ? datosAgeb : datosAlcaldia;
     const composicion = calcularComposicion(datosVista, estado);
 

@@ -194,11 +194,6 @@
   visibility: hidden;
 }
 
-/* TEMP-DIAG (?diag=sinpatron): sin_datos en color plano; 2 clases ganan a la regla de 1 clase. */
-.mapa__lienzo--sin-patron .mapa__alcaldia--sin-datos {
-  fill: var(--sin-datos);
-}
-
 /* Sin `transition: transform` (correccion/action_plan.md §8.2 punto 41): D3
    ya anima el atributo `transform`; esta regla hacía que cada escritura por
    fotograma arrancara una transición CSS nueva de 120 ms sobre grupos con

@@ -39,18 +39,6 @@ const MARGEN_PROYECCION_PX = 32;
 const DEBOUNCE_RESIZE_MS = 150;
 const DESPLAZAMIENTO_TOOLTIP_PX = 12;
 
-// TEMP-DIAG: interruptores de diagnostico por URL, p. ej. `index.html?diag=sinanim,sinhover#/`.
-//   sinanim   -> el foco aplica el transform de golpe (sin transicion de 820 ms).
-//   sinhover  -> ningun manejador de hover/tooltip.
-//   sinpatron -> AGEB/alcaldias sin_datos con color plano en vez de patron hachurado.
-//   sinagebs  -> no se dibuja ningun AGEB (aisla el coste del SVG de AGEB).
-// Quitar junto con las referencias a DIAG cuando se cierre el diagnostico.
-const DIAG = new Set(
-  (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("diag") ?? "" : "")
-    .split(",")
-    .filter(Boolean),
-);
-
 // --- F70: transición de foco/inversa y zoom de la vista de alcaldía (spec §10.2-§10.3, §10.7). ---
 // 820 ms es el valor exacto que fija el spec para el gesto de foco (y su inverso); no forma parte
 // de la escala `--d-*` de tokens.css porque es una medida de diseño puntual de esta transición,
@@ -122,6 +110,68 @@ function anillosDeGeometria(geometria) {
   if (geometria.type === "Polygon") return geometria.coordinates;
   if (geometria.type === "MultiPolygon") return geometria.coordinates.flat(1);
   return [];
+}
+
+// ---------------------------------------------------------------------------------------------
+// Corrección de orientación de anillos (causa raíz del color uniforme al enfocar una alcaldía,
+// `correccion/solucion_agebs.md`): `data/reference/ageb_cdmx_simplificado.geojson` trae los 2453
+// anillos de AGEB devanados en sentido inverso al que exige `d3-geo` (RFC 7946 visto desde fuera
+// de la esfera) -- `alcaldias.geojson` y el `ageb_cdmx.geojson` sin simplificar están devanados al
+// revés (correctamente) del `_simplificado`, así que el simplificador invirtió el orden de los
+// puntos de cada anillo. Con el devanado equivocado, el algoritmo de recorte de antimeridiano de
+// `d3-geo` interpreta cada AGEB como "todo el planisferio menos ese polígono": el `<path>`
+// resultante trae, además del contorno real (pequeño), un segundo anillo gigantesco (un
+// rectángulo del tamaño del dominio proyectado) que tapa visualmente a los demás AGEB pintados
+// antes -- de ahí el "color uniforme, el mismo de la alcaldía" reportado (en realidad es el color
+// del último AGEB pintado, ampliado a un rectángulo que cubre toda la escena).
+// `data/reference/` es de solo lectura (CLAUDE.md): la corrección vive aquí, del lado del
+// cliente, nunca reescribiendo el GeoJSON. Es idempotente y defensiva: solo invierte un anillo si
+// su área plana (lon/lat) tiene el signo equivocado, así que si el archivo de referencia se
+// corrigiera algún día en el pipeline, esta función no le haría nada.
+export function areaPlanaAnillo(anillo) {
+  let area = 0;
+  for (let i = 0; i < anillo.length - 1; i++) {
+    const [x1, y1] = anillo[i];
+    const [x2, y2] = anillo[i + 1];
+    area += x1 * y2 - x2 * y1;
+  }
+  return area / 2;
+}
+
+/** Anillo exterior: área plana negativa (mismo devanado que `alcaldias.geojson`). Anillos
+ * interiores (huecos): signo contrario al exterior. */
+export function anilloConOrientacionCorrecta(anillo, esExterior) {
+  const area = areaPlanaAnillo(anillo);
+  const necesitaInvertir = esExterior ? area > 0 : area < 0;
+  return necesitaInvertir ? anillo.slice().reverse() : anillo;
+}
+
+export function repararOrientacionGeometria(geometria) {
+  if (!geometria) return geometria;
+  if (geometria.type === "Polygon") {
+    return { ...geometria, coordinates: geometria.coordinates.map((anillo, i) => anilloConOrientacionCorrecta(anillo, i === 0)) };
+  }
+  if (geometria.type === "MultiPolygon") {
+    return {
+      ...geometria,
+      coordinates: geometria.coordinates.map((poligono) => poligono.map((anillo, i) => anilloConOrientacionCorrecta(anillo, i === 0))),
+    };
+  }
+  return geometria;
+}
+
+/** Corrige la orientación de cada feature de una colección de AGEB (memoizada por referencia:
+ * `main.js` entrega el mismo objeto `agebGeoJSON` en cada recálculo, no hay que reprocesarlo). */
+const cacheGeoJSONReparado = new WeakMap();
+export function repararAgebGeoJSON(coleccion) {
+  if (!coleccion) return coleccion;
+  if (cacheGeoJSONReparado.has(coleccion)) return cacheGeoJSONReparado.get(coleccion);
+  const reparado = {
+    ...coleccion,
+    features: coleccion.features.map((feature) => ({ ...feature, geometry: repararOrientacionGeometria(feature.geometry) })),
+  };
+  cacheGeoJSONReparado.set(coleccion, reparado);
+  return reparado;
 }
 
 function calcularSegmentosExteriores(coleccion) {
@@ -200,7 +250,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
 
   let registros = registrosPorCveMun;
   let vistaActiva = obtenerEstado().vistaMapa;
-  let agebGeoJSON = opciones.agebGeoJSON ?? null;
+  let agebGeoJSON = repararAgebGeoJSON(opciones.agebGeoJSON ?? null);
   let registrosAgeb = opciones.registrosAgebPorCvegeo ?? new Map();
   let cveMunEnfocado = null;
   let transformEnfoque = { escala: 1, tx: 0, ty: 0 };
@@ -220,7 +270,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   // entre navegadores"), así que el mapa se oculta del árbol de accesibilidad.
   const svg = select(contenedor)
     .append("svg")
-    .attr("class", DIAG.has("sinpatron") ? "mapa__lienzo mapa__lienzo--sin-patron" : "mapa__lienzo")
+    .attr("class", "mapa__lienzo")
     .attr("aria-hidden", "true")
     .attr("focusable", "false");
 
@@ -395,12 +445,12 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
       .attr("class", (feature) => `mapa__alcaldia ${claseFeature(feature)}`)
       .attr("data-cve-mun", (feature) => feature.properties.cve_alc)
       .on("mouseenter", (evento, feature) => {
-        if (DIAG.has("sinhover") || cveMunEnfocado !== null) return;
+        if (cveMunEnfocado !== null) return;
         mostrarRealce(feature);
         mostrarTooltip(evento, feature);
       })
       .on("mousemove", (evento) => {
-        if (DIAG.has("sinhover") || cveMunEnfocado !== null) return;
+        if (cveMunEnfocado !== null) return;
         posicionarTooltip(evento);
       })
       .on("mouseleave", () => {
@@ -455,7 +505,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
 
   function aplicarTransform(t, { animar = false, duracion = DURACION_ENFOQUE_MS } = {}) {
     const cadenaTransform = `translate(${t.tx},${t.ty}) scale(${t.escala})`;
-    if (animar && !DIAG.has("sinanim")) {
+    if (animar) {
       // Trazo una sola vez, ya con la escala destino (no por fotograma).
       ajustarTrazoEscena(t.escala);
       // Durante los 820 ms el contenido se desliza bajo el puntero: sin hit-testing ni
@@ -467,12 +517,11 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
         .attr("transform", cadenaTransform)
         .on("end interrupt", () => svg.classed("mapa__lienzo--animando", false));
     } else {
-      // Zoom del usuario (rueda/pellizco/arrastre o `reencuadrar()`), o `?diag=sinanim`: sin
-      // animacion propia. El trazo se recalcula en el evento `end` del gesto (activarZoomUsuario).
+      // Zoom del usuario (rueda/pellizco/arrastre o `reencuadrar()`): sin animacion propia. El
+      // trazo se recalcula en el evento `end` del gesto (activarZoomUsuario).
       gEscenario.interrupt?.();
       svg.classed("mapa__lienzo--animando", false);
       gEscenario.attr("transform", cadenaTransform);
-      if (animar) ajustarTrazoEscena(t.escala);
     }
   }
 
@@ -501,7 +550,6 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
   }
 
   function pintarAgebs() {
-    if (DIAG.has("sinagebs")) return;
     const features = agebGeoJSON?.features?.filter((f) => f.properties.cve_mun === cveMunEnfocado) ?? [];
     const seleccion = gAgebs
       .selectAll("path.mapa__ageb")
@@ -525,12 +573,10 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
       .attr("stroke-width", TRAZO_BASE_AGEB / escalaTrazo)
       .attr("d", generadorRuta)
       .on("mouseenter", (evento, feature) => {
-        if (DIAG.has("sinhover")) return;
         tooltipAgebFeature = feature;
         crearTooltipAgeb(evento, feature);
       })
       .on("mousemove", (evento) => {
-        if (DIAG.has("sinhover")) return;
         posicionarTooltip(evento);
       })
       .on("mouseleave", () => {
@@ -729,7 +775,7 @@ export function montarMapa(contenedor, alcaldiasGeoJSON, registrosPorCveMun, opc
     },
     /** Entrega (o reemplaza) el GeoJSON de AGEB y sus registros; recolorea si hay una alcaldía enfocada. */
     actualizarAgeb(nuevoAgebGeoJSON, nuevosRegistrosAgeb) {
-      agebGeoJSON = nuevoAgebGeoJSON ?? agebGeoJSON;
+      agebGeoJSON = repararAgebGeoJSON(nuevoAgebGeoJSON) ?? agebGeoJSON;
       if (nuevosRegistrosAgeb) registrosAgeb = nuevosRegistrosAgeb;
       if (cveMunEnfocado !== null) pintarAgebs();
     },
